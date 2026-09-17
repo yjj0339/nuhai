@@ -8,157 +8,233 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;background:#bfe3f2}
-body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;color:#1d3a52;user-select:none}
+body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;color:#173a55;user-select:none}
 #c3d{position:fixed;inset:0;display:block}
-.glass{background:rgba(255,255,255,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.85);box-shadow:0 8px 32px rgba(30,80,120,.14);border-radius:16px}
+
+:root{
+  --g-bg:linear-gradient(155deg,rgba(255,255,255,.66),rgba(255,255,255,.42));
+  --g-blur:blur(24px) saturate(1.8) brightness(1.05);
+  --g-stroke:rgba(255,255,255,.85);
+  --g-shadow:0 10px 36px rgba(23,74,110,.16),0 2px 8px rgba(23,74,110,.08);
+  --g-inset:inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.28),inset 1.5px 0 0 rgba(255,255,255,.4);
+  --txt:#173a55;--txt2:#4c7191;--txt3:#7fa0b8;
+  --accent:#ef6f3c;--blue:#2f9bd6;
+}
+.glass{
+  background:var(--g-bg);
+  backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);
+  border:1.2px solid var(--g-stroke);
+  box-shadow:var(--g-shadow),var(--g-inset);
+  border-radius:20px;
+}
+
 #hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:5}
 #hud.on{display:block}
-.card{padding:10px 14px}
+.card{padding:11px 15px}
+
 #topbar{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:stretch}
-#daycard{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 18px;min-width:120px}
-#hudDay{font-size:19px;font-weight:800;letter-spacing:1px}
-#hudClock{font-size:12px;color:#5b7d94;margin-top:1px}
-#weathercard{display:flex;align-items:center;gap:10px;padding:8px 16px}
-#wIcon{width:34px;height:34px;border-radius:50%;position:relative;flex:none}
-.sun{background:radial-gradient(circle at 40% 35%,#fff3c0 0%,#ffd75e 55%,#f5b93c 100%);box-shadow:0 0 14px 3px rgba(255,214,90,.75)}
-.cloudy{background:linear-gradient(160deg,#ffffff 20%,#cfe0ec 100%);box-shadow:inset -4px -4px 8px rgba(120,150,175,.35)}
-.fogw{background:conic-gradient(from 200deg,#e8f1f7,#ffffff,#dce9f2,#ffffff,#e8f1f7);box-shadow:inset 0 0 8px rgba(130,160,185,.5)}
-.stormy{background:linear-gradient(160deg,#5c7d99 10%,#39516b 90%);box-shadow:inset 0 0 10px rgba(20,40,60,.6)}
-#wIcon::after{content:"";position:absolute;inset:0;border-radius:50%}
-#wName{font-weight:800;font-size:15px}
-#wDesc{font-size:11px;color:#5b7d94;max-width:150px;line-height:1.35}
-#rescard{position:absolute;top:14px;left:14px;padding:10px 14px;display:flex;flex-direction:column;gap:7px;min-width:172px}
-.resrow{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
-.rdot{width:12px;height:12px;border-radius:4px;flex:none;position:relative;overflow:hidden}
-.rdot span{position:absolute;inset:0;border-radius:4px;opacity:.35}
-.rdot i{position:absolute;left:0;top:0;bottom:0;background:currentColor;border-radius:4px}
-.rd-wood .rdot{color:#a9743f;background:#efd9bd}
-.rd-food .rdot{color:#e0704a;background:#fbd9cb}
-.rd-water .rdot{color:#3e9fd6;background:#cfeaf8}
-.rd-gold .rdot{color:#e0a52e;background:#fae9c0}
-.rval{margin-left:auto;font-variant-numeric:tabular-nums}
-.rcap{color:#8aa7ba;font-weight:600;font-size:11px;margin-left:2px}
-#statcard{position:absolute;left:14px;bottom:14px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;width:230px}
+#daycard{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 20px;min-width:128px}
+#hudDay{font-size:20px;font-weight:900;letter-spacing:1px;background:linear-gradient(160deg,#1d5a86,#2f86b8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#hudClock{font-size:12px;color:var(--txt2);margin-top:2px;font-variant-numeric:tabular-nums}
+#weathercard{display:flex;align-items:center;gap:11px;padding:9px 18px;min-width:214px}
+#wIconBox{width:46px;height:46px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;border-radius:14px;background:linear-gradient(150deg,rgba(255,255,255,.9),rgba(210,235,250,.55));border:1px solid rgba(255,255,255,.9);box-shadow:inset 0 1px 0 #fff}
+#wIconBox svg{width:32px;height:32px}
+#wName{font-weight:900;font-size:15.5px;letter-spacing:.5px}
+#wDesc{font-size:11.5px;color:var(--txt2);margin-top:2px;line-height:1.35}
+#wTimeBar{height:4px;border-radius:2px;background:rgba(255,255,255,.55);margin-top:5px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(60,100,130,.18)}
+#wTimeFill{height:100%;width:100%;border-radius:2px;background:linear-gradient(90deg,#67c7f2,#2f9bd6);transition:width .5s linear}
+
+#rescard{position:absolute;top:14px;left:14px;padding:11px 13px;display:flex;flex-direction:column;gap:8px;min-width:186px}
+.resrow{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:800}
+.rico{width:26px;height:26px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 5px rgba(23,74,110,.12)}
+.rico svg{width:17px;height:17px}
+.ri-wood{background:linear-gradient(150deg,#f4e0c4,#e2c193);color:#8a5a2e}
+.ri-food{background:linear-gradient(150deg,#fdd9cb,#f5b39a);color:#c85a35}
+.ri-water{background:linear-gradient(150deg,#d3edfa,#a8d9f2);color:#2f7fb8}
+.ri-gold{background:linear-gradient(150deg,#fae9c0,#f2d285);color:#a8781f}
+.rnum{margin-left:auto;font-size:15px;font-variant-numeric:tabular-nums;font-weight:900}
+.rcap{color:var(--txt3);font-weight:700;font-size:11px;margin-left:1px}
+
+#statcard{position:absolute;left:14px;bottom:14px;padding:13px 15px;display:flex;flex-direction:column;gap:10px;width:246px}
 .statrow{display:flex;align-items:center;gap:9px}
-.sname{font-size:12px;font-weight:800;width:44px;color:#43647c}
-.sbar{flex:1;height:11px;border-radius:6px;background:#e4eef4;overflow:hidden;box-shadow:inset 0 1px 3px rgba(90,130,160,.25)}
-.sbar i{display:block;height:100%;border-radius:6px;transition:width .25s}
-.b-hunger i{background:linear-gradient(90deg,#f2925c,#e0704a)}
-.b-thirst i{background:linear-gradient(90deg,#5fbfe8,#2f8fc9)}
-.b-hull i{background:linear-gradient(90deg,#9fc35f,#6f9d3c)}
-.sval{font-size:11px;font-weight:800;color:#43647c;width:34px;text-align:right;font-variant-numeric:tabular-nums}
-#minicard{position:absolute;right:14px;bottom:14px;padding:8px}
-#mini{display:block;width:168px;height:168px;border-radius:10px;background:#cfe6f2}
-#minilbl{font-size:11px;font-weight:800;color:#43647c;text-align:center;margin-top:6px}
-#minilbl b{color:#e0704a}
-#btns{position:absolute;top:14px;right:14px;display:flex;gap:8px;pointer-events:auto}
-.gbtn{pointer-events:auto;cursor:pointer;border:none;font-family:inherit;font-weight:800;color:#1d3a52;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.9);box-shadow:0 4px 14px rgba(30,80,120,.16);border-radius:12px;padding:9px 14px;font-size:13px;transition:transform .12s,box-shadow .12s}
-.gbtn:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(30,80,120,.22)}
-.gbtn:active{transform:translateY(0)}
-.gbtn.hot{background:linear-gradient(150deg,#ff9a62,#ef6f3c);color:#fff;border-color:rgba(255,255,255,.6)}
-.gbtn.blue{background:linear-gradient(150deg,#67c7f2,#2f9bd6);color:#fff;border-color:rgba(255,255,255,.6)}
-.gbtn.big{font-size:17px;padding:14px 34px;border-radius:14px}
-#ctrlhint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:#3d617c;background:rgba(255,255,255,.6);padding:7px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.8);white-space:nowrap}
-#ctrlhint b{color:#e0704a}
-#warn{position:absolute;top:84px;left:50%;transform:translateX(-50%) translateY(-16px);opacity:0;transition:all .4s;padding:10px 22px;border-radius:14px;font-weight:800;font-size:14px;background:rgba(255,244,214,.94);border:1px solid #f2d98a;box-shadow:0 6px 22px rgba(150,110,20,.22);color:#8a5a12;display:flex;gap:9px;align-items:center}
+.sname{font-size:12px;font-weight:900;width:40px;color:var(--txt2);letter-spacing:1px}
+.sbar{flex:1;height:13px;border-radius:7px;background:rgba(255,255,255,.5);overflow:hidden;box-shadow:inset 0 1.5px 3px rgba(50,90,120,.2),inset 0 -1px 0 rgba(255,255,255,.7)}
+.sbar i{display:block;height:100%;border-radius:7px;transition:width .25s;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55)}
+.b-hunger i{background:linear-gradient(90deg,#ffb37e,#ef8046)}
+.b-thirst i{background:linear-gradient(90deg,#8fd6f5,#37a0d8)}
+.b-hull i{background:linear-gradient(90deg,#b8dd7e,#7cae42)}
+.sval{font-size:11.5px;font-weight:900;color:var(--txt2);width:32px;text-align:right;font-variant-numeric:tabular-nums}
+.statrow.danger .sbar i{animation:pulse .8s infinite}
+@keyframes pulse{50%{opacity:.45}}
+
+#questcard{position:absolute;left:14px;top:50%;transform:translateY(-50%);padding:12px 14px;width:224px;transition:opacity .4s,transform .4s}
+#questcard.hide{opacity:0;transform:translateY(-50%) translateX(-16px);pointer-events:none}
+#qtag{font-size:10px;font-weight:900;letter-spacing:2.5px;color:var(--txt3)}
+#questname{font-size:14px;font-weight:900;margin-top:3px;line-height:1.4}
+#questdesc{font-size:11px;color:var(--txt2);margin-top:3px;line-height:1.5}
+#questbar{height:7px;border-radius:4px;background:rgba(255,255,255,.5);overflow:hidden;margin-top:8px;box-shadow:inset 0 1px 2px rgba(50,90,120,.2)}
+#questfill{height:100%;border-radius:4px;background:linear-gradient(90deg,#ffd75e,#f2a63c);width:0;transition:width .4s}
+#questval{font-size:10.5px;font-weight:800;color:var(--txt3);margin-top:5px;text-align:right;font-variant-numeric:tabular-nums}
+
+#buffrow{position:absolute;left:14px;top:calc(50% + 108px);display:flex;flex-direction:column;gap:7px}
+.buff{padding:7px 13px;border-radius:14px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:8px;animation:tin .35s ease-out}
+.buff .bdot{width:9px;height:9px;border-radius:50%;background:#4dc0a8;animation:pulse 1.2s infinite}
+
+#minicard{position:absolute;right:14px;bottom:14px;padding:9px}
+#mini{display:block;width:172px;height:172px;border-radius:14px;background:#cfe6f2}
+#minilbl{font-size:11px;font-weight:900;color:var(--txt2);text-align:center;margin-top:7px;letter-spacing:1px}
+#minilbl b{color:var(--accent)}
+
+#btns{position:absolute;top:14px;right:14px;display:flex;gap:9px;pointer-events:auto}
+.gbtn{pointer-events:auto;cursor:pointer;border:none;font-family:inherit;font-weight:900;color:var(--txt);background:linear-gradient(155deg,rgba(255,255,255,.8),rgba(255,255,255,.5));border:1.2px solid rgba(255,255,255,.9);box-shadow:0 5px 16px rgba(23,74,110,.15),inset 0 1.5px 0 rgba(255,255,255,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:14px;padding:10px 16px;font-size:13px;letter-spacing:.5px;transition:transform .14s,box-shadow .14s}
+.gbtn:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(23,74,110,.22),inset 0 1.5px 0 rgba(255,255,255,.95)}
+.gbtn:active{transform:translateY(0) scale(.98)}
+.gbtn.hot{background:linear-gradient(150deg,#ff9a62,#ee5f28);color:#fff;border-color:rgba(255,255,255,.55);text-shadow:0 1px 2px rgba(160,60,10,.3)}
+.gbtn.blue{background:linear-gradient(150deg,#6ccaf2,#2287c2);color:#fff;border-color:rgba(255,255,255,.55);text-shadow:0 1px 2px rgba(10,70,110,.3)}
+.gbtn.big{font-size:17.5px;padding:15px 38px;border-radius:17px;letter-spacing:3px}
+
+#warn{position:absolute;top:88px;left:50%;transform:translateX(-50%) translateY(-14px);opacity:0;transition:all .45s cubic-bezier(.2,.8,.3,1.2);padding:11px 24px;border-radius:16px;font-weight:900;font-size:14px;display:flex;gap:10px;align-items:center;background:linear-gradient(155deg,rgba(255,246,222,.92),rgba(255,238,196,.88));backdrop-filter:blur(18px) saturate(1.6);border:1.2px solid rgba(242,203,106,.85);box-shadow:0 8px 26px rgba(150,110,20,.25),inset 0 1.5px 0 rgba(255,255,255,.9);color:#8a5a12}
 #warn.on{opacity:1;transform:translateX(-50%) translateY(0)}
-#warndot{width:10px;height:10px;border-radius:50%;background:#e8a23c;animation:blink 1s infinite}
+#warndot{width:10px;height:10px;border-radius:50%;background:#e8a23c;box-shadow:0 0 8px #e8a23c;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.25}}
-#toasts{position:absolute;top:130px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center}
-.toast{padding:9px 20px;border-radius:99px;background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.95);box-shadow:0 6px 18px rgba(30,80,120,.18);font-size:13px;font-weight:700;color:#1d3a52;animation:tin .3s ease-out}
-.toast.gold{background:linear-gradient(140deg,#fff6da,#ffe9b0);color:#8a5a12;border-color:#f2d98a}
-@keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.92)}}
-#prompt{position:absolute;bottom:110px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:99px;font-size:13px;font-weight:700;display:none}
-#prompt.on{display:block}
-#prompt b{color:#e0704a}
+
+#toasts{position:absolute;top:138px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:8}
+.toast{padding:10px 22px;border-radius:99px;background:linear-gradient(155deg,rgba(255,255,255,.88),rgba(255,255,255,.68));backdrop-filter:blur(18px) saturate(1.6);border:1.2px solid rgba(255,255,255,.92);box-shadow:0 8px 24px rgba(23,74,110,.18),inset 0 1.5px 0 rgba(255,255,255,.95);font-size:13px;font-weight:800;color:var(--txt);animation:tin .32s cubic-bezier(.2,.8,.3,1.2)}
+.toast.gold{background:linear-gradient(150deg,rgba(255,248,224,.94),rgba(255,236,190,.9));color:#8a5a12;border-color:rgba(242,203,106,.9)}
+@keyframes tin{from{opacity:0;transform:translateY(-12px) scale(.9)}}
+
+#prompt{position:absolute;bottom:118px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:99px;font-size:13.5px;font-weight:800;display:none}
+#prompt.on{display:block;animation:tin .3s ease-out}
+#prompt b{color:var(--accent)}
+
 #menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
 #menu.off{display:none}
-#menubox{pointer-events:auto;width:min(430px,92vw);padding:36px 38px 30px;text-align:center;border-radius:24px}
-#mtitle{font-size:52px;font-weight:900;letter-spacing:10px;color:#123a5c;background:linear-gradient(150deg,#1d5a86,#123a5c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
-#msub{font-size:14px;color:#5b7d94;letter-spacing:5px;margin-bottom:26px}
-#mbtns{display:flex;flex-direction:column;gap:11px;align-items:center}
+#menubox{pointer-events:auto;width:min(452px,92vw);padding:40px 40px 32px;text-align:center;border-radius:30px}
+#mspark{width:74px;height:74px;margin:0 auto 6px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,rgba(255,255,255,.95),rgba(205,235,252,.7));border:1.2px solid rgba(255,255,255,.95);box-shadow:0 10px 30px rgba(23,74,110,.2),inset 0 2px 0 #fff}
+#mtitle{font-size:54px;font-weight:900;letter-spacing:11px;background:linear-gradient(165deg,#1d5a86 10%,#37a5da 60%,#7cd0f0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+#msub{font-size:13.5px;color:var(--txt2);letter-spacing:6px;margin-bottom:28px}
+#mbtns{display:flex;flex-direction:column;gap:12px;align-items:center}
 #btnResume{display:none}
 #btnResume.on{display:block}
-#mhelp{margin-top:20px;font-size:12px;color:#6b8ba1;line-height:1.8;text-align:left;background:rgba(232,242,248,.7);border-radius:12px;padding:12px 16px}
-#mhelp b{color:#1d5a86}
-#mhelp .sec{margin-top:6px;padding-top:6px;border-top:1px dashed #bcd4e2}
-#panelWrap{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(200,225,238,.35);backdrop-filter:blur(3px)}
+#mhelp{margin-top:22px;font-size:12.5px;color:var(--txt2);line-height:1.9;text-align:left;background:rgba(235,246,252,.62);border:1px solid rgba(255,255,255,.8);border-radius:16px;padding:14px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+#mhelp b{color:#1d6497}
+#mhelp .sec{margin-top:7px;padding-top:7px;border-top:1px dashed #bcd4e2}
+
+#panelWrap{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(190,225,242,.32);backdrop-filter:blur(5px) saturate(1.4)}
 #panelWrap.on{display:flex}
-#upanel{pointer-events:auto;width:min(640px,94vw);max-height:86vh;overflow-y:auto;padding:24px 26px;border-radius:22px}
-#uptitle{font-size:22px;font-weight:900;color:#123a5c;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-#upsub{font-size:12px;color:#5b7d94;margin-bottom:16px}
-#upclose{cursor:pointer;border:none;background:#e4eef4;color:#43647c;width:34px;height:34px;border-radius:10px;font-size:16px;font-weight:800;font-family:inherit}
-#upclose:hover{background:#d2e4ee}
-.upitem{display:flex;align-items:center;gap:14px;padding:13px 16px;background:rgba(240,247,251,.85);border:1px solid #dbe9f2;border-radius:14px;margin-bottom:10px}
-.upicon{width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center}
-.ui-sail{background:linear-gradient(150deg,#e8f4fb,#c9e4f5)}
-.ui-hull{background:linear-gradient(150deg,#f2e6d2,#e2cba6)}
-.ui-hold{background:linear-gradient(150deg,#e5f3e0,#c8e5bd)}
-.ui-lamp{background:linear-gradient(150deg,#fff6d8,#ffe9a8)}
-.ui-net{background:linear-gradient(150deg,#e0eef8,#bcd8ec)}
+#upanel{pointer-events:auto;width:min(660px,94vw);max-height:86vh;overflow-y:auto;padding:26px 28px;border-radius:28px}
+#uptitle{font-size:23px;font-weight:900;display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;background:linear-gradient(160deg,#1d5a86,#2f86b8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#upsub{font-size:12px;color:var(--txt2);margin-bottom:18px}
+#upclose{cursor:pointer;border:none;background:rgba(255,255,255,.65);color:var(--txt2);width:36px;height:36px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;box-shadow:inset 0 1px 0 #fff,0 2px 6px rgba(23,74,110,.12);transition:background .15s}
+#upclose:hover{background:#fff}
+.upitem{display:flex;align-items:center;gap:15px;padding:14px 17px;background:linear-gradient(155deg,rgba(255,255,255,.72),rgba(240,249,253,.5));border:1.2px solid rgba(255,255,255,.88);box-shadow:0 4px 14px rgba(23,74,110,.08),inset 0 1.5px 0 rgba(255,255,255,.9);border-radius:18px;margin-bottom:11px}
+.upicon{width:48px;height:48px;border-radius:15px;flex:none;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 8px rgba(23,74,110,.14)}
+.upicon svg{width:28px;height:28px}
+.ui-sail{background:linear-gradient(150deg,#e8f4fb,#c5e3f5);color:#2f7fb8}
+.ui-hull{background:linear-gradient(150deg,#f5e8d2,#e0c69e);color:#8a5a2e}
+.ui-hold{background:linear-gradient(150deg,#e9f5e4,#c9e6bc);color:#4e8a3a}
+.ui-lamp{background:linear-gradient(150deg,#fff6d8,#ffe598);color:#a8781f}
+.ui-net{background:linear-gradient(150deg,#e0eef8,#b8d8ee);color:#2f6f98}
 .upmain{flex:1;min-width:0}
-.upname{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
-.lv{display:inline-flex;gap:3px}
-.lv b{width:9px;height:9px;border-radius:3px;background:#d5e4ee}
-.lv b.f{background:linear-gradient(150deg,#67c7f2,#2f9bd6)}
-.updesc{font-size:11.5px;color:#5b7d94;margin-top:3px;line-height:1.4}
-.upbtn{cursor:pointer;border:none;font-family:inherit;font-weight:800;font-size:12.5px;padding:9px 13px;border-radius:10px;white-space:nowrap;transition:transform .12s}
-.upbtn:not(:disabled):hover{transform:translateY(-1px)}
-.upbtn:disabled{cursor:not-allowed;opacity:.55}
-.upok{background:linear-gradient(150deg,#ff9a62,#ef6f3c);color:#fff}
-.upno{background:#e4eef4;color:#7d9cb2}
-.upmax{background:#e8f3e4;color:#56823f}
-#builditem{border:2px dashed #f2b76a;background:linear-gradient(140deg,#fff8ea,#ffefd2)}
-#over{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(210,232,243,.55);backdrop-filter:blur(6px)}
+.upname{font-weight:900;font-size:15.5px;display:flex;align-items:center;gap:9px}
+.lv{display:inline-flex;gap:3.5px}
+.lv b{width:10px;height:10px;border-radius:3.5px;background:rgba(180,205,220,.55);box-shadow:inset 0 1px 1px rgba(60,90,110,.2)}
+.lv b.f{background:linear-gradient(150deg,#7fd0f2,#2f9bd6);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.updesc{font-size:12px;color:var(--txt2);margin-top:4px;line-height:1.45}
+.upbtn{cursor:pointer;border:none;font-family:inherit;font-weight:900;font-size:12.5px;padding:10px 14px;border-radius:13px;white-space:nowrap;transition:transform .13s,box-shadow .13s;line-height:1.5}
+.upbtn:not(:disabled):hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(23,74,110,.2)}
+.upbtn:disabled{cursor:not-allowed;opacity:.5}
+.upok{background:linear-gradient(150deg,#ff9a62,#ee5f28);color:#fff;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4)}
+.upno{background:rgba(228,240,248,.8);color:#7d9cb2;box-shadow:inset 0 1px 0 #fff}
+.upmax{background:linear-gradient(150deg,#e6f4df,#cfe9c2);color:#4e8a3a;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+#builditem{border:2px dashed rgba(242,183,106,.8);background:linear-gradient(140deg,rgba(255,250,236,.85),rgba(255,240,210,.65))}
+#builditem.armed{border-style:solid;border-color:rgba(242,163,60,1);animation:buildGlow 1.6s infinite}
+@keyframes buildGlow{50%{box-shadow:0 0 22px rgba(242,163,60,.45),inset 0 1.5px 0 rgba(255,255,255,.9)}}
+
+#over{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(200,228,242,.45);backdrop-filter:blur(8px) saturate(1.4)}
 #over.on{display:flex}
-#overbox{text-align:center;padding:44px 50px;border-radius:24px;width:min(430px,92vw)}
-#ovtitle{font-size:40px;font-weight:900;letter-spacing:6px;margin-bottom:8px}
+#overbox{text-align:center;padding:46px 52px;border-radius:30px;width:min(452px,92vw)}
+#ovtitle{font-size:42px;font-weight:900;letter-spacing:7px;margin-bottom:10px}
 #ovtitle.win{color:#1c7a43}
 #ovtitle.lose{color:#b3502e}
-#ovsub{font-size:14px;color:#43647c;line-height:2;margin-bottom:24px}
-#ovsub b{color:#123a5c;font-size:16px}
-#loadnote{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:40;background:#bfe3f2;color:#43647c;font-weight:700;letter-spacing:4px;font-size:15px}
+#ovstats{display:flex;justify-content:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.ovstat{background:rgba(235,246,252,.65);border:1px solid rgba(255,255,255,.85);border-radius:14px;padding:9px 16px;box-shadow:inset 0 1px 0 #fff}
+.ovstat b{display:block;font-size:19px;font-weight:900;color:#1d5a86;font-variant-numeric:tabular-nums}
+.ovstat span{font-size:10.5px;color:var(--txt3);letter-spacing:1px}
+#ovsub{font-size:14px;color:var(--txt2);line-height:2;margin-bottom:24px}
+#ovsub b{color:#123a5c}
+
+#loadnote{position:fixed;inset:0;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;z-index:40;background:linear-gradient(180deg,#cfe9f6,#bfe3f2);color:#2f6f98;font-weight:800;letter-spacing:5px;font-size:15px}
 #loadnote.off{display:none}
+#loadwave{width:120px;height:26px;position:relative;overflow:visible}
+#loadwave span{position:absolute;bottom:0;width:12px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#67c7f2,#2f9bd6);animation:wv 1.1s ease-in-out infinite}
+#loadwave span:nth-child(2){left:16px;animation-delay:.12s}
+#loadwave span:nth-child(3){left:32px;animation-delay:.24s}
+#loadwave span:nth-child(4){left:48px;animation-delay:.36s}
+#loadwave span:nth-child(5){left:64px;animation-delay:.48s}
+#loadwave span:nth-child(6){left:80px;animation-delay:.6s}
+#loadwave span:nth-child(7){left:96px;animation-delay:.72s}
+@keyframes wv{0%,100%{height:6px}50%{height:24px}}
+
 @media (max-width:760px){
- #rescard{min-width:140px;padding:8px 10px}
- #minicard{transform:scale(.82);transform-origin:bottom right}
+ #rescard{min-width:150px;padding:9px 11px;gap:6px}
+ .rnum{font-size:13.5px}
+ #minicard{transform:scale(.8);transform-origin:bottom right}
+ #statcard{width:206px;bottom:110px}
+ #questcard{top:auto;bottom:14px;transform:none;width:200px}
+ #questcard.hide{transform:translateX(-16px)}
+ #buffrow{top:auto;bottom:150px}
  #ctrlhint{display:none}
- #statcard{width:196px}
- #mtitle{font-size:40px;letter-spacing:6px}
+ #mtitle{font-size:42px;letter-spacing:7px}
+ #topbar{top:10px}
+ #weathercard{min-width:0;padding:8px 13px}
+ #wDesc{display:none}
 }
 </style>
 </head>
 <body>
 <canvas id="c3d"></canvas>
-<div id="loadnote">正在准备出海装备…</div>
+<div id="loadnote">
+  <div id="loadwave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  正在准备出海装备…
+</div>
 <div id="hud">
   <div id="topbar">
     <div id="daycard" class="glass card">
       <div id="hudDay">第 1 天</div>
-      <div id="hudClock">06:00 晴</div>
+      <div id="hudClock">06:00</div>
     </div>
     <div id="weathercard" class="glass card">
-      <div id="wIcon" class="sun"></div>
-      <div>
+      <div id="wIconBox"></div>
+      <div style="flex:1;min-width:0">
         <div id="wName">晴朗</div>
         <div id="wDesc">风平浪静，适合航行</div>
+        <div id="wTimeBar"><div id="wTimeFill"></div></div>
       </div>
     </div>
   </div>
   <div id="rescard" class="glass card">
-    <div class="resrow rd-wood"><div class="rdot"><i id="piW"></i></div>木材<span class="rval"><span id="rvW">0</span><span class="rcap" id="rcW">/50</span></span></div>
-    <div class="resrow rd-food"><div class="rdot"><i id="piF"></i></div>食物<span class="rval"><span id="rvF">0</span><span class="rcap" id="rcF">/20</span></span></div>
-    <div class="resrow rd-water"><div class="rdot"><i id="piT"></i></div>淡水<span class="rval"><span id="rvT">0</span><span class="rcap" id="rcT">/20</span></span></div>
-    <div class="resrow rd-gold"><div class="rdot"><i id="piG"></i></div>金币<span class="rval" id="rvG">0</span></div>
+    <div class="resrow"><div class="rico ri-wood"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9" width="18" height="6" rx="3" fill="currentColor"/><circle cx="19" cy="12" r="2.6" fill="#f7e8cf"/></svg></div>木材<span class="rnum"><span id="rvW">0</span><span class="rcap" id="rcW">/50</span></span></div>
+    <div class="resrow"><div class="rico ri-food"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" fill="currentColor" opacity=".85"/><path d="M4 8l2-4h12l2 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 13h4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>食物<span class="rnum"><span id="rvF">0</span><span class="rcap" id="rcF">/20</span></span></div>
+    <div class="resrow"><div class="rico ri-water"><svg viewBox="0 0 24 24" fill="none"><path d="M9 3h6l3 5c1.8 3 1.6 8-3 13H9c-4.6-5-4.8-10-3-13l3-5z" fill="currentColor" opacity=".85"/><ellipse cx="12" cy="10" rx="4" ry="3" fill="#fff" opacity=".7"/></svg></div>淡水<span class="rnum"><span id="rvT">0</span><span class="rcap" id="rcT">/20</span></span></div>
+    <div class="resrow"><div class="rico ri-gold"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="#fff5d8"/><text x="12" y="15.4" text-anchor="middle" font-size="8" font-weight="900" fill="#a8781f">¥</text></svg></div>金币<span class="rnum" id="rvG">0</span></div>
   </div>
   <div id="statcard" class="glass card">
-    <div class="statrow"><span class="sname">饱食</span><div class="sbar b-hunger"><i id="bh"></i></div><span class="sval" id="vh">100</span></div>
-    <div class="statrow"><span class="sname">水分</span><div class="sbar b-thirst"><i id="bt"></i></div><span class="sval" id="vt">100</span></div>
-    <div class="statrow"><span class="sname">船体</span><div class="sbar b-hull"><i id="bp"></i></div><span class="sval" id="vp">100</span></div>
+    <div class="statrow" id="srH"><span class="sname">饱食</span><div class="sbar b-hunger"><i id="bh"></i></div><span class="sval" id="vh">100</span></div>
+    <div class="statrow" id="srT"><span class="sname">水分</span><div class="sbar b-thirst"><i id="bt"></i></div><span class="sval" id="vt">100</span></div>
+    <div class="statrow" id="srP"><span class="sname">船体</span><div class="sbar b-hull"><i id="bp"></i></div><span class="sval" id="vp">100</span></div>
   </div>
+  <div id="questcard" class="glass">
+    <div id="qtag">当前目标</div>
+    <div id="questname">—</div>
+    <div id="questdesc"></div>
+    <div id="questbar"><div id="questfill"></div></div>
+    <div id="questval"></div>
+  </div>
+  <div id="buffrow"></div>
   <div id="minicard" class="glass">
-    <canvas id="mini" width="336" height="336"></canvas>
-    <div id="minilbl">探索 <b id="expl">0%</b></div>
+    <canvas id="mini" width="344" height="344"></canvas>
+    <div id="minilbl">海图探索 <b id="expl">0%</b></div>
   </div>
   <div id="btns">
     <button class="gbtn blue" id="btnUpgrade">船坞升级</button>
@@ -167,35 +243,37 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
   <div id="warn"><div id="warndot"></div><span id="warntxt"></span></div>
   <div id="toasts"></div>
   <div id="prompt" class="glass"><span id="promptxt"></span></div>
-  <div id="ctrlhint">W/S 升降帆 · A/D 转舵 · <b>E</b> 船坞 · 滚轮 缩放视角</div>
+  <div id="ctrlhint" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:#3d617c;background:rgba(255,255,255,.55);backdrop-filter:blur(12px);padding:8px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.85);white-space:nowrap">W/S 升降帆 · A/D 转舵 · <b style="color:#ef6f3c">E</b> 船坞 · 滚轮缩放</div>
 </div>
 <div id="menu">
   <div id="menubox" class="glass">
+    <div id="mspark"><svg viewBox="0 0 24 24" width="44" height="44" fill="none"><path d="M3 15l2.5-4.5L8 13l3-7 3.5 9 2-3 4.5 3" stroke="#2f9bd6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M4 19c3-1.4 5-1.4 8 0s5 1.4 8 0" stroke="#67c7f2" stroke-width="1.8" stroke-linecap="round"/><circle cx="11" cy="6" r="1" fill="#ef6f3c"/></svg></div>
     <div id="mtitle">怒海求生</div>
-    <div id="msub">— 采 集 · 升 级 · 探 索 —</div>
+    <div id="msub">采 集 · 升 级 · 探 索 · 归 航</div>
     <div id="mbtns">
       <button class="gbtn hot big" id="btnStart">扬 帆 出 海</button>
       <button class="gbtn big" id="btnResume">继续上次航行</button>
       <button class="gbtn" id="btnHelp">玩法说明</button>
     </div>
     <div id="mhelp" style="display:none">
-      驾驶小船在无边大海中生存下去。<b>W/S</b> 升降帆、<b>A/D</b> 转舵，靠近漂浮物自动打捞。
-      <div class="sec"><b>生存</b>：饱食与水分会持续下降，靠打捞的食物和淡水补充；风暴会损伤船体，靠木材维修（自动消耗）。</div>
-      <div class="sec"><b>升级</b>：金币+木材在船坞升级船帆、船体、货舱、船灯、渔网，最终建造远洋巨轮通关。</div>
-      <div class="sec"><b>探索</b>：远离起点资源更丰富也更危险；发现岛屿有奖励；雷雨天雨水可补充淡水。</div>
+      驾驶小船在无边大海中生存。<b>W/S</b> 升降帆、<b>A/D</b> 转舵，靠近漂浮物自动打捞。
+      <div class="sec"><b>生存</b>：饱食与水分持续下降，物资充足时会自动进食饮水；风暴伤船，木材会自动修船，靠岛时免费修复。</div>
+      <div class="sec"><b>玩法</b>：跟着左上目标卡一步步走；停船在鱼群上可撒网捕鱼；漂流瓶藏着奖励；商筏路过时按 T 交易；海豚伴航有打捞加成。</div>
+      <div class="sec"><b>通关</b>：船帆3级+船体3级+木材120+金币150，建造远洋巨轮。夜晚有发光浮标，雷暴中打捞有额外加成。</div>
     </div>
   </div>
 </div>
 <div id="panelWrap">
   <div id="upanel" class="glass">
     <div id="uptitle"><span>船坞 · 升级</span><button id="upclose">✕</button></div>
-    <div id="upsub">离岸维修中：靠岛时船体自动修复 · 木材会自动用于修补船体</div>
+    <div id="upsub">海上时间不等人 · 打开面板时时间流速减慢 · 靠岛时船体自动修复</div>
     <div id="uplist"></div>
   </div>
 </div>
 <div id="over">
   <div id="overbox" class="glass">
     <div id="ovtitle">航程结束</div>
+    <div id="ovstats"></div>
     <div id="ovsub"></div>
     <button class="gbtn hot big" id="btnRestart">再 次 出 海</button>
   </div>
@@ -206,6 +284,7 @@ var DAYLEN = 150;
 var WORLD_R = 880;
 var CELL = 64;
 var GRID_R = Math.ceil(WORLD_R / CELL);
+var LUCK_T = 60;
 
 var state = {
   phase: 'menu',
@@ -215,10 +294,15 @@ var state = {
   boat: { x: 0, z: 0, heading: 0, speed: 0, sail: 0 },
   res: { wood: 10, food: 6, water: 6, gold: 0 },
   stats: { hunger: 100, thirst: 100, hull: 100 },
-  lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 0 },
+  lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1 },
   weather: { cur: 'sun', prev: 'sun', next: 'breeze', t: 60, warnT: 0, blend: 0 },
   explored: {},
   islandsFound: {},
+  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+  dist: 0,
+  quest: 0,
+  luck: 0,
+  buff: null,
   mute: false,
   playSec: 0,
   hintShown: {}
@@ -226,32 +310,32 @@ var state = {
 
 var UPG = {
   sail: {
-    name: '船帆', icon: 'ui-sail', max: 5,
+    name: '船帆', icon: 'ui-sail', max: 5, svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 4c6 1 11 5 12 10-4 1-9-1-12-4V4z" fill="currentColor" opacity=".8"/><path d="M6 12c3 .6 5.5 2.5 7 5-3.2.5-5.5-.8-7-3v-2z" fill="currentColor" opacity=".5"/></svg>',
     eff: function (l) { return '航速 ' + (6.5 + l * 1.4).toFixed(1) + ' 节'; },
     costG: [25, 55, 95, 150, 220],
     costW: [8, 15, 25, 40, 60]
   },
   hull: {
-    name: '船体', icon: 'ui-hull', max: 5,
+    name: '船体', icon: 'ui-hull', max: 5, svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 12l2-4h14l2 4-4 6H7l-4-6z" fill="currentColor" opacity=".8"/><path d="M5 8l1-3h12l1 3" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 12h8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>',
     eff: function (l) { return '耐久上限 ' + (100 + (l - 1) * 35) + ' · 抗浪+' + ((l - 1) * 18) + '%'; },
     costG: [20, 45, 85, 140, 210],
     costW: [12, 22, 36, 55, 80]
   },
   hold: {
-    name: '货舱', icon: 'ui-hold', max: 5,
+    name: '货舱', icon: 'ui-hold', max: 5, svg: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="9" width="16" height="11" rx="2" fill="currentColor" opacity=".8"/><path d="M4 10l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="13" width="4" height="4" rx="1" fill="#fff" opacity=".7"/></svg>',
     eff: function (l) { var c = holdCap(l); return '木材' + c[0] + ' 食物' + c[1] + ' 淡水' + c[2]; },
     costG: [15, 35, 70, 120, 180],
     costW: [5, 10, 18, 30, 45]
   },
   lamp: {
-    name: '船灯', icon: 'ui-lamp', max: 3,
+    name: '船灯', icon: 'ui-lamp', max: 3, svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M9 3h6v5l2.5 9h-11L9 8V3z" fill="currentColor" opacity=".85"/><circle cx="12" cy="14" r="2.5" fill="#fff" opacity=".85"/><path d="M6 21h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     eff: function (l) { return '雾中视野 ' + (260 + (l - 1) * 130) + ' 米'; },
     costG: [30, 70, 130],
     costW: [4, 8, 14]
   },
   net: {
-    name: '渔网', icon: 'ui-net', max: 3,
-    eff: function (l) { return l === 0 ? '尚未安装 · 无法打捞' : '自动打捞半径 ' + (3.2 + l * 2.6).toFixed(1) + ' 米'; },
+    name: '渔网', icon: 'ui-net', max: 3, svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 6c6 3 12 3 18 0M3 11c6 3 12 3 18 0M3 16c6 3 12 3 18 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="12" cy="13" rx="7" ry="4" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="1.2" fill="currentColor"/></svg>',
+    eff: function (l) { return '打捞半径 ' + (3.2 + l * 2.6).toFixed(1) + ' 米 · 船停稳可撒网捕鱼'; },
     costG: [40, 90, 160],
     costW: [6, 12, 20]
   }
@@ -259,15 +343,39 @@ var UPG = {
 
 var BUILD_NEED = { sail: 3, hull: 3, wood: 120, gold: 150 };
 
+var QUESTS = [
+  { id: 'pickup', name: '初试身手', desc: '打捞 3 个漂浮物', target: 3, rg: 15 },
+  { id: 'supply', name: '备足淡水口粮', desc: '同时持有食物 10 与淡水 10', target: 10, rg: 15 },
+  { id: 'sail2', name: '快一点，再快一点', desc: '把船帆升到 2 级', target: 2, rg: 0, rw: 20 },
+  { id: 'island2', name: '岛屿勘测员', desc: '发现 2 座岛屿', target: 2, rg: 30 },
+  { id: 'fish2', name: '满载而归', desc: '在鱼群上停船撒网捕鱼 2 次', target: 2, rg: 25 },
+  { id: 'storm1', name: '风暴挑战者', desc: '完整挺过一场雷暴天气', target: 1, rg: 40 },
+  { id: 'net2', name: '大网撒开', desc: '把渔网升到 2 级', target: 2, rg: 0, rw: 25 },
+  { id: 'exp25', name: '绘制海图', desc: '海图探索达到 25%', target: 25, rg: 60 }
+];
+
+var TRADES = [
+  { id: 't1', label: '10 木材 → 32 金币', give: { wood: 10 }, get: { gold: 32 } },
+  { id: 't2', label: '18 金币 → 12 食物 + 12 淡水', give: { gold: 18 }, get: { food: 12, water: 12 } },
+  { id: 't3', label: '25 金币 → 35 木材', give: { gold: 25 }, get: { wood: 35 } }
+];
+
 var WDEF = {
   sun: { name: '晴朗', desc: '风平浪静，适合航行', amp: 0.55, fogFar: 760, sunI: 1.0, sky: ['#7ec8ee', '#eaf7fd'], sea: ['#37a7d8', '#8fd8ef'], w: 0.62 },
   breeze: { name: '起风', desc: '浪渐增大，航速提升', amp: 1.0, fogFar: 640, sunI: 0.92, sky: ['#8fcbe8', '#eef6f8'], sea: ['#2f9ccc', '#84cfe8'], w: 0.24 },
   fog: { name: '浓雾', desc: '视野受限，小心礁石', amp: 0.7, fogFar: 0, sunI: 0.75, sky: ['#b8d2de', '#eef3f5'], sea: ['#4f9fbf', '#93c4d4'], w: 0.14 },
-  storm: { name: '雷暴', desc: '巨浪拍船！注意维修', amp: 2.1, fogFar: 420, sunI: 0.55, sky: ['#5f7f9a', '#a8bfd0'], sea: ['#2a7ba6', '#6fb0c9'], w: 0 }
+  storm: { name: '雷暴', desc: '巨浪拍船！打捞有加成', amp: 2.1, fogFar: 420, sunI: 0.55, sky: ['#5f7f9a', '#a8bfd0'], sea: ['#2a7ba6', '#6fb0c9'], w: 0 }
 };
 
 var WSEQ = { sun: ['breeze', 'fog'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
 var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], storm: [30, 46] };
+
+var WSVG = {
+  sun: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.6" fill="#ffd75e"/><g stroke="#f5b93c" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></g></svg>',
+  breeze: '<svg viewBox="0 0 24 24" fill="none"><path d="M7 9a3.4 3.4 0 0 1 0-6.8c1.6 0 2.6 1 3 2.2" stroke="#5b8fb5" stroke-width="2" stroke-linecap="round"/><path d="M7 9h9.5a3 3 0 1 1 0 6H8" stroke="#5b8fb5" stroke-width="2" stroke-linecap="round"/><path d="M5 15h6.5" stroke="#8fc3e5" stroke-width="2" stroke-linecap="round"/></svg>',
+  fog: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 8c2.5-2.2 5.5-2.2 8 0s5.5 2.2 8 0" stroke="#7fa0b8" stroke-width="2.2" stroke-linecap="round"/><path d="M4 13c2.5-2.2 5.5-2.2 8 0s5.5 2.2 8 0" stroke="#9db9cc" stroke-width="2.2" stroke-linecap="round"/><path d="M6 18c2-1.6 4.4-1.6 6.4 0s4 1.6 5.6 0" stroke="#b9d0de" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  storm: '<svg viewBox="0 0 24 24" fill="none"><path d="M6.5 14a4 4 0 0 1 .5-8 5.2 5.2 0 0 1 9.8 1.2A3.6 3.6 0 0 1 17 14H6.5z" fill="#5c7d99"/><path d="M12.5 14l-3 4.4h2.6l-1.6 3.8 4.7-5.3h-2.5l1.8-2.9h-2z" fill="#ffd75e"/></svg>'
+};
 
 function holdCap(l) { return [50 + (l - 1) * 30, 20 + (l - 1) * 12, 20 + (l - 1) * 12]; }
 function maxHull() { return 100 + (state.lv.hull - 1) * 35; }
@@ -278,10 +386,11 @@ function fogFarBase() { return 260 + (state.lv.lamp - 1) * 130; }
 function save() {
   try {
     var d = {
-      v: 1, time: state.time, day: state.day, dayT: state.dayT,
+      v: 2, time: state.time, day: state.day, dayT: state.dayT,
       boat: state.boat, res: state.res, stats: state.stats, lv: state.lv,
       weather: { cur: state.weather.cur, t: state.weather.t },
       explored: state.explored, islandsFound: state.islandsFound,
+      cnt: state.cnt, dist: state.dist, quest: state.quest, luck: state.luck,
       playSec: state.playSec, mute: state.mute
     };
     localStorage.setItem('nuhai_save', JSON.stringify(d));
@@ -292,7 +401,7 @@ function loadSave() {
     var s = localStorage.getItem('nuhai_save');
     if (!s) return null;
     var d = JSON.parse(s);
-    if (!d || d.v !== 1) return null;
+    if (!d || (d.v !== 2 && d.v !== 1)) return null;
     return d;
   } catch (e) { return null; }
 }
@@ -338,6 +447,8 @@ function blip(freq, dur, type, vol, slide) {
 function sfxPickup(kind) {
   if (kind === 'gold') blip(880, 0.22, 'triangle', 0.2, 1320);
   else if (kind === 'chest') { blip(520, 0.3, 'triangle', 0.22, 780); setTimeout(function () { blip(780, 0.35, 'triangle', 0.2, 1170); }, 140); }
+  else if (kind === 'bottle') { blip(620, 0.25, 'sine', 0.18, 930); }
+  else if (kind === 'fish') { blip(300, 0.18, 'sine', 0.18, 540); setTimeout(function () { blip(540, 0.2, 'sine', 0.15, 720); }, 130); }
   else blip(440 + Math.random() * 120, 0.16, 'sine', 0.16, 620);
 }
 function sfxUp() { blip(392, 0.16, 'triangle', 0.18); setTimeout(function () { blip(523, 0.16, 'triangle', 0.18); }, 120); setTimeout(function () { blip(659, 0.3, 'triangle', 0.18); }, 240); }
@@ -360,15 +471,13 @@ function sfxWin() {
   var seq = [523, 659, 784, 1046];
   for (var i = 0; i < seq.length; i++) (function (f, d) { setTimeout(function () { blip(f, 0.35, 'triangle', 0.2); }, d); })(seq[i], i * 180);
 }
+function sfxDolphin() { blip(980, 0.12, 'sine', 0.14, 1400); setTimeout(function () { blip(1180, 0.1, 'sine', 0.12, 1500); }, 110); }
 
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 function lerp(a, b, t) { return a + (b - a) * t; }
 function rand(a, b) { return a + Math.random() * (b - a); }
 function randi(a, b) { return Math.floor(rand(a, b + 1)); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function lerpColor(c1, c2, t) {
-  c1.lerp(c2, t);
-}
 function angLerp(a, b, t) {
   var d = b - a;
   while (d > Math.PI) d -= Math.PI * 2;
@@ -389,6 +498,10 @@ function waveSlope(x, z, t, amp) {
   return { x: hx / (2 * e), z: hz / (2 * e) };
 }
 function ringDist(x, z) { return Math.sqrt(x * x + z * z); }
+function hashSeed(n) {
+  var x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
 var canvas = document.getElementById('c3d');
 var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -471,99 +584,371 @@ var seaMesh = new THREE.Mesh(seaGeo, seaMat);
 scene.add(seaMesh);
 
 var MAT = {
-  hull: new THREE.MeshLambertMaterial({ color: 0xb5793f }),
-  hullDk: new THREE.MeshLambertMaterial({ color: 0x8a5a2e }),
-  deck: new THREE.MeshLambertMaterial({ color: 0xd8b98a }),
-  mast: new THREE.MeshLambertMaterial({ color: 0x9a6a38 }),
+  hull: new THREE.MeshPhongMaterial({ color: 0xb5763c, flatShading: true, shininess: 18 }),
+  hullDk: new THREE.MeshPhongMaterial({ color: 0x8a5a2e, flatShading: true }),
+  hullRd: new THREE.MeshPhongMaterial({ color: 0xd8955a, flatShading: true }),
+  deck: new THREE.MeshPhongMaterial({ color: 0xe2c391, flatShading: true }),
+  mast: new THREE.MeshPhongMaterial({ color: 0x9a6a38, flatShading: true }),
+  rope: new THREE.LineBasicMaterial({ color: 0x6e4c26, transparent: true, opacity: 0.85 }),
   sail: new THREE.MeshLambertMaterial({ color: 0xfdfdf8, side: THREE.DoubleSide }),
+  sailStripe: new THREE.MeshLambertMaterial({ color: 0xf2b56a, side: THREE.DoubleSide }),
   flag: new THREE.MeshLambertMaterial({ color: 0xef6f3c, side: THREE.DoubleSide }),
-  rock: new THREE.MeshLambertMaterial({ color: 0x5e7d8e }),
-  sand: new THREE.MeshLambertMaterial({ color: 0xf2dfae }),
-  grass: new THREE.MeshLambertMaterial({ color: 0x8fc95e }),
-  trunk: new THREE.MeshLambertMaterial({ color: 0xa9743f }),
-  leaf: new THREE.MeshLambertMaterial({ color: 0x62b04a }),
-  barrel: new THREE.MeshLambertMaterial({ color: 0xc98d4e }),
-  crate: new THREE.MeshLambertMaterial({ color: 0xd8a86a }),
-  crateDk: new THREE.MeshLambertMaterial({ color: 0xb0824a }),
-  water: new THREE.MeshLambertMaterial({ color: 0x59b8e8 }),
-  goldM: new THREE.MeshLambertMaterial({ color: 0xf2c14e, emissive: 0x664c10 }),
-  chest: new THREE.MeshLambertMaterial({ color: 0x9a6a38 }),
-  chestGold: new THREE.MeshLambertMaterial({ color: 0xffd75e, emissive: 0x8a6a10 }),
+  rock: new THREE.MeshPhongMaterial({ color: 0x5e7d8e, flatShading: true }),
+  rockDk: new THREE.MeshPhongMaterial({ color: 0x49657a, flatShading: true }),
+  sand: new THREE.MeshPhongMaterial({ color: 0xf4e2b2, flatShading: true }),
+  grass: new THREE.MeshPhongMaterial({ color: 0x8fc95e, flatShading: true }),
+  grassDk: new THREE.MeshPhongMaterial({ color: 0x6fb24a, flatShading: true }),
+  trunk: new THREE.MeshPhongMaterial({ color: 0xa9743f, flatShading: true }),
+  leaf: new THREE.MeshPhongMaterial({ color: 0x5cb548, flatShading: true }),
+  leafDk: new THREE.MeshPhongMaterial({ color: 0x47a038, flatShading: true }),
+  coconut: new THREE.MeshPhongMaterial({ color: 0x6e4a26 }),
+  barrel: new THREE.MeshPhongMaterial({ color: 0xc98d4e, flatShading: true }),
+  barrelDark: new THREE.MeshPhongMaterial({ color: 0x9a6a38, flatShading: true }),
+  ironBand: new THREE.MeshPhongMaterial({ color: 0x55606a, shininess: 60 }),
+  crate: new THREE.MeshPhongMaterial({ color: 0xd8a86a, flatShading: true }),
+  crateDk: new THREE.MeshPhongMaterial({ color: 0xb0824a, flatShading: true }),
+  water: new THREE.MeshPhongMaterial({ color: 0x59b8e8, shininess: 80 }),
+  goldM: new THREE.MeshPhongMaterial({ color: 0xf2c14e, emissive: 0x664c10, shininess: 90 }),
+  chest: new THREE.MeshPhongMaterial({ color: 0x9a6a38, flatShading: true }),
+  chestGold: new THREE.MeshPhongMaterial({ color: 0xffd75e, emissive: 0x8a6a10 }),
+  bottleG: new THREE.MeshPhongMaterial({ color: 0x5fae72, shininess: 100, transparent: true, opacity: 0.92 }),
+  corkM: new THREE.MeshPhongMaterial({ color: 0xc9a06a }),
+  fishM: new THREE.MeshPhongMaterial({ color: 0x7ac4e8, shininess: 80 }),
+  fishM2: new THREE.MeshPhongMaterial({ color: 0x9ad8f0, shininess: 80 }),
+  dolphinM: new THREE.MeshPhongMaterial({ color: 0x8fb8d8, flatShading: true }),
+  dolphinB: new THREE.MeshPhongMaterial({ color: 0xe8f2f8, flatShading: true }),
+  whaleM: new THREE.MeshPhongMaterial({ color: 0x4a6a8a, flatShading: true }),
+  canopyA: new THREE.MeshPhongMaterial({ color: 0xef8a5a, side: THREE.DoubleSide, flatShading: true }),
+  canopyB: new THREE.MeshPhongMaterial({ color: 0xfff4e8, side: THREE.DoubleSide, flatShading: true }),
+  glowM: new THREE.MeshBasicMaterial({ color: 0xbff0d8, transparent: true, opacity: 0.9 }),
   white: new THREE.MeshLambertMaterial({ color: 0xffffff }),
-  ring: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false }),
-  ringGold: new THREE.MeshBasicMaterial({ color: 0xffd75e, transparent: true, opacity: 0.5, depthWrite: false })
+  ring: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.32, depthWrite: false }),
+  ringGold: new THREE.MeshBasicMaterial({ color: 0xffd75e, transparent: true, opacity: 0.5, depthWrite: false }),
+  ringFish: new THREE.MeshBasicMaterial({ color: 0x9fe8b8, transparent: true, opacity: 0.45, depthWrite: false }),
+  wake: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false, vertexColors: true }),
+  foamRing: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false })
 };
 
 function box(w, h, d, m) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); }
 function cyl(rt, rb, h, m, seg) { return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 10), m); }
+function sph(r, m, ws, hs) { return new THREE.Mesh(new THREE.SphereGeometry(r, ws || 10, hs || 8), m); }
+
+var glowTex = (function () {
+  var cv = document.createElement('canvas');
+  cv.width = 64; cv.height = 64;
+  var ctx = cv.getContext('2d');
+  var g = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  g.addColorStop(0, 'rgba(255,255,255,0.95)');
+  g.addColorStop(0.4, 'rgba(255,255,255,0.35)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  var t = new THREE.CanvasTexture(cv);
+  return t;
+})();
+function makeGlow(size, color) {
+  var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: color || 0xffe9a8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  s.scale.set(size, size, 1);
+  return s;
+}
+function makeRopeLine(pts) {
+  var g = new THREE.BufferGeometry().setFromPoints(pts.map(function (p) { return new THREE.Vector3(p[0], p[1], p[2]); }));
+  return new THREE.Line(g, MAT.rope);
+}
+
+function sculptBoatHull() {
+  var geo = new THREE.BoxGeometry(2.55, 1.25, 5.9, 7, 4, 18);
+  var pos = geo.attributes.position;
+  for (var i = 0; i < pos.count; i++) {
+    var x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    var t = z / 2.95;
+    var wS = t > 0 ? 1 - Math.pow(t, 2.5) * 0.97 : 1 - Math.pow(-t, 2.3) * 0.45;
+    x *= Math.max(0.03, wS);
+    if (y < 0) {
+      var dn = 1 - Math.abs(t) * 0.55;
+      y *= dn;
+      y += Math.pow(Math.abs(t), 2.7) * 0.5 * Math.min(1, -y * 2.2);
+    }
+    if (y > 0.35) y += Math.pow(Math.abs(t), 2.0) * 0.5;
+    pos.setX(i, x); pos.setY(i, y); pos.setZ(i, z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
 
 var boat = new THREE.Group();
 (function buildBoat() {
-  var body = box(2.4, 1.0, 5.4, MAT.hull); body.position.y = 0.1; boat.add(body);
-  var bowL = box(2.4, 1.0, 1.6, MAT.hull); bowL.position.set(0, 0.1, 3.3); bowL.rotation.y = Math.PI / 4; bowL.scale.set(0.72, 1, 0.72); boat.add(bowL);
-  var bowR = box(2.4, 1.0, 1.6, MAT.hull); bowR.position.set(0, 0.1, 3.3); bowR.rotation.y = -Math.PI / 4; bowR.scale.set(0.72, 1, 0.72); boat.add(bowR);
-  var stern = box(2.2, 0.9, 1.0, MAT.hull); stern.position.set(0, 0.15, -2.9); boat.add(stern);
-  var deckM = box(2.0, 0.12, 5.0, MAT.deck); deckM.position.y = 0.62; boat.add(deckM);
-  var rail1 = box(0.14, 0.22, 5.6, MAT.hullDk); rail1.position.set(1.18, 0.76, 0); boat.add(rail1);
-  var rail2 = rail1.clone(); rail2.position.x = -1.18; boat.add(rail2);
-  var rail3 = box(2.5, 0.22, 0.14, MAT.hullDk); rail3.position.set(0, 0.76, -2.8); boat.add(rail3);
-  var mast = cyl(0.09, 0.13, 5.2, MAT.mast); mast.position.set(0, 3.2, 0.2); boat.add(mast);
-  var yard = cyl(0.06, 0.06, 2.9, MAT.mast); yard.rotation.z = Math.PI / 2; yard.position.set(0, 5.0, 0.2); boat.add(yard);
-  var sailGeo = new THREE.PlaneGeometry(2.7, 3.4, 10, 1);
-  var sail = new THREE.Mesh(sailGeo, MAT.sail); sail.position.set(0, 3.3, 0.16); boat.add(sail);
+  var hullMesh = new THREE.Mesh(sculptBoatHull(), MAT.hull);
+  hullMesh.position.y = 0.42;
+  boat.add(hullMesh);
+  var keel = box(0.34, 0.3, 4.6, MAT.hullDk);
+  keel.position.y = -0.28; boat.add(keel);
+  var rubL = box(0.16, 0.2, 4.4, MAT.hullRd);
+  rubL.position.set(1.16, 1.0, -0.2); rubL.rotation.x = -0.06; boat.add(rubL);
+  var rubR = rubL.clone(); rubR.position.x = -1.16; boat.add(rubR);
+  var waleL = box(0.1, 0.12, 4.2, MAT.hullDk);
+  waleL.position.set(1.22, 0.72, -0.25); boat.add(waleL);
+  var waleR = waleL.clone(); waleR.position.x = -1.22; boat.add(waleR);
+
+  var deckShape = new THREE.Shape();
+  deckShape.absellipse(0, 0, 1.05, 2.55, 0, Math.PI * 2);
+  var deck = new THREE.Mesh(new THREE.ShapeGeometry(deckShape, 20), MAT.deck);
+  deck.rotation.x = -Math.PI / 2;
+  deck.position.y = 0.68;
+  boat.add(deck);
+  var deckTrim = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.12, 22), MAT.hullDk);
+  deckTrim.rotation.x = -Math.PI / 2;
+  deckTrim.scale.y = 2.4;
+  deckTrim.position.y = 0.7;
+  boat.add(deckTrim);
+
+  var bowDeco = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.85, 6), MAT.hullRd);
+  bowDeco.rotation.x = Math.PI / 2 - 0.5;
+  bowDeco.position.set(0, 1.25, 2.85);
+  boat.add(bowDeco);
+
+  var cabin = box(1.5, 0.95, 1.35, MAT.hullDk);
+  cabin.position.set(0, 1.15, -1.65); boat.add(cabin);
+  var cabinRoof = box(1.72, 0.16, 1.55, MAT.deck);
+  cabinRoof.position.set(0, 1.68, -1.65); boat.add(cabinRoof);
+  var win = box(1.56, 0.34, 0.06, MAT.water);
+  win.position.set(0, 1.28, -0.95); boat.add(win);
+  var door = box(0.5, 0.62, 0.06, MAT.mast);
+  door.position.set(0.35, 1.05, -2.34); boat.add(door);
+
+  var mast = cyl(0.085, 0.13, 5.6, MAT.mast, 8);
+  mast.position.set(0, 3.35, 0.3); boat.add(mast);
+  var crow = cyl(0.34, 0.26, 0.3, MAT.hullDk, 8);
+  crow.position.set(0, 4.5, 0.3); boat.add(crow);
+  var crowRim = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.05, 6, 12), MAT.hullDk);
+  crowRim.rotation.x = Math.PI / 2; crowRim.position.set(0, 4.66, 0.3); boat.add(crowRim);
+  var yard = cyl(0.055, 0.055, 3.1, MAT.mast, 8);
+  yard.rotation.z = Math.PI / 2; yard.position.set(0, 5.35, 0.28); boat.add(yard);
+
+  var sailGeo = new THREE.PlaneGeometry(2.95, 3.6, 12, 9);
+  var sp = sailGeo.attributes.position;
+  for (var si = 0; si < sp.count; si++) {
+    var sx = sp.getX(si) / 1.475;
+    var sy = sp.getY(si) / 1.8;
+    sp.setZ(si, Math.sin((sx + 1) / 2 * Math.PI) * 0.55 * (1 - Math.abs(sy) * 0.35));
+  }
+  sailGeo.computeVertexNormals();
+  var sail = new THREE.Mesh(sailGeo, MAT.sail);
+  sail.position.set(0, 3.5, 0.24);
+  boat.add(sail);
   boat.userData.sail = sail;
-  var foreMast = cyl(0.06, 0.08, 3.4, MAT.mast); foreMast.position.set(0, 2.3, 2.6); boat.add(foreMast);
-  var foreSail = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.0, 8, 1), MAT.sail);
-  foreSail.position.set(0, 2.5, 2.7); boat.add(foreSail);
-  boat.userData.foreSail = foreSail;
-  var flag = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.5), MAT.flag);
-  flag.position.set(0.5, 5.6, 0.2); boat.add(flag);
+  var stripe = new THREE.Mesh(new THREE.PlaneGeometry(2.95, 0.42, 12, 1), MAT.sailStripe);
+  stripe.position.set(0, 4.35, 0.36);
+  boat.add(stripe);
+  boat.userData.stripe = stripe;
+
+  var foreMast = cyl(0.06, 0.09, 3.6, MAT.mast, 8);
+  foreMast.position.set(0, 2.4, 2.55); boat.add(foreMast);
+  var jibShape = new THREE.Shape();
+  jibShape.moveTo(0, 0); jibShape.lineTo(0, 2.1); jibShape.lineTo(1.15, 0.1); jibShape.closePath();
+  var jib = new THREE.Mesh(new THREE.ShapeGeometry(jibShape), MAT.sail);
+  jib.rotation.y = Math.PI / 2;
+  jib.position.set(0, 2.55, 2.55);
+  boat.add(jib);
+  boat.userData.foreSail = jib;
+
+  boat.add(makeRopeLine([[0, 5.6, 0.3], [0, 1.35, 2.7]]));
+  boat.add(makeRopeLine([[0.09, 5.2, 0.3], [1.1, 1.0, -0.4]]));
+  boat.add(makeRopeLine([[-0.09, 5.2, 0.3], [-1.1, 1.0, -0.4]]));
+  boat.add(makeRopeLine([[0, 3.9, 0.3], [0.8, 1.0, -1.6]]));
+  boat.add(makeRopeLine([[0, 3.9, 0.3], [-0.8, 1.0, -1.6]]));
+
+  var flag = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.45, 6, 1), MAT.flag);
+  flag.position.set(0.52, 5.75, 0.3);
+  boat.add(flag);
   boat.userData.flag = flag;
-  var lampPole = cyl(0.05, 0.05, 1.1, MAT.mast);
-  lampPole.position.set(0, 1.2, -2.6); boat.add(lampPole);
-  var lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }));
-  lampBulb.position.set(0, 1.8, -2.6); boat.add(lampBulb);
-  boat.userData.lampBulb = lampBulb;
-  var lampLight = new THREE.PointLight(0xffdf90, 0, 26, 2);
-  lampLight.position.set(0, 2.1, -2.6); boat.add(lampLight);
+  var flagTop = sph(0.09, MAT.goldM, 6, 5);
+  flagTop.position.set(0, 5.98, 0.3); boat.add(flagTop);
+
+  var lampPole = cyl(0.045, 0.045, 1.3, MAT.mast, 6);
+  lampPole.position.set(0, 1.3, -2.55); boat.add(lampPole);
+  var lampArm = box(0.5, 0.07, 0.07, MAT.mast);
+  lampArm.position.set(0.2, 1.92, -2.55); boat.add(lampArm);
+  var lantern = new THREE.Group();
+  var lantBody = cyl(0.14, 0.17, 0.3, MAT.ironBand, 6);
+  lantern.add(lantBody);
+  var lantTop = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 6), MAT.ironBand);
+  lantTop.position.y = 0.22; lantern.add(lantTop);
+  var bulb = sph(0.1, new THREE.MeshBasicMaterial({ color: 0xffe9a8 }), 8, 6);
+  lantern.add(bulb);
+  lantern.position.set(0.42, 1.82, -2.55);
+  boat.add(lantern);
+  var lampGlow = makeGlow(1.6, 0xffdf90);
+  lampGlow.position.set(0.42, 1.82, -2.55);
+  boat.add(lampGlow);
+  boat.userData.lampBulb = bulb;
+  boat.userData.lampGlow = lampGlow;
+  var lampLight = new THREE.PointLight(0xffdf90, 0, 30, 2);
+  lampLight.position.set(0.42, 2.1, -2.4);
+  boat.add(lampLight);
   boat.userData.lampLight = lampLight;
-  var cabin = box(1.5, 0.9, 1.2, MAT.hullDk); cabin.position.set(0, 1.1, -1.7); boat.add(cabin);
-  var cabinRoof = box(1.7, 0.14, 1.4, MAT.deck); cabinRoof.position.set(0, 1.6, -1.7); boat.add(cabinRoof);
+
+  var wheel = new THREE.Group();
+  var wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 6, 14), MAT.hullDk);
+  wheel.add(wheelRim);
+  for (var wi = 0; wi < 4; wi++) {
+    var spoke = box(0.055, 0.62, 0.055, MAT.hullDk);
+    spoke.rotation.z = wi * Math.PI / 4;
+    wheel.add(spoke);
+  }
+  wheel.position.set(0, 1.1, -2.45);
+  wheel.rotation.x = 0.5;
+  boat.add(wheel);
+  boat.userData.wheel = wheel;
+
+  var rudder = box(0.09, 0.85, 0.55, MAT.hullDk);
+  rudder.position.set(0, -0.2, -2.95); boat.add(rudder);
+
+  var cargo = new THREE.Group();
+  cargo.position.set(-0.55, 0.74, -0.55);
+  boat.add(cargo);
+  boat.userData.cargo = cargo;
+  boat.userData.cargoN = -1;
+
+  var anchorS = new THREE.Group();
+  var ancS = cyl(0.04, 0.04, 0.7, MAT.ironBand, 6);
+  anchorS.add(ancS);
+  var ancA = box(0.5, 0.06, 0.06, MAT.ironBand);
+  ancA.position.y = -0.3; anchorS.add(ancA);
+  anchorS.position.set(1.05, 0.5, 1.7);
+  anchorS.rotation.z = 0.5;
+  boat.add(anchorS);
 })();
-scene.add(boat);
+
+function updateCargoVisual() {
+  var n = state.lv.hold;
+  if (n === boat.userData.cargoN) return;
+  boat.userData.cargoN = n;
+  while (boat.userData.cargo.children.length) boat.userData.cargo.remove(boat.userData.cargo.children[0]);
+  var spots = [[0, 0, 0], [0.62, 0, 0.25], [-0.1, 0, 0.75], [0.5, 0.4, 0.1], [0.05, 0.42, 0.6]];
+  for (var i = 0; i < Math.min(n + 1, 5); i++) {
+    var c = i % 2 === 0 ? box(0.5, 0.38, 0.5, i % 4 === 1 ? MAT.crate : MAT.crateDk) : cyl(0.24, 0.28, 0.42, MAT.barrel, 9);
+    c.position.set(spots[i][0], spots[i][1] + 0.2, spots[i][2]);
+    c.rotation.y = i * 0.8;
+    boat.userData.cargo.add(c);
+  }
+}
+
+var WAKE_N = 26;
+var wakeGeo = new THREE.BufferGeometry();
+var wakePos = new Float32Array(WAKE_N * 2 * 3);
+var wakeCol = new Float32Array(WAKE_N * 2 * 3);
+wakeGeo.setAttribute('position', new THREE.BufferAttribute(wakePos, 3));
+wakeGeo.setAttribute('color', new THREE.BufferAttribute(wakeCol, 3));
+var wakeIdx = [];
+for (var wi = 0; wi < WAKE_N - 1; wi++) {
+  var a = wi * 2, b = wi * 2 + 1, c = wi * 2 + 2, d = wi * 2 + 3;
+  wakeIdx.push(a, b, c, b, d, c);
+}
+wakeGeo.setIndex(wakeIdx);
+var wakeMesh = new THREE.Mesh(wakeGeo, MAT.wake);
+wakeMesh.frustumCulled = false;
+scene.add(wakeMesh);
+var wakePts = [];
+for (var wp = 0; wp < WAKE_N; wp++) wakePts.push({ x: 0, z: 0, h: 0 });
 
 var ISLAND_NAMES = ['椰风屿', '海鸥岩', '星沙洲', '月牙湾', '翠竹屿', '浪花礁', '晨曦岛', '迷雾洲', '珊瑚屿', '望归崖', '白帆洲', '鲸背岛'];
 var islands = [];
+function makePalm(seed) {
+  var g = new THREE.Group();
+  var lean = (hashSeed(seed) - 0.5) * 0.5;
+  var segs = 4, h = 0;
+  var px = 0, pz = 0;
+  for (var i = 0; i < segs; i++) {
+    var seg = cyl(0.13 - i * 0.015, 0.16 - i * 0.015, 1.05, MAT.trunk, 7);
+    px += lean * 0.28 * (i + 1) * 0.25;
+    h += 0.52;
+    seg.position.set(px, h, pz);
+    seg.rotation.z = -lean * 0.24 * (i + 1) * 0.3;
+    g.add(seg);
+    h += 0.52;
+  }
+  var topY = h + 0.15;
+  for (var l = 0; l < 7; l++) {
+    var la = (l / 7) * Math.PI * 2 + hashSeed(seed + l) * 0.5;
+    var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.42, 2.7, 4), l % 2 ? MAT.leaf : MAT.leafDk);
+    leaf.scale.y = 1;
+    leaf.position.set(px + Math.cos(la) * 0.95, topY - 0.12, pz + Math.sin(la) * 0.95);
+    leaf.rotation.set(Math.sin(la) * 1.25, 0, -Math.cos(la) * 1.25 + Math.PI / 2);
+    g.add(leaf);
+  }
+  for (var co = 0; co < 3; co++) {
+    var nut = sph(0.16, MAT.coconut, 7, 6);
+    var na = hashSeed(seed + 40 + co) * Math.PI * 2;
+    nut.position.set(px + Math.cos(na) * 0.25, topY - 0.42, pz + Math.sin(na) * 0.25);
+    g.add(nut);
+  }
+  return g;
+}
+function makeIsland(i, ix, iz, r, rocky) {
+  var g = new THREE.Group();
+  var seed = i * 13.7 + 1;
+  var base = sph(r, MAT.sand, 11, 7);
+  base.scale.y = 0.3;
+  base.position.y = -r * 0.17;
+  g.add(base);
+  var hillGeo = new THREE.ConeGeometry(r * 0.72, r * (rocky ? 1.05 : 0.68), 9, 3);
+  var hp = hillGeo.attributes.position;
+  for (var v = 0; v < hp.count; v++) {
+    var hy = hp.getY(v);
+    if (hy <= -r * 0.5 + 0.01) continue;
+    var k = 1 + (hashSeed(seed + v) - 0.5) * (rocky ? 0.55 : 0.32);
+    hp.setX(v, hp.getX(v) * k);
+    hp.setZ(v, hp.getZ(v) * k);
+  }
+  hillGeo.computeVertexNormals();
+  var hill = new THREE.Mesh(hillGeo, rocky ? MAT.rock : MAT.grass);
+  hill.position.y = r * 0.1;
+  g.add(hill);
+  if (!rocky) {
+    var hillTop = new THREE.Mesh(new THREE.ConeGeometry(r * 0.4, r * 0.42, 8, 2), MAT.grassDk);
+    hillTop.position.y = r * 0.48;
+    g.add(hillTop);
+    var nPalm = 3 + Math.floor(hashSeed(seed) * 3);
+    for (var p = 0; p < nPalm; p++) {
+      var palm = makePalm(seed + p * 7.3);
+      var pa = hashSeed(seed + p * 3.1) * Math.PI * 2;
+      var pr = r * (0.28 + hashSeed(seed + p * 5.7) * 0.3);
+      palm.position.set(Math.cos(pa) * pr, 0.3, Math.sin(pa) * pr);
+      palm.rotation.y = hashSeed(seed + p) * 6.28;
+      var ps = 0.8 + hashSeed(seed + p * 11) * 0.5;
+      palm.scale.set(ps, ps, ps);
+      g.add(palm);
+    }
+  } else {
+    for (var rk = 0; rk < 4; rk++) {
+      var rock = new THREE.Mesh(new THREE.DodecahedronGeometry(r * (0.14 + hashSeed(seed + rk) * 0.16), 0), MAT.rockDk);
+      var ra = hashSeed(seed + rk * 2) * Math.PI * 2;
+      rock.position.set(Math.cos(ra) * r * 0.4, r * 0.25 + hashSeed(seed + rk * 3) * r * 0.3, Math.sin(ra) * r * 0.4);
+      rock.rotation.set(hashSeed(seed + rk) * 3, hashSeed(seed + rk * 7) * 3, 0);
+      g.add(rock);
+    }
+  }
+  var shallow = new THREE.Mesh(new THREE.RingGeometry(r * 1.02, r * 1.85, 26), new THREE.MeshBasicMaterial({ color: 0xa8e4d8, transparent: true, opacity: 0.4, depthWrite: false }));
+  shallow.rotation.x = -Math.PI / 2;
+  shallow.position.y = -0.4;
+  g.add(shallow);
+  var foam = new THREE.Mesh(new THREE.RingGeometry(r * 1.78, r * 1.98, 26), MAT.foamRing);
+  foam.rotation.x = -Math.PI / 2;
+  foam.position.y = 0.02;
+  g.add(foam);
+  g.userData = { x: ix, z: iz, r: r + 3, name: ISLAND_NAMES[i % ISLAND_NAMES.length], id: 'is' + i, found: false, foam: foam };
+  g.position.set(ix, 0, iz);
+  scene.add(g);
+  return g;
+}
 (function buildIslands() {
   for (var i = 0; i < 11; i++) {
     var ang = (i / 11) * Math.PI * 2 + rand(-0.2, 0.2);
     var dist = 210 + (i % 5) * 135 + rand(-40, 40);
     var ix = Math.cos(ang) * dist, iz = Math.sin(ang) * dist;
-    var g = new THREE.Group();
     var r = rand(14, 22);
-    var base = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 6), MAT.sand);
-    base.scale.y = 0.28; base.position.y = -r * 0.16; g.add(base);
-    var hill = new THREE.Mesh(new THREE.ConeGeometry(r * 0.55, r * 0.7, 7), MAT.grass);
-    hill.position.y = r * 0.16; g.add(hill);
-    for (var p = 0; p < 3; p++) {
-      var palm = new THREE.Group();
-      var tr = cyl(0.16, 0.28, 4.2, MAT.trunk, 7);
-      tr.position.y = 2.1; tr.rotation.z = rand(-0.18, 0.18); palm.add(tr);
-      for (var l = 0; l < 5; l++) {
-        var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.6, 4), MAT.leaf);
-        var la = (l / 5) * Math.PI * 2;
-        leaf.position.set(Math.cos(la) * 1.0, 4.3, Math.sin(la) * 1.0);
-        leaf.rotation.set(Math.sin(la) * 1.1, 0, -Math.cos(la) * 1.1 + Math.PI / 2);
-        palm.add(leaf);
-      }
-      var pa = rand(0, Math.PI * 2), pr = rand(2, r * 0.55);
-      palm.position.set(Math.cos(pa) * pr, 0.5, Math.sin(pa) * pr);
-      g.add(palm);
-    }
-    g.position.set(ix, 0, iz);
-    g.userData = { x: ix, z: iz, r: r + 3, name: ISLAND_NAMES[i], id: 'is' + i, found: false };
-    scene.add(g);
-    islands.push(g);
+    islands.push(makeIsland(i, ix, iz, r, i % 3 === 2));
   }
 })();
 
@@ -572,10 +957,11 @@ var rocks = [];
   for (var i = 0; i < 34; i++) {
     var ang = rand(0, Math.PI * 2);
     var dist = rand(120, WORLD_R - 60);
-    var m = new THREE.Mesh(new THREE.DodecahedronGeometry(rand(1.6, 3.4), 0), MAT.rock);
+    var m = new THREE.Mesh(new THREE.DodecahedronGeometry(rand(1.6, 3.4), 0), i % 3 ? MAT.rock : MAT.rockDk);
     var rx = Math.cos(ang) * dist, rz = Math.sin(ang) * dist;
     m.position.set(rx, rand(-1.2, -0.4), rz);
     m.rotation.set(rand(0, 3), rand(0, 3), rand(0, 3));
+    m.scale.y = rand(0.7, 1.3);
     m.userData = { x: rx, z: rz, r: 3 };
     scene.add(m); rocks.push(m);
   }
@@ -583,16 +969,17 @@ var rocks = [];
 
 var clouds = [];
 (function buildClouds() {
-  var cm = new THREE.MeshLambertMaterial({ color: 0xffffff, fog: false, transparent: true, opacity: 0.92 });
-  for (var i = 0; i < 8; i++) {
+  var cm = new THREE.MeshLambertMaterial({ color: 0xffffff, fog: false, transparent: true, opacity: 0.94 });
+  for (var i = 0; i < 10; i++) {
     var g = new THREE.Group();
-    var n = randi(4, 6);
+    var n = randi(5, 7);
     for (var j = 0; j < n; j++) {
-      var s = new THREE.Mesh(new THREE.SphereGeometry(rand(7, 14), 8, 6), cm);
-      s.position.set(rand(-16, 16), rand(-2, 3), rand(-7, 7));
-      s.scale.y = 0.55; g.add(s);
+      var s = new THREE.Mesh(new THREE.SphereGeometry(rand(6, 13), 9, 7), cm);
+      s.position.set(rand(-17, 17), rand(-1.5, 3) + Math.abs(j - n / 2) * 0.8, rand(-8, 8));
+      s.scale.y = 0.52;
+      g.add(s);
     }
-    g.position.set(rand(-700, 700), rand(95, 150), rand(-700, 700));
+    g.position.set(rand(-750, 750), rand(95, 155), rand(-750, 750));
     g.userData = { vx: rand(1.2, 2.6) };
     scene.add(g); clouds.push(g);
   }
@@ -600,48 +987,200 @@ var clouds = [];
 
 var gulls = [];
 (function buildGulls() {
-  var gm = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false });
-  for (var i = 0; i < 4; i++) {
+  var bm = new THREE.MeshLambertMaterial({ color: 0xffffff, fog: false });
+  var om = new THREE.MeshLambertMaterial({ color: 0xf2b56a, fog: false });
+  for (var i = 0; i < 5; i++) {
     var g = new THREE.Group();
-    var wL = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.4), gm); wL.position.x = -0.65;
-    var wR = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.4), gm); wR.position.x = 0.65;
+    var body = sph(0.22, bm, 8, 6);
+    body.scale.set(1, 0.9, 1.7); g.add(body);
+    var head = sph(0.13, bm, 7, 5);
+    head.position.set(0, 0.14, 0.32); g.add(head);
+    var beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 5), om);
+    beak.rotation.x = Math.PI / 2; beak.position.set(0, 0.12, 0.48); g.add(beak);
+    var tail = box(0.16, 0.05, 0.3, bm);
+    tail.position.set(0, 0.02, -0.4); g.add(tail);
+    var wL = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.42), new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }));
+    wL.position.set(-0.58, 0.08, 0);
+    var wR = wL.clone(); wR.position.x = 0.58;
     g.add(wL); g.add(wR);
-    g.userData = { a: rand(0, Math.PI * 2), r: rand(18, 34), h: rand(9, 15), sp: rand(0.25, 0.45), wL: wL, wR: wR, ph: rand(0, 6) };
+    g.userData = { a: rand(0, Math.PI * 2), r: rand(20, 40), h: rand(9, 16), sp: rand(0.25, 0.45), wL: wL, wR: wR, ph: rand(0, 6) };
     scene.add(g); gulls.push(g);
   }
 })();
 
 var floaters = [];
-function makeFloater(kind) {
+function makeLogStack() {
   var g = new THREE.Group();
-  if (kind === 'wood') {
-    for (var i = 0; i < 3; i++) {
-      var log = cyl(0.28, 0.28, 2.2, MAT.trunk, 8);
-      log.rotation.z = Math.PI / 2; log.rotation.y = rand(-0.3, 0.3);
-      log.position.set(rand(-0.2, 0.2), 0.28 + (i % 2) * 0.5, rand(-0.2, 0.2));
-      g.add(log);
-    }
-  } else if (kind === 'food') {
-    var cr = box(1.3, 0.9, 1.3, MAT.crate); cr.position.y = 0.45; g.add(cr);
-    var lid = box(1.4, 0.14, 1.4, MAT.crateDk); lid.position.y = 0.95; g.add(lid);
-  } else if (kind === 'water') {
-    var bar = cyl(0.62, 0.62, 1.1, MAT.barrel, 12); bar.position.y = 0.55; g.add(bar);
-    var band = cyl(0.66, 0.66, 0.16, MAT.water, 12); band.position.y = 0.55; g.add(band);
-  } else if (kind === 'gold') {
-    var bag = new THREE.Mesh(new THREE.SphereGeometry(0.62, 10, 8), MAT.crateDk);
-    bag.scale.y = 0.9; bag.position.y = 0.5; g.add(bag);
-    var coin = cyl(0.36, 0.36, 0.1, MAT.goldM, 12); coin.position.y = 1.15; coin.rotation.x = 0.35; g.add(coin);
-    var coin2 = cyl(0.26, 0.26, 0.08, MAT.goldM, 12); coin2.position.set(0.2, 1.3, 0.1); coin2.rotation.z = 0.5; g.add(coin2);
-  } else {
-    var cb = box(1.5, 0.8, 1.0, MAT.chest); cb.position.y = 0.4; g.add(cb);
-    var cl = box(1.5, 0.3, 1.0, MAT.chest); cl.position.set(0, 0.95, -0.3); cl.rotation.x = -0.5; g.add(cl);
-    var gl = box(1.1, 0.2, 0.7, MAT.chestGold); gl.position.y = 0.86; g.add(gl);
+  var spots = [[-0.32, 0.26, 0.1], [0.32, 0.26, -0.1], [0, 0.72, 0.05], [-0.3, 0.26, 0.95]];
+  for (var i = 0; i < spots.length; i++) {
+    var log = cyl(0.24, 0.24, 2.0, MAT.trunk, 9);
+    log.rotation.z = Math.PI / 2;
+    log.rotation.y = spots[i][2];
+    log.position.set(spots[i][0], spots[i][1], i === 3 ? -0.45 : 0);
+    g.add(log);
+    var capL = cyl(0.19, 0.19, 0.05, MAT.deck, 9);
+    capL.rotation.z = Math.PI / 2;
+    capL.position.set(spots[i][0] - 1.0 * Math.cos(spots[i][2]), spots[i][1], -1.0 * Math.sin(spots[i][2]));
+    g.add(capL);
   }
-  var rm = kind === 'chest' ? MAT.ringGold : MAT.ring;
-  var ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 24), rm);
+  var rope = makeRopeLine([[-0.9, 0.5, 0], [0, 0.95, 0], [0.9, 0.5, 0]]);
+  g.add(rope);
+  return g;
+}
+function makeCrateBox() {
+  var g = new THREE.Group();
+  var body = box(1.3, 0.85, 1.3, MAT.crate);
+  body.position.y = 0.45; g.add(body);
+  var lid = box(1.42, 0.16, 1.42, MAT.crateDk);
+  lid.position.y = 0.95; g.add(lid);
+  for (var i = 0; i < 4; i++) {
+    var edge = box(0.14, 0.9, 0.14, MAT.crateDk);
+    edge.position.set(i < 2 ? 0.62 : -0.62, 0.46, i % 2 ? 0.62 : -0.62);
+    g.add(edge);
+  }
+  var band = box(1.34, 0.12, 0.2, MAT.crateDk);
+  band.position.y = 0.5; g.add(band);
+  return g;
+}
+function makeWaterBarrel() {
+  var g = new THREE.Group();
+  var bar = cyl(0.58, 0.5, 1.15, MAT.barrel, 13);
+  bar.position.y = 0.55; g.add(bar);
+  var b1 = new THREE.Mesh(new THREE.TorusGeometry(0.585, 0.045, 6, 14), MAT.ironBand);
+  b1.rotation.x = Math.PI / 2; b1.position.y = 0.32; g.add(b1);
+  var b2 = b1.clone(); b2.position.y = 0.82; g.add(b2);
+  var cap = cyl(0.48, 0.48, 0.07, MAT.water, 13);
+  cap.position.y = 1.14; g.add(cap);
+  var tap = cyl(0.06, 0.06, 0.2, MAT.ironBand, 6);
+  tap.rotation.z = Math.PI / 2; tap.position.set(0.62, 0.75, 0); g.add(tap);
+  return g;
+}
+function makeGoldBag() {
+  var g = new THREE.Group();
+  var bag = sph(0.6, MAT.crateDk, 10, 8);
+  bag.scale.y = 0.92; bag.position.y = 0.5; g.add(bag);
+  var neck = cyl(0.2, 0.3, 0.22, MAT.crateDk, 8);
+  neck.position.y = 1.05; g.add(neck);
+  var knot = sph(0.13, MAT.trunk, 6, 5);
+  knot.position.y = 1.2; g.add(knot);
+  for (var i = 0; i < 3; i++) {
+    var coin = cyl(0.24, 0.24, 0.07, MAT.goldM, 12);
+    coin.position.set(rand(-0.55, 0.55), 0.12 + i * 0.06, rand(-0.55, 0.55));
+    coin.rotation.set(rand(0.3, 1.2), rand(0, 3), rand(0.3, 1.2));
+    g.add(coin);
+  }
+  var glint = makeGlow(1.3, 0xffd75e);
+  glint.position.y = 0.8;
+  glint.material.opacity = 0.5;
+  g.add(glint);
+  return g;
+}
+function makeChest() {
+  var g = new THREE.Group();
+  var body = box(1.5, 0.75, 1.0, MAT.chest);
+  body.position.y = 0.38; g.add(body);
+  var lid = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.5, 10, 1, false, 0, Math.PI), MAT.chest);
+  lid.rotation.z = Math.PI / 2;
+  lid.position.y = 0.76;
+  lid.rotation.x = -0.45;
+  lid.position.z = -0.18;
+  g.add(lid);
+  var bandV = box(0.14, 0.78, 1.06, MAT.ironBand);
+  bandV.position.y = 0.39; g.add(bandV);
+  var lock = box(0.2, 0.26, 0.12, MAT.goldM);
+  lock.position.set(0, 0.62, 0.52); g.add(lock);
+  var shine = box(1.1, 0.1, 0.72, MAT.chestGold);
+  shine.position.y = 0.79; shine.rotation.x = -0.42;
+  g.add(shine);
+  var gl = makeGlow(2.2, 0xffd75e);
+  gl.position.y = 0.9;
+  gl.material.opacity = 0.65;
+  g.add(gl);
+  g.userData.glow = gl;
+  return g;
+}
+function makeBottle() {
+  var g = new THREE.Group();
+  var body = cyl(0.3, 0.34, 0.9, MAT.bottleG, 10);
+  body.position.y = 0.3; g.add(body);
+  var neck = cyl(0.13, 0.3, 0.4, MAT.bottleG, 10);
+  neck.position.y = 0.9; g.add(neck);
+  var cork = cyl(0.12, 0.14, 0.16, MAT.corkM, 8);
+  cork.position.y = 1.16; g.add(cork);
+  var paper = cyl(0.17, 0.17, 0.5, MAT.white, 8);
+  paper.position.y = 0.35; g.add(paper);
+  g.rotation.z = 1.35;
+  g.position.y = 0.18;
+  var wrap = new THREE.Group();
+  wrap.add(g);
+  var gl = makeGlow(1.4, 0xa8f0c8);
+  gl.position.y = 0.5;
+  gl.material.opacity = 0.4;
+  wrap.add(gl);
+  wrap.userData.glow = gl;
+  return wrap;
+}
+function makeGlowBuoy() {
+  var g = new THREE.Group();
+  var orb = sph(0.42, MAT.glowM, 12, 9);
+  orb.position.y = 0.55; g.add(orb);
+  var bandM = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.06, 6, 16), MAT.ironBand);
+  bandM.rotation.x = Math.PI / 2; bandM.position.y = 0.55; g.add(bandM);
+  var spikeUp = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 6), MAT.ironBand);
+  spikeUp.position.y = 1.05; g.add(spikeUp);
+  var gl = makeGlow(3.2, 0x9fe8d8);
+  gl.position.y = 0.6;
+  g.add(gl);
+  g.userData.glow = gl;
+  return g;
+}
+function makeFishSchool() {
+  var g = new THREE.Group();
+  var fishes = [];
+  for (var i = 0; i < 5; i++) {
+    var f = new THREE.Group();
+    var body = sph(0.22, i % 2 ? MAT.fishM : MAT.fishM2, 7, 5);
+    body.scale.set(0.55, 0.7, 1.6); f.add(body);
+    var tail = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.3, 4), i % 2 ? MAT.fishM2 : MAT.fishM);
+    tail.rotation.x = -Math.PI / 2;
+    tail.scale.x = 0.4;
+    tail.position.z = -0.4; f.add(tail);
+    f.userData = { orbit: rand(0.5, 1.6), sp: rand(1.8, 3.2), ph: rand(0, 6.28) };
+    g.add(f); fishes.push(f);
+  }
+  var ripple = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.45, 22), MAT.ringFish);
+  ripple.rotation.x = -Math.PI / 2;
+  ripple.position.y = 0.08;
+  g.add(ripple);
+  g.userData.fishes = fishes;
+  g.userData.ripple = ripple;
+  return g;
+}
+function makeFloater(kind) {
+  var g;
+  if (kind === 'wood') g = makeLogStack();
+  else if (kind === 'food') g = makeCrateBox();
+  else if (kind === 'water') g = makeWaterBarrel();
+  else if (kind === 'gold') g = makeGoldBag();
+  else if (kind === 'chest') g = makeChest();
+  else if (kind === 'bottle') g = makeBottle();
+  else if (kind === 'glow') g = makeGlowBuoy();
+  else g = makeFishSchool();
+  var rm = kind === 'chest' || kind === 'glow' ? MAT.ringGold : kind === 'fish' ? MAT.ringFish : MAT.ring;
+  var ring = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.85, 26), rm);
   ring.rotation.x = -Math.PI / 2; ring.position.y = 0.1;
   g.add(ring);
-  g.userData = { kind: kind, ring: ring, ph: rand(0, 6.28), drift: rand(0, Math.PI * 2), life: 0 };
+  var ring2 = new THREE.Mesh(new THREE.RingGeometry(2.05, 2.16, 26), rm);
+  ring2.rotation.x = -Math.PI / 2; ring2.position.y = 0.1;
+  ring2.material = rm;
+  g.add(ring2);
+  g.userData = g.userData || {};
+  g.userData.kind = kind;
+  g.userData.ring = ring;
+  g.userData.ring2 = ring2;
+  g.userData.ph = rand(0, 6.28);
+  g.userData.drift = rand(0, Math.PI * 2);
+  g.userData.hold = 0;
   return g;
 }
 function spawnFloater(kind, x, z) {
@@ -658,6 +1197,102 @@ function removeFloater(m) {
   m.traverse(function (o) { if (o.geometry && o.geometry !== seaGeo) o.geometry.dispose(); });
 }
 
+var merchant = null;
+function spawnMerchant(x, z) {
+  if (merchant) scene.remove(merchant);
+  var g = new THREE.Group();
+  for (var i = 0; i < 7; i++) {
+    var log = cyl(0.34, 0.34, 5.6, MAT.trunk, 8);
+    log.rotation.x = Math.PI / 2;
+    log.position.set(0, 0.36, -1.7 + i * 0.58);
+    g.add(log);
+  }
+  var mastM = cyl(0.09, 0.11, 3.4, MAT.mast, 7);
+  mastM.position.set(-0.6, 2.0, 0.4); g.add(mastM);
+  for (var s = 0; s < 6; s++) {
+    var seg = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.15, 0.6, 3, 1, false, s * Math.PI / 3, Math.PI / 3), s % 2 ? MAT.canopyA : MAT.canopyB);
+    seg.position.set(-0.6, 3.55, 0.4);
+    g.add(seg);
+  }
+  var capM = sph(0.16, MAT.goldM, 6, 5);
+  capM.position.set(-0.6, 3.78, 0.4); g.add(capM);
+  var c1 = box(0.9, 0.7, 0.9, MAT.crateDk);
+  c1.position.set(1.2, 0.9, -0.9); g.add(c1);
+  var c2 = box(0.7, 0.55, 0.7, MAT.crate);
+  c2.position.set(1.15, 1.5, -0.85); g.add(c2);
+  var barrelM = cyl(0.42, 0.36, 0.85, MAT.barrel, 10);
+  barrelM.position.set(1.3, 0.85, 0.9); g.add(barrelM);
+  var lampM = makeGlow(1.8, 0xffdf90);
+  lampM.position.set(1.9, 1.4, 0);
+  g.add(lampM);
+  var gl = makeGlow(3, 0xffe9a8);
+  gl.position.y = 1;
+  gl.material.opacity = 0.35;
+  g.add(gl);
+  g.position.set(x, 0, z);
+  g.userData = { life: 90, ph: rand(0, 6.28), glow: gl };
+  scene.add(g);
+  merchant = g;
+  return g;
+}
+
+var dolphins = [];
+function makeDolphin() {
+  var g = new THREE.Group();
+  var body = sph(0.5, MAT.dolphinM, 10, 7);
+  body.scale.set(0.55, 0.6, 1.75); g.add(body);
+  var snout = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 7), MAT.dolphinM);
+  snout.rotation.x = Math.PI / 2;
+  snout.position.set(0, -0.02, 1.05); g.add(snout);
+  var finD = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.55, 5), MAT.dolphinM);
+  finD.position.set(0, 0.36, 0.1); g.add(finD);
+  var fluke = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 5), MAT.dolphinM);
+  fluke.rotation.x = -Math.PI / 2 + 0.2;
+  fluke.scale.x = 2.2;
+  fluke.position.set(0, 0.05, -0.95); g.add(fluke);
+  var flipL = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 5), MAT.dolphinB);
+  flipL.rotation.z = Math.PI / 2.4;
+  flipL.position.set(-0.32, -0.12, 0.45); g.add(flipL);
+  var flipR = flipL.clone();
+  flipR.rotation.z = -Math.PI / 2.4;
+  flipR.position.x = 0.32; g.add(flipR);
+  var belly = sph(0.42, MAT.dolphinB, 8, 6);
+  belly.scale.set(0.5, 0.42, 1.55);
+  belly.position.y = -0.14; g.add(belly);
+  g.visible = false;
+  return g;
+}
+(function buildDolphins() {
+  for (var i = 0; i < 3; i++) {
+    var d = makeDolphin();
+    d.userData = { off: i * 2.1, side: i % 2 ? -1 : 1, ph: rand(0, 6.28) };
+    scene.add(d); dolphins.push(d);
+  }
+})();
+
+var whale = null;
+function makeWhale() {
+  var g = new THREE.Group();
+  var back = sph(3.2, MAT.whaleM, 10, 7);
+  back.scale.set(1, 0.55, 1.9);
+  back.position.y = -1.3;
+  g.add(back);
+  var finW = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.6, 5), MAT.whaleM);
+  finW.scale.set(0.4, 1, 1);
+  finW.rotation.z = Math.PI / 2;
+  finW.position.set(-2.4, -1.7, 0.3); g.add(finW);
+  var finW2 = finW.clone(); finW2.rotation.z = -Math.PI / 2; finW2.position.x = 2.4; g.add(finW2);
+  var tailW = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.4, 5), MAT.whaleM);
+  tailW.scale.set(2.0, 0.5, 1);
+  tailW.position.set(0, -1.5, -6.2); g.add(tailW);
+  var spout = makeGlow(2.5, 0xe8f6ff);
+  spout.position.set(0, 0.8, 2.2);
+  spout.material.opacity = 0;
+  g.add(spout);
+  g.userData = { life: 26, spout: spout, dir: rand(0, 6.28) };
+  return g;
+}
+
 var RAIN_N = 1200;
 var rainGeo = new THREE.BufferGeometry();
 var rainPos = new Float32Array(RAIN_N * 6);
@@ -669,13 +1304,13 @@ var rainMesh = new THREE.LineSegments(rainGeo, rainMat);
 rainMesh.frustumCulled = false;
 scene.add(rainMesh);
 
-var FOAM_N = 150;
+var FOAM_N = 170;
 var foamGeo = new THREE.BufferGeometry();
 var foamPos = new Float32Array(FOAM_N * 3);
 var foamDat = [];
 for (var fi = 0; fi < FOAM_N; fi++) foamDat.push({ life: 0, x: 0, y: 0, z: 0, vy: 0 });
 foamGeo.setAttribute('position', new THREE.BufferAttribute(foamPos, 3));
-var foamMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.55, transparent: true, opacity: 0.85, depthWrite: false });
+var foamMat = new THREE.PointsMaterial({ map: glowTex, color: 0xffffff, size: 0.85, transparent: true, opacity: 0.9, depthWrite: false });
 var foamMesh = new THREE.Points(foamGeo, foamMat);
 foamMesh.frustumCulled = false;
 scene.add(foamMesh);
@@ -738,6 +1373,8 @@ var visW = {
 var lightning = { t: 5, flash: 0 };
 var hitCD = 0, edgeCD = 0, eatT = 0, drinkT = 0, fixT = 0, spawnT = 1.5, expT = 0, fullHintCD = 0;
 var windAng = 0;
+var dolphinT = 70, whaleT = 140, merchantT = 110, dolphinOn = 0;
+var stormSurviveFlag = false;
 
 function pickWeatherNext(cur) {
   var n = pick(WSEQ[cur]);
@@ -753,6 +1390,12 @@ function updateWeather(dt) {
   if (w.t <= 8 && w.t + dt > 8 && w.next !== w.cur) showWarn(w.next);
   if (w.t <= 0) {
     w.prev = w.cur; w.cur = w.next;
+    if (w.prev === 'storm' && stormSurviveFlag) {
+      state.cnt.storms++;
+      stormSurviveFlag = false;
+      checkQuests();
+    }
+    if (w.cur === 'storm') stormSurviveFlag = true;
     w.next = pickWeatherNext(w.cur);
     w.t = rand(WTIME[w.cur][0], WTIME[w.cur][1]);
     hideWarn();
@@ -790,10 +1433,16 @@ function updateWeather(dt) {
 function onWeatherChange() {
   var w = state.weather;
   var msgs = {
-    sun: '天气转晴，海面平静', breeze: '起风了，正好扬帆',
-    fog: '浓雾来袭，打开船灯慢行', storm: '雷暴来袭！尽快修船'
+    sun: '天气转晴，海面平静',
+    breeze: '起风了，正好扬帆',
+    fog: '浓雾来袭，打开船灯慢行',
+    storm: '雷暴来袭！挺过去就是胜利'
   };
   toast(msgs[w.cur], w.cur === 'storm' ? 'gold' : '');
+  if (w.cur === 'storm' && !state.hintShown.stormTip) {
+    state.hintShown.stormTip = 1;
+    toast('雷暴中打捞收益 +50%，风险与机遇并存');
+  }
   if (ambG) ambG.gain.value = w.cur === 'storm' ? 0.16 : w.cur === 'breeze' ? 0.08 : 0.05;
   if (ambFilter) ambFilter.frequency.value = w.cur === 'storm' ? 700 : 420;
   updateWeatherHUD();
@@ -811,8 +1460,8 @@ function updateDayNight(dt) {
   seaMat.uniforms.uSun.value.copy(skyMat.uniforms.uSunDir.value);
 
   var dayTop = visW.skyTop.clone(), dayBot = visW.skyBot.clone();
-  var nightTop = new THREE.Color('#1c3a5e'), nightBot = new THREE.Color('#41678e');
-  nightTop.lerp(new THREE.Color('#0f2440'), 0.35);
+  var nightTop = new THREE.Color('#1c3a5e').lerp(new THREE.Color('#0f2440'), 0.35);
+  var nightBot = new THREE.Color('#41678e');
   var duskTop = new THREE.Color('#7a6f96'), duskBot = new THREE.Color('#f4c99a');
   var top = dayTop.clone().lerp(duskTop, dusk).lerp(nightTop, night);
   var bot = dayBot.clone().lerp(duskBot, dusk).lerp(nightBot, night);
@@ -820,12 +1469,9 @@ function updateDayNight(dt) {
   skyMat.uniforms.uBot.value.copy(bot);
   skyMat.uniforms.uNight.value = night;
 
-  var dayFogC = visW.fogC.clone();
-  var nightFogC = new THREE.Color('#3d5c7e');
-  var fc = dayFogC.lerp(nightFogC, night * 0.8);
+  var fc = visW.fogC.clone().lerp(new THREE.Color('#3d5c7e'), night * 0.8);
   scene.fog.color.copy(fc);
-  var farScale = 1 - night * 0.3;
-  scene.fog.far = visW.fogFar * farScale;
+  scene.fog.far = visW.fogFar * (1 - night * 0.3);
   scene.fog.near = scene.fog.far * 0.09;
 
   hemi.intensity = lerp(0.85 * visW.sunI + 0.25, 0.62, night);
@@ -842,6 +1488,8 @@ function updateDayNight(dt) {
   var lampOn = night > 0.25 || state.weather.cur === 'fog' || state.weather.cur === 'storm';
   boat.userData.lampLight.intensity = lampOn ? 0.9 + Math.sin(state.time * 7) * 0.06 : 0;
   boat.userData.lampBulb.material.color.set(lampOn ? '#ffe9a8' : '#d8c9a0');
+  boat.userData.lampGlow.material.opacity = lampOn ? 0.75 : 0.12;
+  state.nightF = night;
 }
 
 function updateBoat(dt) {
@@ -853,14 +1501,16 @@ function updateBoat(dt) {
   b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
   var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
   var target = b.sail * maxS;
+  var oldX = b.x, oldZ = b.z;
   b.speed = lerp(b.speed, target, dt * (target > b.speed ? 0.32 : 0.5));
-  var rud = (rt - lf) * (touch.steer !== 0 ? Math.abs(touch.steer) : 1);
+  var rud = rt - lf;
   if (touch.steer !== 0) rud = touch.steer;
   var spdF = 0.35 + (b.speed / Math.max(1, boatSpeedMax())) * 0.7;
   b.heading -= rud * dt * 1.15 * spdF;
   var fx = Math.sin(b.heading), fz = Math.cos(b.heading);
   b.x += fx * b.speed * dt;
   b.z += fz * b.speed * dt;
+  state.dist += Math.hypot(b.x - oldX, b.z - oldZ);
 
   if (state.weather.cur === 'storm') {
     b.x += Math.cos(windAng) * 1.1 * dt;
@@ -892,6 +1542,7 @@ function updateBoat(dt) {
       state.res.gold += 15;
       toast('发现新岛屿：' + u.name + '，金币 +15', 'gold');
       blip(660, 0.3, 'triangle', 0.2, 990);
+      checkQuests();
     }
   }
   for (var r = 0; r < rocks.length; r++) {
@@ -920,14 +1571,35 @@ function updateBoat(dt) {
   boat.rotation.y = b.heading;
 
   var sailB = 0.12 + b.sail * 0.88;
-  boat.userData.sail.scale.z = sailB;
-  boat.userData.foreSail.scale.z = sailB;
+  boat.userData.sail.scale.set(1, sailB * 0.9 + 0.1, sailB);
+  boat.userData.stripe.scale.set(1, 1, sailB);
+  boat.userData.foreSail.scale.set(1, 1, sailB);
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
+  boat.userData.wheel.rotation.z -= rud * dt * 4 * spdF;
+  updateCargoVisual();
 
-  if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 24) spawnFoam(
-    b.x - fx * 2.6 + rand(-0.8, 0.8), b.z - fz * 2.6 + rand(-0.8, 0.8), b.speed
+  if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 26) spawnFoam(
+    b.x - fx * 2.8 + rand(-0.9, 0.9), b.z - fz * 2.8 + rand(-0.9, 0.9), b.speed
   );
+
+  var bx = b.x - fx * 2.6, bz = b.z - fz * 2.6;
+  for (var wk = WAKE_N - 1; wk > 0; wk--) wakePts[wk] = wakePts[wk - 1];
+  wakePts[0] = { x: bx, z: bz, h: waveH(bx, bz, state.time, visW.amp) };
+  for (var wv = 0; wv < WAKE_N; wv++) {
+    var wid = 0.55 + wv * 0.11;
+    var px2 = wakePts[wv].x + Math.cos(b.heading) * wid;
+    var pz2 = wakePts[wv].z - Math.sin(b.heading) * wid;
+    var mx2 = wakePts[wv].x - Math.cos(b.heading) * wid;
+    var mz2 = wakePts[wv].z + Math.sin(b.heading) * wid;
+    wakePos[wv * 6] = px2; wakePos[wv * 6 + 1] = wakePts[wv].h + 0.12; wakePos[wv * 6 + 2] = pz2;
+    wakePos[wv * 6 + 3] = mx2; wakePos[wv * 6 + 4] = wakePts[wv].h + 0.12; wakePos[wv * 6 + 5] = mz2;
+    var fade = (1 - wv / WAKE_N) * clamp(b.speed / 5, 0, 1) * 0.9;
+    wakeCol[wv * 6] = fade; wakeCol[wv * 6 + 1] = fade; wakeCol[wv * 6 + 2] = fade;
+    wakeCol[wv * 6 + 3] = fade; wakeCol[wv * 6 + 4] = fade; wakeCol[wv * 6 + 5] = fade;
+  }
+  wakeGeo.attributes.position.needsUpdate = true;
+  wakeGeo.attributes.color.needsUpdate = true;
 }
 
 function spawnFoam(x, z, sp) {
@@ -943,22 +1615,28 @@ function spawnFoam(x, z, sp) {
   }
 }
 
+function isNight() { return (state.nightF || 0) > 0.45; }
+
 function floaterKindFor(d, storm) {
+  var night = isNight();
   var g = d > 500 ? 0.24 : d > 250 ? 0.18 : 0.13;
   var c = storm ? 0.13 : 0.055;
   var r = Math.random();
-  if (r < 0.28) return 'wood';
-  if (r < 0.52) return 'food';
-  if (r < 0.76) return 'water';
-  if (r < 0.76 + g) return 'gold';
-  if (r < 0.76 + g + c) return 'chest';
+  if (r < 0.26) return 'wood';
+  if (r < 0.48) return 'food';
+  if (r < 0.70) return 'water';
+  if (r < 0.77) return 'fish';
+  if (night && r < 0.84) return 'glow';
+  if (r < 0.92 + g * 0.5) return 'gold';
+  if (r < 0.95 + g * 0.5) return 'chest';
+  if (r < 0.965) return 'bottle';
   return 'wood';
 }
 
 function updateFloaters(dt) {
   spawnT -= dt;
-  if (spawnT <= 0 && floaters.length < 40) {
-    spawnT = state.weather.cur === 'storm' ? 1.5 : 2.3;
+  if (spawnT <= 0 && floaters.length < 42) {
+    spawnT = state.weather.cur === 'storm' ? 1.4 : (state.luck > 0 ? 1.9 : 2.3);
     var ang = rand(0, Math.PI * 2);
     var dist = rand(38, 130);
     var x = state.boat.x + Math.cos(ang) * dist;
@@ -969,51 +1647,107 @@ function updateFloaters(dt) {
   }
   var pr = pickupR();
   var take = [];
+  var b = state.boat;
   for (var i = 0; i < floaters.length; i++) {
     var m = floaters[i];
     var u = m.userData;
     m.position.x += Math.cos(u.drift) * 0.25 * dt;
     m.position.z += Math.sin(u.drift) * 0.25 * dt;
     u.drift += Math.sin(state.time * 0.4 + u.ph) * 0.15 * dt;
-    m.position.y = waveH(m.position.x, m.position.z, state.time, visW.amp) + 0.12 + Math.sin(state.time * 1.4 + u.ph) * 0.06;
-    m.rotation.y += dt * 0.25;
-    u.ring.rotation.z = state.time * 0.8 + u.ph;
+    var baseY = u.kind === 'fish' ? -0.75 : 0.12;
+    m.position.y = waveH(m.position.x, m.position.z, state.time, visW.amp) + baseY + Math.sin(state.time * 1.4 + u.ph) * 0.06;
+    if (u.kind !== 'fish') m.rotation.y += dt * 0.25;
     var s = 1 + Math.sin(state.time * 2.2 + u.ph) * 0.09;
     u.ring.scale.set(s, s, 1);
-    var bd = Math.hypot(m.position.x - state.boat.x, m.position.z - state.boat.z);
-    if (pr > 0 && bd < pr) take.push(m);
-    else if (bd > 210) take.push(m);
+    u.ring2.scale.set(2 - s, 2 - s, 1);
+    if (u.kind === 'fish') {
+      for (var fi = 0; fi < u.fishes.length; fi++) {
+        var f = u.fishes[fi];
+        f.userData.ph += dt * f.userData.sp;
+        f.position.set(Math.cos(f.userData.ph) * f.userData.orbit, Math.sin(f.userData.ph * 2) * 0.25, Math.sin(f.userData.ph) * f.userData.orbit);
+        f.rotation.y = -f.userData.ph + Math.PI / 2;
+      }
+      u.ripple.scale.setScalar(1 + Math.sin(state.time * 3 + u.ph) * 0.18);
+      var bd = Math.hypot(m.position.x - b.x, m.position.z - b.z);
+      if (bd < 6) {
+        if (b.speed < 1.2) {
+          u.hold += dt;
+          if (u.hold > 2.2) { catchFish(m); continue; }
+        } else u.hold = Math.max(0, u.hold - dt * 2);
+      } else u.hold = 0;
+    } else if (u.kind === 'glow' || u.kind === 'chest' || u.kind === 'bottle') {
+      if (u.glow) u.glow.material.opacity = (isNight() ? 0.85 : 0.35) * (0.75 + Math.sin(state.time * 3 + u.ph) * 0.25);
+    }
+    var bd2 = Math.hypot(m.position.x - b.x, m.position.z - b.z);
+    if (pr > 0 && u.kind !== 'fish' && bd2 < pr) take.push(m);
+    else if (bd2 > 210) take.push(m);
   }
   for (var t = 0; t < take.length; t++) collectFloater(take[t]);
 }
 
+function catchFish(m) {
+  var cap = holdCap(state.lv.hold);
+  var got = Math.round(rand(7, 12) * (state.luck > 0 ? 1.25 : 1));
+  var bf = Math.min(got, cap[1] - Math.floor(state.res.food));
+  state.cnt.fish++;
+  if (bf > 0) {
+    state.res.food += bf;
+    toast('一网捞起！食物 +' + bf, 'gold');
+  } else {
+    toast('鱼获满满，但货舱装不下了');
+  }
+  sfxPickup('fish');
+  removeFloater(m);
+  checkQuests();
+}
+
+var BOTTLE_MSGS = [
+  '瓶中纸条：「往东的礁石后有宝藏」——附了 30 金币的地图碎片',
+  '瓶中纸条：「谢谢你送它回岸」——瓶子里藏着一小袋金币',
+  '瓶中纸条：某位老水手的日记，夹着 25 金币书签',
+  '瓶中纸条：「暴雨将至，多备木材」——随附 15 木材'
+];
 function collectFloater(m) {
   var k = m.userData.kind;
   var far = ringDist(m.position.x, m.position.z) > 400 ? 1.5 : 1;
-  if (m.userData.life >= 0 && Math.hypot(m.position.x - state.boat.x, m.position.z - state.boat.z) > pickupR()) {
-    removeFloater(m); return;
-  }
+  var bd = Math.hypot(m.position.x - state.boat.x, m.position.z - state.boat.z);
+  if (bd > pickupR() && bd < 200) { removeFloater(m); return; }
   var cap = holdCap(state.lv.hold);
+  var mult = far * (state.weather.cur === 'storm' ? 1.5 : 1) * (state.luck > 0 ? 1.25 : 1);
   var gained = false;
+  state.cnt.pickup++;
   if (k === 'wood') {
-    var gw = Math.round(rand(6, 10) * far);
+    var gw = Math.round(rand(6, 10) * mult);
     var bw = Math.min(gw, cap[0] - Math.floor(state.res.wood));
     if (bw > 0) { state.res.wood += bw; gained = true; toastGet('木材 +' + bw); }
   } else if (k === 'food') {
-    var gf = Math.round(rand(8, 13) * far);
-    var bf = Math.min(gf, cap[1] - Math.floor(state.res.food));
-    if (bf > 0) { state.res.food += bf; gained = true; toastGet('食物 +' + bf); }
+    var gf = Math.round(rand(8, 13) * mult);
+    var bf2 = Math.min(gf, cap[1] - Math.floor(state.res.food));
+    if (bf2 > 0) { state.res.food += bf2; gained = true; toastGet('食物 +' + bf2); }
   } else if (k === 'water') {
-    var gt = Math.round(rand(8, 13) * far);
+    var gt = Math.round(rand(8, 13) * mult);
     var bt = Math.min(gt, cap[2] - Math.floor(state.res.water));
     if (bt > 0) { state.res.water += bt; gained = true; toastGet('淡水 +' + bt); }
   } else if (k === 'gold') {
-    var gg = Math.round(rand(5, 12) * far);
+    var gg = Math.round(rand(5, 12) * mult);
     state.res.gold += gg; gained = true; toastGet('金币 +' + gg, 'gold');
+  } else if (k === 'glow') {
+    var gg2 = Math.round(rand(14, 24) * mult);
+    state.res.gold += gg2; gained = true;
+    toast('捞起一枚发光浮标，金币 +' + gg2, 'gold');
+  } else if (k === 'bottle') {
+    var msg = pick(BOTTLE_MSGS);
+    if (msg.indexOf('木材') >= 0) { var aw = Math.min(15, cap[0] - Math.floor(state.res.wood)); state.res.wood += aw; }
+    else state.res.gold += Math.round(rand(22, 35));
+    state.cnt.bottles++;
+    gained = true;
+    toast(msg, 'gold');
+    blip(740, 0.3, 'sine', 0.18, 990);
   } else {
-    state.res.gold += Math.round(rand(22, 48) * far);
-    var cw = Math.min(Math.round(rand(12, 22) * far), cap[0] - Math.floor(state.res.wood));
+    state.res.gold += Math.round(rand(22, 48) * mult);
+    var cw = Math.min(Math.round(rand(12, 22) * mult), cap[0] - Math.floor(state.res.wood));
     if (cw > 0) state.res.wood += cw;
+    state.cnt.chests++;
     gained = true;
     toast('打捞到漂流宝箱！金币与木材大丰收', 'gold');
   }
@@ -1026,6 +1760,7 @@ function collectFloater(m) {
     toast('货舱已满，无法装载'); fullHintCD = 10;
   }
   removeFloater(m);
+  checkQuests();
 }
 
 function updateSurvival(dt) {
@@ -1033,6 +1768,7 @@ function updateSurvival(dt) {
   state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1);
   state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : 1);
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
+  if (state.luck > 0) state.luck -= dt;
   if (state.stats.hunger < 62 && state.res.food >= 1 && eatT <= 0) {
     state.res.food -= 1; state.stats.hunger = Math.min(100, state.stats.hunger + 16); eatT = 3.0;
     if (!state.hintShown.ate) { state.hintShown.ate = 1; toast('自动进食：饱食不足时消耗食物'); }
@@ -1062,6 +1798,42 @@ function updateSurvival(dt) {
   else if (state.stats.hull <= 0) gameOver('hull');
 }
 
+function questProgress() {
+  var q = QUESTS[state.quest];
+  if (!q) return { cur: 1, max: 1 };
+  var n = Object.keys(state.islandsFound).length;
+  var cur = 0;
+  if (q.id === 'pickup') cur = Math.min(state.cnt.pickup, q.target);
+  else if (q.id === 'supply') cur = (state.res.food >= 10 && state.res.water >= 10) ? 10 : Math.min(Math.floor(Math.min(state.res.food, state.res.water)), 9);
+  else if (q.id === 'sail2') cur = state.lv.sail;
+  else if (q.id === 'island2') cur = Math.min(n, q.target);
+  else if (q.id === 'fish2') cur = Math.min(state.cnt.fish, q.target);
+  else if (q.id === 'storm1') cur = Math.min(state.cnt.storms, 1);
+  else if (q.id === 'net2') cur = state.lv.net;
+  else if (q.id === 'exp25') cur = Math.min(explorePct(), q.target);
+  return { cur: cur, max: q.target };
+}
+function checkQuests() {
+  var guard = 0;
+  while (state.quest < QUESTS.length && guard++ < 5) {
+    var q = QUESTS[state.quest];
+    var p = questProgress();
+    if (p.cur >= p.max) {
+      var rwTxt = [];
+      if (q.rg) { state.res.gold += q.rg; rwTxt.push('金币+' + q.rg); }
+      if (q.rw) { state.res.wood += q.rw; rwTxt.push('木材+' + q.rw); }
+      toast('目标达成：' + q.name + '！奖励 ' + rwTxt.join(' '), 'gold');
+      sfxUp();
+      state.quest++;
+      updateQuestHUD();
+    } else break;
+  }
+  if (state.quest >= QUESTS.length && !state.hintShown.allq) {
+    state.hintShown.allq = 1;
+    toast('全部目标完成！攒够物资去船坞建造远洋巨轮', 'gold');
+  }
+}
+
 function updateExplore(dt) {
   expT -= dt;
   if (expT > 0) return;
@@ -1076,7 +1848,7 @@ function updateExplore(dt) {
   }
   if (added > 0) {
     var pct = explorePct();
-    var marks = [[25, 30], [50, 60], [75, 100], [100, 200]];
+    var marks = [[50, 80], [75, 120], [100, 220]];
     for (var i = 0; i < marks.length; i++) {
       if (pct >= marks[i][0] && !state.hintShown['ex' + marks[i][0]]) {
         state.hintShown['ex' + marks[i][0]] = 1;
@@ -1092,6 +1864,92 @@ function explorePct() {
   var n = 0, key;
   for (key in state.explored) if (state.explored[key]) n++;
   return Math.min(100, Math.round(n / total * 100));
+}
+
+function updateEvents(dt) {
+  dolphinT -= dt;
+  if (dolphinT <= 0 && dolphinOn <= 0) {
+    dolphinT = rand(130, 220);
+    dolphinOn = 25;
+    state.luck = LUCK_T;
+    toast('一群海豚伴你同行！60 秒内打捞收益 +25%', 'gold');
+    sfxDolphin();
+    updateBuffHUD();
+  }
+  if (dolphinOn > 0) dolphinOn -= dt;
+
+  merchantT -= dt;
+  if (merchantT <= 0 && !merchant) {
+    merchantT = rand(170, 260);
+    var a = rand(0, Math.PI * 2);
+    var dd = rand(55, 85);
+    var mx = state.boat.x + Math.cos(a) * dd;
+    var mz = state.boat.z + Math.sin(a) * dd;
+    if (ringDist(mx, mz) < WORLD_R - 30) {
+      spawnMerchant(mx, mz);
+      toast('远方漂来一座商筏，靠近看看（存在 90 秒）');
+    }
+  }
+  if (merchant) {
+    merchant.userData.life -= dt;
+    if (merchant.userData.life <= 0) {
+      scene.remove(merchant);
+      merchant = null;
+      hideTradeCard();
+      toast('商筏慢慢漂远了…');
+    } else {
+      merchant.position.x += Math.cos(merchant.userData.ph) * 0.35 * dt;
+      merchant.position.z += Math.sin(merchant.userData.ph) * 0.35 * dt;
+      merchant.position.y = waveH(merchant.position.x, merchant.position.z, state.time, visW.amp) + 0.05;
+      merchant.rotation.y += dt * 0.05;
+      var md = Math.hypot(merchant.position.x - state.boat.x, merchant.position.z - state.boat.z);
+      if (md < 14 && state.phase === 'play') showTradeCard();
+      else hideTradeCard();
+    }
+  }
+
+  whaleT -= dt;
+  if (whaleT <= 0 && !whale) {
+    whaleT = rand(150, 260);
+    whale = makeWhale();
+    var wa = rand(0, Math.PI * 2);
+    var wd = rand(140, 220);
+    whale.position.set(state.boat.x + Math.cos(wa) * wd, 0, state.boat.z + Math.sin(wa) * wd);
+    whale.rotation.y = rand(0, 6.28);
+    whale.userData.dir = whale.rotation.y;
+    scene.add(whale);
+    toast('远处海面有鲸鱼喷水！');
+  }
+  if (whale) {
+    whale.userData.life -= dt;
+    whale.position.x += Math.sin(whale.userData.dir) * 2.2 * dt;
+    whale.position.z += Math.cos(whale.userData.dir) * 2.2 * dt;
+    whale.position.y = waveH(whale.position.x, whale.position.z, state.time, visW.amp) - 0.2;
+    whale.rotation.z = Math.sin(state.time * 0.8) * 0.04;
+    var ph = (whale.userData.life % 6);
+    whale.userData.spout.material.opacity = ph > 4.6 ? (6 - ph) * 0.7 : 0;
+    if (whale.userData.life <= 0) { scene.remove(whale); whale = null; }
+  }
+}
+
+function canTrade(t) {
+  var g = t.give;
+  return state.res.wood >= (g.wood || 0) && state.res.gold >= (g.gold || 0) && state.res.food >= (g.food || 0) && state.res.water >= (g.water || 0);
+}
+function doTrade(t) {
+  if (!canTrade(t)) { toast('物资不够啦'); return; }
+  var g = t.give, gt = t.get;
+  if (g.wood) state.res.wood -= g.wood;
+  if (g.gold) state.res.gold -= g.gold;
+  var cap = holdCap(state.lv.hold);
+  if (gt.gold) state.res.gold += gt.gold;
+  if (gt.wood) state.res.wood = Math.min(cap[0], state.res.wood + gt.wood);
+  if (gt.food) state.res.food = Math.min(cap[1], state.res.food + gt.food);
+  if (gt.water) state.res.water = Math.min(cap[2], state.res.water + gt.water);
+  state.cnt.trade++;
+  sfxPickup('gold');
+  toast('交易完成：' + t.label, 'gold');
+  renderTradeCard();
 }
 
 function canUpgrade(key) {
@@ -1114,6 +1972,7 @@ function doUpgrade(key) {
   toast(u.name + ' 升级到 ' + state.lv[key] + ' 级！', 'gold');
   renderUpList();
   updateHUD();
+  checkQuests();
   save();
   return true;
 }
@@ -1159,7 +2018,6 @@ var WARN_TXT = {
   sun: '天气即将放晴'
 };
 function showWarn(next) {
-  var w = WDEF[next];
   $('warntxt').textContent = '预警：' + WARN_TXT[next];
   $('warn').classList.add('on');
 }
@@ -1167,9 +2025,14 @@ function hideWarn() { $('warn').classList.remove('on'); }
 
 function updateWeatherHUD() {
   var def = WDEF[state.weather.cur];
-  $('wIcon').className = { sun: 'sun', breeze: 'cloudy', fog: 'fogw', storm: 'stormy' }[state.weather.cur];
+  $('wIconBox').innerHTML = WSVG[state.weather.cur];
   $('wName').textContent = def.name;
   $('wDesc').textContent = def.desc;
+}
+function updateWeatherTime() {
+  var total = WTIME[state.weather.cur];
+  var f = clamp(state.weather.t / total[1], 0, 1);
+  $('wTimeFill').style.width = (f * 100).toFixed(1) + '%';
 }
 
 function updateHUD() {
@@ -1181,19 +2044,84 @@ function updateHUD() {
   $('rvT').textContent = Math.floor(state.res.water);
   $('rcT').textContent = '/' + cap[2];
   $('rvG').textContent = state.res.gold;
-  $('piW').style.width = clamp(state.res.wood / cap[0] * 100, 0, 100) + '%';
-  $('piF').style.width = clamp(state.res.food / cap[1] * 100, 0, 100) + '%';
-  $('piT').style.width = clamp(state.res.water / cap[2] * 100, 0, 100) + '%';
-  $('piG').style.width = '100%';
   $('bh').style.width = state.stats.hunger + '%';
   $('bt').style.width = state.stats.thirst + '%';
   $('bp').style.width = state.stats.hull / maxHull() * 100 + '%';
   $('vh').textContent = Math.ceil(state.stats.hunger);
   $('vt').textContent = Math.ceil(state.stats.thirst);
   $('vp').textContent = Math.ceil(state.stats.hull);
+  $('srH').classList.toggle('danger', state.stats.hunger < 30);
+  $('srT').classList.toggle('danger', state.stats.thirst < 30);
+  $('srP').classList.toggle('danger', state.stats.hull / maxHull() < 0.3);
   $('hudDay').textContent = '第 ' + state.day + ' 天';
-  $('hudClock').textContent = fmtClock(state.dayT) + ' · ' + WDEF[state.weather.cur].name;
+  $('hudClock').textContent = fmtClock(state.dayT);
   $('expl').textContent = explorePct() + '%';
+  updateWeatherTime();
+}
+
+function updateQuestHUD() {
+  var card = $('questcard');
+  if (state.quest >= QUESTS.length) {
+    $('qtag').textContent = '最终目标';
+    $('questname').textContent = '建造远洋巨轮';
+    $('questdesc').textContent = '船帆3级 + 船体3级 + 木材120 + 金币150，在船坞点「建造」通关';
+    var ready = canBuild();
+    $('questfill').style.width = ready ? '100%' : '62%';
+    $('questval').textContent = ready ? '条件已齐，去船坞建造！' : '攒够物资就出海回家';
+    return;
+  }
+  var q = QUESTS[state.quest];
+  var p = questProgress();
+  $('qtag').textContent = '目标 ' + (state.quest + 1) + ' / ' + QUESTS.length;
+  $('questname').textContent = q.name;
+  $('questdesc').textContent = q.desc;
+  $('questfill').style.width = clamp(p.cur / p.max * 100, 0, 100) + '%';
+  $('questval').textContent = p.cur + ' / ' + p.max;
+}
+
+function updateBuffHUD() {
+  var row = $('buffrow');
+  row.innerHTML = '';
+  if (state.luck > 0) {
+    var d = document.createElement('div');
+    d.className = 'buff glass';
+    d.innerHTML = '<div class="bdot"></div>海豚好运 · 打捞+25% · ' + Math.ceil(state.luck) + 's';
+    row.appendChild(d);
+  }
+  if (state.weather.cur === 'storm') {
+    var d2 = document.createElement('div');
+    d2.className = 'buff glass';
+    d2.innerHTML = '<div class="bdot" style="background:#f2a63c"></div>雷暴 · 打捞+50% · 注意船体';
+    row.appendChild(d2);
+  }
+}
+
+var tradeCard = null;
+function showTradeCard() {
+  if (tradeCard) { renderTradeCard(); return; }
+  tradeCard = document.createElement('div');
+  tradeCard.className = 'glass';
+  tradeCard.style.cssText = 'position:absolute;bottom:170px;left:50%;transform:translateX(-50%);padding:14px 16px;min-width:280px;pointer-events:auto';
+  $('hud').appendChild(tradeCard);
+  renderTradeCard();
+}
+function hideTradeCard() {
+  if (tradeCard && tradeCard.parentNode) tradeCard.parentNode.removeChild(tradeCard);
+  tradeCard = null;
+}
+function renderTradeCard() {
+  if (!tradeCard) return;
+  var html = '<div style="font-weight:900;font-size:14px;margin-bottom:9px;letter-spacing:1px">漂 流 商 筏 <span style="font-size:11px;color:#7fa0b8;font-weight:700">· 存在 ' + Math.ceil(merchant ? merchant.userData.life : 0) + 's</span></div>';
+  for (var i = 0; i < TRADES.length; i++) {
+    var t = TRADES[i];
+    var ok = canTrade(t);
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-top:7px">' +
+      '<span style="flex:1;font-size:12.5px;font-weight:800">' + t.label + '</span>' +
+      '<button class="gbtn" style="padding:6px 12px;font-size:12px;' + (ok ? '' : 'opacity:.45;pointer-events:none') + '" data-trade="' + i + '">交易</button></div>';
+  }
+  tradeCard.innerHTML = html;
+  var btns = tradeCard.querySelectorAll('[data-trade]');
+  for (var b = 0; b < btns.length; b++) btns[b].onclick = function () { doTrade(TRADES[+this.getAttribute('data-trade')]); };
 }
 
 var mini = $('mini'), mctx = mini.getContext('2d');
@@ -1212,21 +2140,27 @@ function drawMini() {
     mctx.fillRect(cx + gx * CELL * sc - CELL * sc / 2, cy + gz * CELL * sc / 2 - CELL * sc / 2, CELL * sc + 0.5, CELL * sc + 0.5);
   }
   mctx.strokeStyle = 'rgba(120,160,185,.35)';
-  mctx.lineWidth = 2;
+  mctx.lineWidth = 2.5;
   mctx.strokeRect(cx - WORLD_R * sc, cy - WORLD_R * sc, WORLD_R * 2 * sc, WORLD_R * 2 * sc);
   for (var i = 0; i < islands.length; i++) {
     var u = islands[i].userData;
     var ix = cx + u.x * sc, iz = cy + u.z * sc;
     mctx.fillStyle = u.found ? '#e8c87a' : '#c4d8e2';
     mctx.beginPath();
-    mctx.arc(ix, iz, Math.max(3, u.r * sc * 1.6), 0, 6.29);
+    mctx.arc(ix, iz, Math.max(3.5, u.r * sc * 1.6), 0, 6.29);
     mctx.fill();
     if (u.found) {
       mctx.fillStyle = '#7db95c';
       mctx.beginPath();
-      mctx.arc(ix, iz, Math.max(1.5, u.r * sc * 0.7), 0, 6.29);
+      mctx.arc(ix, iz, Math.max(1.8, u.r * sc * 0.7), 0, 6.29);
       mctx.fill();
     }
+  }
+  if (merchant) {
+    mctx.fillStyle = '#ef8a5a';
+    mctx.beginPath();
+    mctx.arc(cx + merchant.position.x * sc, cy + merchant.position.z * sc, 5, 0, 6.29);
+    mctx.fill();
   }
   var b = state.boat;
   mctx.save();
@@ -1235,12 +2169,12 @@ function drawMini() {
   mctx.fillStyle = '#ef6f3c';
   mctx.beginPath();
   mctx.moveTo(0, -9);
-  mctx.lineTo(6, 7);
-  mctx.lineTo(-6, 7);
+  mctx.lineTo(6.5, 7);
+  mctx.lineTo(-6.5, 7);
   mctx.closePath();
   mctx.fill();
   mctx.strokeStyle = '#fff';
-  mctx.lineWidth = 2;
+  mctx.lineWidth = 2.2;
   mctx.stroke();
   mctx.restore();
 }
@@ -1262,7 +2196,7 @@ function renderUpList() {
     var costG = maxed ? 0 : u.costG[idx];
     var costW = maxed ? 0 : u.costW[idx];
     var afford = !maxed && state.res.gold >= costG && state.res.wood >= costW;
-    html += '<div class="upitem"><div class="upicon ' + u.icon + '"></div>' +
+    html += '<div class="upitem"><div class="upicon ' + u.icon + '">' + u.svg + '</div>' +
       '<div class="upmain"><div class="upname">' + u.name + ' ' + lvDots(lv, u.max) + '</div>' +
       '<div class="updesc">' + u.eff(lv) + (maxed ? '' : ' → ' + u.eff(lv + 1)) + '</div></div>';
     if (maxed) html += '<button class="upbtn upmax" disabled>已满级</button>';
@@ -1271,9 +2205,9 @@ function renderUpList() {
     html += '</div>';
   }
   var ok = canBuild();
-  html += '<div class="upitem" id="builditem"><div class="upicon ui-lamp"></div>' +
-    '<div class="upmain"><div class="upname">建造远洋巨轮</div>' +
-    '<div class="updesc">需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + state.res.wood + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold + ' → 建成即通关！</div></div>' +
+  html += '<div class="upitem' + (ok ? ' armed' : '') + '" id="builditem"><div class="upicon ui-lamp"><svg viewBox="0 0 24 24" fill="none"><path d="M4 14l1.6-7A2.4 2.4 0 0 1 8 5h8a2.4 2.4 0 0 1 2.4 2L20 14" stroke="#a8781f" stroke-width="2" stroke-linejoin="round"/><path d="M4 14h16v3.4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V14z" fill="#a8781f" opacity=".85"/><path d="M9 19.6V21M15 19.6V21" stroke="#a8781f" stroke-width="2" stroke-linecap="round"/><path d="M12 3.2c2.8 1.8 2.8 5 0 6.8-2.8-1.8-2.8-5 0-6.8z" fill="#2f9bd6"/></svg></div>' +
+    '<div class="upmain"><div class="upname">建造远洋巨轮 · 通关</div>' +
+    '<div class="updesc">需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + Math.floor(state.res.wood) + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold + '</div></div>' +
     '<button class="upbtn upok" id="btnBuild"' + (ok ? '' : ' disabled') + '>' + (ok ? '建 造' : '未达成') + '</button></div>';
   $('uplist').innerHTML = html;
   var btns = $('uplist').querySelectorAll('[data-up]');
@@ -1295,7 +2229,8 @@ function togglePause() {
     overMode = 'pause';
     $('ovtitle').textContent = '已 暂 停';
     $('ovtitle').className = 'win';
-    $('ovsub').innerHTML = '第 ' + state.day + ' 天 · 海图探索 ' + explorePct() + '%<br>按 P 键或点击按钮继续航行';
+    renderOvStats();
+    $('ovsub').innerHTML = '按 P 键或点击按钮继续航行';
     $('btnRestart').textContent = '继 续 航 行';
     $('over').classList.add('on');
     save();
@@ -1303,6 +2238,20 @@ function togglePause() {
     state.phase = 'play';
     $('over').classList.remove('on');
   }
+}
+
+function renderOvStats() {
+  var items = [
+    ['生存天数', state.day],
+    ['海图探索', explorePct() + '%'],
+    ['金币', state.res.gold],
+    ['打捞物资', state.cnt.pickup]
+  ];
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    html += '<div class="ovstat"><b>' + items[i][1] + '</b><span>' + items[i][0] + '</span></div>';
+  }
+  $('ovstats').innerHTML = html;
 }
 
 function gameOver(why) {
@@ -1317,7 +2266,8 @@ function gameOver(why) {
   }[why];
   $('ovtitle').textContent = '航 程 结 束';
   $('ovtitle').className = 'lose';
-  $('ovsub').innerHTML = whyTxt + '<br><br>生存 <b>' + state.day + '</b> 天 · 海图探索 <b>' + explorePct() + '%</b> · 积攒 <b>' + state.res.gold + '</b> 金币<br><span style="font-size:12px;color:#7d9cb2">下次记得多备淡水和木材，风暴前靠岛休整</span>';
+  renderOvStats();
+  $('ovsub').innerHTML = whyTxt + '<br><span style="font-size:12px;color:#7d9cb2">共航行 ' + (state.dist / 1000).toFixed(1) + ' 公里 · 捕鱼 ' + state.cnt.fish + ' 次 · 开箱 ' + state.cnt.chests + ' 个 · 漂流瓶 ' + state.cnt.bottles + ' 个</span><br><span style="font-size:12px;color:#7d9cb2">下次记得多备淡水和木材，风暴前靠岛休整</span>';
   $('btnRestart').textContent = '再 次 出 海';
   $('over').classList.add('on');
 }
@@ -1325,7 +2275,8 @@ function showOver(win) {
   overMode = 'win';
   $('ovtitle').textContent = '通 关 !';
   $('ovtitle').className = 'win';
-  $('ovsub').innerHTML = '远洋巨轮建成！<br>你带着满舱物资驶向地平线，结束漂流生涯。<br><br>共生存 <b>' + state.day + '</b> 天 · 海图探索 <b>' + explorePct() + '%</b> · 发现 <b>' + Object.keys(state.islandsFound).length + '</b> 座岛屿';
+  renderOvStats();
+  $('ovsub').innerHTML = '远洋巨轮建成！你带着满舱物资驶向地平线，结束漂流生涯。<br>发现 <b>' + Object.keys(state.islandsFound).length + '</b> 座岛屿 · 航行 <b>' + (state.dist / 1000).toFixed(1) + '</b> 公里 · 捕鱼 <b>' + state.cnt.fish + '</b> 次';
   $('btnRestart').textContent = '开 启 新 航 程';
   $('over').classList.add('on');
 }
@@ -1337,7 +2288,7 @@ function updateCamera(dt) {
   camYaw = angLerp(camYaw, wantYaw, dt * 2.2);
   boat.userData.camYaw = camYaw;
   var cp = camCtl.pitch, cd = camCtl.dist;
-  var tx = b.x, ty = boat.position.y + 2.2, tz = b.z;
+  var tx = b.x, ty = boat.position.y + 2.4, tz = b.z;
   var px = tx + Math.sin(camYaw) * Math.cos(cp) * cd;
   var pz = tz + Math.cos(camYaw) * Math.cos(cp) * cd;
   var py = ty + Math.sin(cp) * cd;
@@ -1388,7 +2339,6 @@ function updateFX(dt) {
     } else fp[f * 3 + 1] = -999;
   }
   foamGeo.attributes.position.needsUpdate = true;
-  foamMat.opacity = 0.85;
 
   for (var g = 0; g < gulls.length; g++) {
     var gu = gulls[g].userData;
@@ -1396,7 +2346,7 @@ function updateFX(dt) {
     var gx = state.boat.x + Math.cos(gu.a) * gu.r;
     var gz = state.boat.z + Math.sin(gu.a) * gu.r;
     gulls[g].position.set(gx, gu.h + Math.sin(state.time * 1.2 + gu.ph) * 1.4, gz);
-    gulls[g].rotation.y = -gu.a;
+    gulls[g].rotation.y = -gu.a + Math.PI / 2;
     var flap = Math.sin(state.time * 9 + gu.ph) * 0.55;
     gu.wL.rotation.y = flap;
     gu.wR.rotation.y = -flap;
@@ -1405,6 +2355,30 @@ function updateFX(dt) {
     var cl = clouds[c];
     cl.position.x += cl.userData.vx * dt;
     if (cl.position.x > 800) cl.position.x = -800;
+  }
+  for (var il = 0; il < islands.length; il++) {
+    var fm = islands[il].userData.foam;
+    if (fm) {
+      var fs = 1 + Math.sin(state.time * 1.5 + il * 1.3) * 0.03;
+      fm.scale.set(fs, fs, 1);
+      fm.material.opacity = 0.35 + Math.sin(state.time * 1.5 + il * 1.3) * 0.15;
+    }
+  }
+  for (var dp = 0; dp < dolphins.length; dp++) {
+    var dol = dolphins[dp];
+    if (dolphinOn > 0) {
+      dol.visible = true;
+      var du = dol.userData;
+      var prog = state.time * 0.9 + du.off;
+      var dr = 9 + Math.sin(prog * 0.7) * 3;
+      var dx2 = state.boat.x - Math.sin(state.boat.heading) * 4 + Math.cos(prog) * dr * du.side;
+      var dz2 = state.boat.z - Math.cos(state.boat.heading) * 4 + Math.sin(prog) * dr;
+      var jump = Math.max(0, Math.sin(prog * 1.6 + du.ph));
+      var jy = waveH(dx2, dz2, state.time, visW.amp) - 0.3 + jump * jump * 2.6;
+      dol.position.set(dx2, jy, dz2);
+      var pitchA = Math.cos(prog * 1.6 + du.ph) * 0.8 * (jump > 0.1 ? 1 : 0);
+      dol.rotation.set(-pitchA, -prog + Math.PI / 2 * du.side, 0);
+    } else dol.visible = false;
   }
 }
 
@@ -1417,9 +2391,16 @@ function step(dt) {
   updateFloaters(dt);
   updateSurvival(dt);
   updateExplore(dt);
+  updateEvents(dt);
   updateCamera(dt);
   hudT -= dt;
-  if (hudT <= 0) { hudT = 0.15; updateHUD(); }
+  if (hudT <= 0) {
+    hudT = 0.25;
+    updateHUD();
+    updateQuestHUD();
+    checkQuests();
+    updateBuffHUD();
+  }
   miniT -= dt;
   if (miniT <= 0) { miniT = 0.3; drawMini(); }
   saveT -= dt;
@@ -1433,52 +2414,74 @@ function menuIdle(dt) {
   var b = state.boat;
   var wh = waveH(b.x, b.z, state.time, 0.55);
   boat.position.set(0, wh + 0.32, 0);
-  boat.rotation.set(Math.sin(state.time * 0.7) * 0.03, b.heading + menuA, Math.sin(state.time * 0.5) * 0.05);
-  boat.userData.sail.scale.z = 0.35 + Math.sin(state.time * 0.4) * 0.1;
-  boat.userData.foreSail.scale.z = 0.3;
-  var cd = 20;
-  camera.position.set(Math.sin(menuA * 2) * cd, 8.5 + Math.sin(state.time * 0.3) * 0.8, Math.cos(menuA * 2) * cd);
-  camera.lookAt(0, 2.5, 0);
+  boat.rotation.set(Math.sin(state.time * 0.7) * 0.03, menuA * 1.4 + 2.2, Math.sin(state.time * 0.5) * 0.05);
+  boat.userData.sail.scale.set(1, 0.78, 0.72);
+  boat.userData.stripe.scale.set(1, 1, 0.72);
+  boat.userData.foreSail.scale.set(1, 1, 0.7);
+  var cd = 13.5;
+  camera.position.set(Math.sin(menuA * 2) * cd, 4.6 + Math.sin(state.time * 0.3) * 0.5, Math.cos(menuA * 2) * cd);
+  camera.lookAt(0, 2.2, 0);
   visW.rain = 0;
+}
+
+function resetWorld() {
+  for (var i = islands.length - 1; i >= 0; i--) islands[i].userData.found = false;
+  while (floaters.length) removeFloater(floaters[0]);
+  if (merchant) { scene.remove(merchant); merchant = null; hideTradeCard(); }
+  if (whale) { scene.remove(whale); whale = null; }
+  dolphinOn = 0;
+  dolphinT = 70; whaleT = 140; merchantT = 110;
+  stormSurviveFlag = false;
+  wakePts = [];
+  for (var wp = 0; wp < WAKE_N; wp++) wakePts.push({ x: state.boat.x, z: state.boat.z, h: 0 });
+  boat.userData.cargoN = -1;
+  updateCargoVisual();
 }
 
 function newGame() {
   clearSave();
-  var keepMute = state.mute;
+  var keepMute = state.mute, keepTime = state.time, keepNightF = state.nightF || 0;
   state = {
-    phase: 'play', time: state.time, day: 1, dayT: 0.3,
+    phase: 'play', time: keepTime, day: 1, dayT: 0.3, nightF: keepNightF,
     boat: { x: 0, z: 0, heading: rand(0, 6.28), speed: 0, sail: 0 },
     res: { wood: 10, food: 6, water: 6, gold: 0 },
     stats: { hunger: 100, thirst: 100, hull: 100 },
     lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1 },
     weather: { cur: 'sun', prev: 'sun', next: pickWeatherNext('sun'), t: 55, warnT: 0, blend: 0 },
-    explored: {}, islandsFound: {}, mute: keepMute, playSec: 0, hintShown: {}
+    explored: {}, islandsFound: {},
+    cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+    dist: 0, quest: 0, luck: 0,
+    mute: keepMute, playSec: 0, hintShown: {}
   };
-  for (var i = islands.length - 1; i >= 0; i--) islands[i].userData.found = !!false;
-  while (floaters.length) removeFloater(floaters[0]);
+  resetWorld();
   for (var s = 0; s < 7; s++) {
     var a = rand(0, 6.28), dd = rand(15, 55);
-    spawnFloater(pick(['wood', 'food', 'water', 'wood', 'gold']), Math.cos(a) * dd, Math.sin(a) * dd);
+    spawnFloater(pick(['wood', 'food', 'water', 'wood', 'gold', 'fish']), Math.cos(a) * dd, Math.sin(a) * dd);
   }
   boat.userData.camYaw = state.boat.heading + Math.PI;
   updateWeatherHUD();
   updateHUD();
+  updateQuestHUD();
+  updateBuffHUD();
   drawMini();
   $('menu').classList.add('off');
   $('hud').classList.add('on');
   $('over').classList.remove('on');
   state.phase = 'play';
-  setTimeout(function () { toast('W 升帆出发，靠近漂浮物自动打捞'); }, 600);
-  setTimeout(function () { toast('雷雨天记得储备木材修船', ''); }, 4200);
+  setTimeout(function () { toast('跟着左侧目标卡走，W 升帆出发'); }, 600);
+  setTimeout(function () { toast('看见绿色涟漪的鱼群了吗？停稳在旁边等 2 秒'); }, 4600);
 }
 
 function loadGame(d) {
-  var keepMute = state.mute;
+  var keepMute = state.mute, keepTime = state.time;
   state = {
-    phase: 'play', time: state.time, day: d.day, dayT: d.dayT,
+    phase: 'play', time: keepTime, day: d.day, dayT: d.dayT, nightF: 0,
     boat: d.boat, res: d.res, stats: d.stats, lv: d.lv,
     weather: { cur: d.weather.cur, prev: d.weather.cur, next: pickWeatherNext(d.weather.cur), t: d.weather.t, warnT: 0, blend: 0 },
-    explored: d.explored, islandsFound: d.islandsFound, mute: d.mute !== undefined ? d.mute : keepMute,
+    explored: d.explored, islandsFound: d.islandsFound,
+    cnt: d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+    dist: d.dist || 0, quest: d.quest || 0, luck: d.luck || 0,
+    mute: d.mute !== undefined ? d.mute : keepMute,
     playSec: d.playSec || 0, hintShown: { ate: 1 }
   };
   var def = WDEF[state.weather.cur];
@@ -1489,11 +2492,13 @@ function loadGame(d) {
   visW.seaShal = new THREE.Color(def.sea[1]);
   visW.rain = state.weather.cur === 'storm' ? 0.5 : 0;
   visW.wind = def.w;
+  resetWorld();
   for (var i = 0; i < islands.length; i++) islands[i].userData.found = !!state.islandsFound[islands[i].userData.id];
-  while (floaters.length) removeFloater(floaters[0]);
   boat.userData.camYaw = state.boat.heading + Math.PI;
   updateWeatherHUD();
   updateHUD();
+  updateQuestHUD();
+  updateBuffHUD();
   drawMini();
   $('menu').classList.add('off');
   $('hud').classList.add('on');
@@ -1540,7 +2545,8 @@ function boot() {
     if (document.hidden && state.phase === 'play') { save(); togglePause(); }
   });
   if ('ontouchstart' in window) {
-    $('ctrlhint').innerHTML = '左侧滑动 升帆转向 · 右侧拖动 转视角 · <b>船坞</b> 按钮升级';
+    var ch = document.querySelector('#ctrlhint');
+    if (ch) ch.innerHTML = '左侧滑动 升帆转向 · 右侧拖动 转视角 · <b style="color:#ef6f3c">船坞</b> 按钮升级';
   }
   $('loadnote').classList.add('off');
   requestAnimationFrame(loop);
