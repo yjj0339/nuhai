@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>怒海求生 · 海上生存</title>
+<link rel="icon" href="data:,">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#bfe3f2}
+body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;color:#1d3a52;user-select:none}
+#c3d{position:fixed;inset:0;display:block}
+.glass{background:rgba(255,255,255,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.85);box-shadow:0 8px 32px rgba(30,80,120,.14);border-radius:16px}
+#hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:5}
+#hud.on{display:block}
+.card{padding:10px 14px}
+#topbar{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:stretch}
+#daycard{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 18px;min-width:120px}
+#hudDay{font-size:19px;font-weight:800;letter-spacing:1px}
+#hudClock{font-size:12px;color:#5b7d94;margin-top:1px}
+#weathercard{display:flex;align-items:center;gap:10px;padding:8px 16px}
+#wIcon{width:34px;height:34px;border-radius:50%;position:relative;flex:none}
+.sun{background:radial-gradient(circle at 40% 35%,#fff3c0 0%,#ffd75e 55%,#f5b93c 100%);box-shadow:0 0 14px 3px rgba(255,214,90,.75)}
+.cloudy{background:linear-gradient(160deg,#ffffff 20%,#cfe0ec 100%);box-shadow:inset -4px -4px 8px rgba(120,150,175,.35)}
+.fogw{background:conic-gradient(from 200deg,#e8f1f7,#ffffff,#dce9f2,#ffffff,#e8f1f7);box-shadow:inset 0 0 8px rgba(130,160,185,.5)}
+.stormy{background:linear-gradient(160deg,#5c7d99 10%,#39516b 90%);box-shadow:inset 0 0 10px rgba(20,40,60,.6)}
+#wIcon::after{content:"";position:absolute;inset:0;border-radius:50%}
+#wName{font-weight:800;font-size:15px}
+#wDesc{font-size:11px;color:#5b7d94;max-width:150px;line-height:1.35}
+#rescard{position:absolute;top:14px;left:14px;padding:10px 14px;display:flex;flex-direction:column;gap:7px;min-width:172px}
+.resrow{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.rdot{width:12px;height:12px;border-radius:4px;flex:none;position:relative;overflow:hidden}
+.rdot span{position:absolute;inset:0;border-radius:4px;opacity:.35}
+.rdot i{position:absolute;left:0;top:0;bottom:0;background:currentColor;border-radius:4px}
+.rd-wood .rdot{color:#a9743f;background:#efd9bd}
+.rd-food .rdot{color:#e0704a;background:#fbd9cb}
+.rd-water .rdot{color:#3e9fd6;background:#cfeaf8}
+.rd-gold .rdot{color:#e0a52e;background:#fae9c0}
+.rval{margin-left:auto;font-variant-numeric:tabular-nums}
+.rcap{color:#8aa7ba;font-weight:600;font-size:11px;margin-left:2px}
+#statcard{position:absolute;left:14px;bottom:14px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;width:230px}
+.statrow{display:flex;align-items:center;gap:9px}
+.sname{font-size:12px;font-weight:800;width:44px;color:#43647c}
+.sbar{flex:1;height:11px;border-radius:6px;background:#e4eef4;overflow:hidden;box-shadow:inset 0 1px 3px rgba(90,130,160,.25)}
+.sbar i{display:block;height:100%;border-radius:6px;transition:width .25s}
+.b-hunger i{background:linear-gradient(90deg,#f2925c,#e0704a)}
+.b-thirst i{background:linear-gradient(90deg,#5fbfe8,#2f8fc9)}
+.b-hull i{background:linear-gradient(90deg,#9fc35f,#6f9d3c)}
+.sval{font-size:11px;font-weight:800;color:#43647c;width:34px;text-align:right;font-variant-numeric:tabular-nums}
+#minicard{position:absolute;right:14px;bottom:14px;padding:8px}
+#mini{display:block;width:168px;height:168px;border-radius:10px;background:#cfe6f2}
+#minilbl{font-size:11px;font-weight:800;color:#43647c;text-align:center;margin-top:6px}
+#minilbl b{color:#e0704a}
+#btns{position:absolute;top:14px;right:14px;display:flex;gap:8px;pointer-events:auto}
+.gbtn{pointer-events:auto;cursor:pointer;border:none;font-family:inherit;font-weight:800;color:#1d3a52;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.9);box-shadow:0 4px 14px rgba(30,80,120,.16);border-radius:12px;padding:9px 14px;font-size:13px;transition:transform .12s,box-shadow .12s}
+.gbtn:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(30,80,120,.22)}
+.gbtn:active{transform:translateY(0)}
+.gbtn.hot{background:linear-gradient(150deg,#ff9a62,#ef6f3c);color:#fff;border-color:rgba(255,255,255,.6)}
+.gbtn.blue{background:linear-gradient(150deg,#67c7f2,#2f9bd6);color:#fff;border-color:rgba(255,255,255,.6)}
+.gbtn.big{font-size:17px;padding:14px 34px;border-radius:14px}
+#ctrlhint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:#3d617c;background:rgba(255,255,255,.6);padding:7px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.8);white-space:nowrap}
+#ctrlhint b{color:#e0704a}
+#warn{position:absolute;top:84px;left:50%;transform:translateX(-50%) translateY(-16px);opacity:0;transition:all .4s;padding:10px 22px;border-radius:14px;font-weight:800;font-size:14px;background:rgba(255,244,214,.94);border:1px solid #f2d98a;box-shadow:0 6px 22px rgba(150,110,20,.22);color:#8a5a12;display:flex;gap:9px;align-items:center}
+#warn.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#warndot{width:10px;height:10px;border-radius:50%;background:#e8a23c;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+#toasts{position:absolute;top:130px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{padding:9px 20px;border-radius:99px;background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.95);box-shadow:0 6px 18px rgba(30,80,120,.18);font-size:13px;font-weight:700;color:#1d3a52;animation:tin .3s ease-out}
+.toast.gold{background:linear-gradient(140deg,#fff6da,#ffe9b0);color:#8a5a12;border-color:#f2d98a}
+@keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.92)}}
+#prompt{position:absolute;bottom:110px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:99px;font-size:13px;font-weight:700;display:none}
+#prompt.on{display:block}
+#prompt b{color:#e0704a}
+#menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
+#menu.off{display:none}
+#menubox{pointer-events:auto;width:min(430px,92vw);padding:36px 38px 30px;text-align:center;border-radius:24px}
+#mtitle{font-size:52px;font-weight:900;letter-spacing:10px;color:#123a5c;background:linear-gradient(150deg,#1d5a86,#123a5c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+#msub{font-size:14px;color:#5b7d94;letter-spacing:5px;margin-bottom:26px}
+#mbtns{display:flex;flex-direction:column;gap:11px;align-items:center}
+#btnResume{display:none}
+#btnResume.on{display:block}
+#mhelp{margin-top:20px;font-size:12px;color:#6b8ba1;line-height:1.8;text-align:left;background:rgba(232,242,248,.7);border-radius:12px;padding:12px 16px}
+#mhelp b{color:#1d5a86}
+#mhelp .sec{margin-top:6px;padding-top:6px;border-top:1px dashed #bcd4e2}
+#panelWrap{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(200,225,238,.35);backdrop-filter:blur(3px)}
+#panelWrap.on{display:flex}
+#upanel{pointer-events:auto;width:min(640px,94vw);max-height:86vh;overflow-y:auto;padding:24px 26px;border-radius:22px}
+#uptitle{font-size:22px;font-weight:900;color:#123a5c;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+#upsub{font-size:12px;color:#5b7d94;margin-bottom:16px}
+#upclose{cursor:pointer;border:none;background:#e4eef4;color:#43647c;width:34px;height:34px;border-radius:10px;font-size:16px;font-weight:800;font-family:inherit}
+#upclose:hover{background:#d2e4ee}
+.upitem{display:flex;align-items:center;gap:14px;padding:13px 16px;background:rgba(240,247,251,.85);border:1px solid #dbe9f2;border-radius:14px;margin-bottom:10px}
+.upicon{width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center}
+.ui-sail{background:linear-gradient(150deg,#e8f4fb,#c9e4f5)}
+.ui-hull{background:linear-gradient(150deg,#f2e6d2,#e2cba6)}
+.ui-hold{background:linear-gradient(150deg,#e5f3e0,#c8e5bd)}
+.ui-lamp{background:linear-gradient(150deg,#fff6d8,#ffe9a8)}
+.ui-net{background:linear-gradient(150deg,#e0eef8,#bcd8ec)}
+.upmain{flex:1;min-width:0}
+.upname{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.lv{display:inline-flex;gap:3px}
+.lv b{width:9px;height:9px;border-radius:3px;background:#d5e4ee}
+.lv b.f{background:linear-gradient(150deg,#67c7f2,#2f9bd6)}
+.updesc{font-size:11.5px;color:#5b7d94;margin-top:3px;line-height:1.4}
+.upbtn{cursor:pointer;border:none;font-family:inherit;font-weight:800;font-size:12.5px;padding:9px 13px;border-radius:10px;white-space:nowrap;transition:transform .12s}
+.upbtn:not(:disabled):hover{transform:translateY(-1px)}
+.upbtn:disabled{cursor:not-allowed;opacity:.55}
+.upok{background:linear-gradient(150deg,#ff9a62,#ef6f3c);color:#fff}
+.upno{background:#e4eef4;color:#7d9cb2}
+.upmax{background:#e8f3e4;color:#56823f}
+#builditem{border:2px dashed #f2b76a;background:linear-gradient(140deg,#fff8ea,#ffefd2)}
+#over{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(210,232,243,.55);backdrop-filter:blur(6px)}
+#over.on{display:flex}
+#overbox{text-align:center;padding:44px 50px;border-radius:24px;width:min(430px,92vw)}
+#ovtitle{font-size:40px;font-weight:900;letter-spacing:6px;margin-bottom:8px}
+#ovtitle.win{color:#1c7a43}
+#ovtitle.lose{color:#b3502e}
+#ovsub{font-size:14px;color:#43647c;line-height:2;margin-bottom:24px}
+#ovsub b{color:#123a5c;font-size:16px}
+#loadnote{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:40;background:#bfe3f2;color:#43647c;font-weight:700;letter-spacing:4px;font-size:15px}
+#loadnote.off{display:none}
+@media (max-width:760px){
+ #rescard{min-width:140px;padding:8px 10px}
+ #minicard{transform:scale(.82);transform-origin:bottom right}
+ #ctrlhint{display:none}
+ #statcard{width:196px}
+ #mtitle{font-size:40px;letter-spacing:6px}
+}
+</style>
+</head>
+<body>
+<canvas id="c3d"></canvas>
+<div id="loadnote">正在准备出海装备…</div>
+<div id="hud">
+  <div id="topbar">
+    <div id="daycard" class="glass card">
+      <div id="hudDay">第 1 天</div>
+      <div id="hudClock">06:00 晴</div>
+    </div>
+    <div id="weathercard" class="glass card">
+      <div id="wIcon" class="sun"></div>
+      <div>
+        <div id="wName">晴朗</div>
+        <div id="wDesc">风平浪静，适合航行</div>
+      </div>
+    </div>
+  </div>
+  <div id="rescard" class="glass card">
+    <div class="resrow rd-wood"><div class="rdot"><i id="piW"></i></div>木材<span class="rval"><span id="rvW">0</span><span class="rcap" id="rcW">/50</span></span></div>
+    <div class="resrow rd-food"><div class="rdot"><i id="piF"></i></div>食物<span class="rval"><span id="rvF">0</span><span class="rcap" id="rcF">/20</span></span></div>
+    <div class="resrow rd-water"><div class="rdot"><i id="piT"></i></div>淡水<span class="rval"><span id="rvT">0</span><span class="rcap" id="rcT">/20</span></span></div>
+    <div class="resrow rd-gold"><div class="rdot"><i id="piG"></i></div>金币<span class="rval" id="rvG">0</span></div>
+  </div>
+  <div id="statcard" class="glass card">
+    <div class="statrow"><span class="sname">饱食</span><div class="sbar b-hunger"><i id="bh"></i></div><span class="sval" id="vh">100</span></div>
+    <div class="statrow"><span class="sname">水分</span><div class="sbar b-thirst"><i id="bt"></i></div><span class="sval" id="vt">100</span></div>
+    <div class="statrow"><span class="sname">船体</span><div class="sbar b-hull"><i id="bp"></i></div><span class="sval" id="vp">100</span></div>
+  </div>
+  <div id="minicard" class="glass">
+    <canvas id="mini" width="336" height="336"></canvas>
+    <div id="minilbl">探索 <b id="expl">0%</b></div>
+  </div>
+  <div id="btns">
+    <button class="gbtn blue" id="btnUpgrade">船坞升级</button>
+    <button class="gbtn" id="btnPause">暂停</button>
+  </div>
+  <div id="warn"><div id="warndot"></div><span id="warntxt"></span></div>
+  <div id="toasts"></div>
+  <div id="prompt" class="glass"><span id="promptxt"></span></div>
+  <div id="ctrlhint">W/S 升降帆 · A/D 转舵 · <b>E</b> 船坞 · 滚轮 缩放视角</div>
+</div>
+<div id="menu">
+  <div id="menubox" class="glass">
+    <div id="mtitle">怒海求生</div>
+    <div id="msub">— 采 集 · 升 级 · 探 索 —</div>
+    <div id="mbtns">
+      <button class="gbtn hot big" id="btnStart">扬 帆 出 海</button>
+      <button class="gbtn big" id="btnResume">继续上次航行</button>
+      <button class="gbtn" id="btnHelp">玩法说明</button>
+    </div>
+    <div id="mhelp" style="display:none">
+      驾驶小船在无边大海中生存下去。<b>W/S</b> 升降帆、<b>A/D</b> 转舵，靠近漂浮物自动打捞。
+      <div class="sec"><b>生存</b>：饱食与水分会持续下降，靠打捞的食物和淡水补充；风暴会损伤船体，靠木材维修（自动消耗）。</div>
+      <div class="sec"><b>升级</b>：金币+木材在船坞升级船帆、船体、货舱、船灯、渔网，最终建造远洋巨轮通关。</div>
+      <div class="sec"><b>探索</b>：远离起点资源更丰富也更危险；发现岛屿有奖励；雷雨天雨水可补充淡水。</div>
+    </div>
+  </div>
+</div>
+<div id="panelWrap">
+  <div id="upanel" class="glass">
+    <div id="uptitle"><span>船坞 · 升级</span><button id="upclose">✕</button></div>
+    <div id="upsub">离岸维修中：靠岛时船体自动修复 · 木材会自动用于修补船体</div>
+    <div id="uplist"></div>
+  </div>
+</div>
+<div id="over">
+  <div id="overbox" class="glass">
+    <div id="ovtitle">航程结束</div>
+    <div id="ovsub"></div>
+    <button class="gbtn hot big" id="btnRestart">再 次 出 海</button>
+  </div>
+</div>
+<script src="vendor/three.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/three@0.158.0/build/three.min.js';document.head.appendChild(s);"></script>
+<script>
+var DAYLEN = 150;
+var WORLD_R = 880;
+var CELL = 64;
+var GRID_R = Math.ceil(WORLD_R / CELL);
+
+var state = {
+  phase: 'menu',
+  time: 0,
+  day: 1,
+  dayT: 0.25,
+  boat: { x: 0, z: 0, heading: 0, speed: 0, sail: 0 },
+  res: { wood: 10, food: 6, water: 6, gold: 0 },
+  stats: { hunger: 100, thirst: 100, hull: 100 },
+  lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 0 },
+  weather: { cur: 'sun', prev: 'sun', next: 'breeze', t: 60, warnT: 0, blend: 0 },
+  explored: {},
+  islandsFound: {},
+  mute: false,
+  playSec: 0,
+  hintShown: {}
+};
+
+var UPG = {
+  sail: {
+    name: '船帆', icon: 'ui-sail', max: 5,
+    eff: function (l) { return '航速 ' + (6.5 + l * 1.4).toFixed(1) + ' 节'; },
+    costG: [25, 55, 95, 150, 220],
+    costW: [8, 15, 25, 40, 60]
+  },
+  hull: {
+    name: '船体', icon: 'ui-hull', max: 5,
+    eff: function (l) { return '耐久上限 ' + (100 + (l - 1) * 35) + ' · 抗浪+' + ((l - 1) * 18) + '%'; },
+    costG: [20, 45, 85, 140, 210],
+    costW: [12, 22, 36, 55, 80]
+  },
+  hold: {
+    name: '货舱', icon: 'ui-hold', max: 5,
+    eff: function (l) { var c = holdCap(l); return '木材' + c[0] + ' 食物' + c[1] + ' 淡水' + c[2]; },
+    costG: [15, 35, 70, 120, 180],
+    costW: [5, 10, 18, 30, 45]
+  },
+  lamp: {
+    name: '船灯', icon: 'ui-lamp', max: 3,
+    eff: function (l) { return '雾中视野 ' + (260 + (l - 1) * 130) + ' 米'; },
+    costG: [30, 70, 130],
+    costW: [4, 8, 14]
+  },
+  net: {
+    name: '渔网', icon: 'ui-net', max: 3,
+    eff: function (l) { return l === 0 ? '尚未安装 · 无法打捞' : '自动打捞半径 ' + (3.2 + l * 2.6).toFixed(1) + ' 米'; },
+    costG: [40, 90, 160],
+    costW: [6, 12, 20]
+  }
+};
+
+var BUILD_NEED = { sail: 3, hull: 3, wood: 120, gold: 150 };
+
+var WDEF = {
+  sun: { name: '晴朗', desc: '风平浪静，适合航行', amp: 0.55, fogFar: 760, sunI: 1.0, sky: ['#7ec8ee', '#eaf7fd'], sea: ['#37a7d8', '#8fd8ef'], w: 0.62 },
+  breeze: { name: '起风', desc: '浪渐增大，航速提升', amp: 1.0, fogFar: 640, sunI: 0.92, sky: ['#8fcbe8', '#eef6f8'], sea: ['#2f9ccc', '#84cfe8'], w: 0.24 },
+  fog: { name: '浓雾', desc: '视野受限，小心礁石', amp: 0.7, fogFar: 0, sunI: 0.75, sky: ['#b8d2de', '#eef3f5'], sea: ['#4f9fbf', '#93c4d4'], w: 0.14 },
+  storm: { name: '雷暴', desc: '巨浪拍船！注意维修', amp: 2.1, fogFar: 420, sunI: 0.55, sky: ['#5f7f9a', '#a8bfd0'], sea: ['#2a7ba6', '#6fb0c9'], w: 0 }
+};
+
+var WSEQ = { sun: ['breeze', 'fog'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
+var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], storm: [30, 46] };
+
+function holdCap(l) { return [50 + (l - 1) * 30, 20 + (l - 1) * 12, 20 + (l - 1) * 12]; }
+function maxHull() { return 100 + (state.lv.hull - 1) * 35; }
+function boatSpeedMax() { return 6.5 + state.lv.sail * 1.4; }
+function pickupR() { return state.lv.net === 0 ? 0 : 3.2 + state.lv.net * 2.6; }
+function fogFarBase() { return 260 + (state.lv.lamp - 1) * 130; }
+
+function save() {
+  try {
+    var d = {
+      v: 1, time: state.time, day: state.day, dayT: state.dayT,
+      boat: state.boat, res: state.res, stats: state.stats, lv: state.lv,
+      weather: { cur: state.weather.cur, t: state.weather.t },
+      explored: state.explored, islandsFound: state.islandsFound,
+      playSec: state.playSec, mute: state.mute
+    };
+    localStorage.setItem('nuhai_save', JSON.stringify(d));
+  } catch (e) { }
+}
+function loadSave() {
+  try {
+    var s = localStorage.getItem('nuhai_save');
+    if (!s) return null;
+    var d = JSON.parse(s);
+    if (!d || d.v !== 1) return null;
+    return d;
+  } catch (e) { return null; }
+}
+function clearSave() { try { localStorage.removeItem('nuhai_save'); } catch (e) { } }
+
+var AC = null, masterG = null, ambG = null, ambSrc = null, ambFilter = null;
+function initAudio() {
+  if (AC) return;
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    masterG = AC.createGain();
+    masterG.gain.value = state.mute ? 0 : 0.8;
+    masterG.connect(AC.destination);
+    var len = AC.sampleRate * 2;
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var ch = buf.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < len; i++) { var wn = Math.random() * 2 - 1; last = (last + 0.02 * wn) / 1.02; ch[i] = last * 3.2; }
+    ambSrc = AC.createBufferSource();
+    ambSrc.buffer = buf; ambSrc.loop = true;
+    ambFilter = AC.createBiquadFilter(); ambFilter.type = 'lowpass'; ambFilter.frequency.value = 420;
+    ambG = AC.createGain(); ambG.gain.value = 0.05;
+    ambSrc.connect(ambFilter); ambFilter.connect(ambG); ambG.connect(masterG);
+    ambSrc.start();
+  } catch (e) { AC = null; }
+}
+function setMute(m) {
+  state.mute = m;
+  if (masterG) masterG.gain.value = m ? 0 : 0.8;
+}
+function blip(freq, dur, type, vol, slide) {
+  if (!AC || state.mute) return;
+  try {
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, slide), AC.currentTime + dur);
+    g.gain.setValueAtTime(vol || 0.15, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+    o.connect(g); g.connect(masterG);
+    o.start(); o.stop(AC.currentTime + dur + 0.02);
+  } catch (e) { }
+}
+function sfxPickup(kind) {
+  if (kind === 'gold') blip(880, 0.22, 'triangle', 0.2, 1320);
+  else if (kind === 'chest') { blip(520, 0.3, 'triangle', 0.22, 780); setTimeout(function () { blip(780, 0.35, 'triangle', 0.2, 1170); }, 140); }
+  else blip(440 + Math.random() * 120, 0.16, 'sine', 0.16, 620);
+}
+function sfxUp() { blip(392, 0.16, 'triangle', 0.18); setTimeout(function () { blip(523, 0.16, 'triangle', 0.18); }, 120); setTimeout(function () { blip(659, 0.3, 'triangle', 0.18); }, 240); }
+function sfxThunder() {
+  if (!AC || state.mute) return;
+  try {
+    var dur = 1.6, len = Math.floor(AC.sampleRate * dur);
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var ch = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) { var t = i / len; ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * (t < 0.04 ? t / 0.04 : 1); }
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 240;
+    var g = AC.createGain(); g.gain.value = 0.6;
+    src.connect(f); f.connect(g); g.connect(masterG); src.start();
+  } catch (e) { }
+}
+function sfxCrash() { blip(120, 0.4, 'sawtooth', 0.25, 55); }
+function sfxLose() { blip(330, 0.5, 'sine', 0.2, 165); setTimeout(function () { blip(220, 0.9, 'sine', 0.2, 82); }, 350); }
+function sfxWin() {
+  var seq = [523, 659, 784, 1046];
+  for (var i = 0; i < seq.length; i++) (function (f, d) { setTimeout(function () { blip(f, 0.35, 'triangle', 0.2); }, d); })(seq[i], i * 180);
+}
+
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function rand(a, b) { return a + Math.random() * (b - a); }
+function randi(a, b) { return Math.floor(rand(a, b + 1)); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function lerpColor(c1, c2, t) {
+  c1.lerp(c2, t);
+}
+function angLerp(a, b, t) {
+  var d = b - a;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return a + d * t;
+}
+function fmtClock(dayT) {
+  var h = Math.floor(dayT * 24), m = Math.floor((dayT * 24 - h) * 60);
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+function waveH(x, z, t, amp) {
+  return (Math.sin(x * 0.055 + t * 1.1) + Math.sin(z * 0.047 - t * 0.9) + Math.sin((x + z) * 0.031 + t * 0.6) * 1.3) * amp * 0.62;
+}
+function waveSlope(x, z, t, amp) {
+  var e = 0.6;
+  var hx = waveH(x + e, z, t, amp) - waveH(x - e, z, t, amp);
+  var hz = waveH(x, z + e, t, amp) - waveH(x, z - e, t, amp);
+  return { x: hx / (2 * e), z: hz / (2 * e) };
+}
+function ringDist(x, z) { return Math.sqrt(x * x + z * z); }
+var canvas = document.getElementById('c3d');
+var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+var scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xeaf7fd, 60, 760);
+var camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 3000);
+camera.position.set(0, 14, -22);
+
+var hemi = new THREE.HemisphereLight(0xbfe8ff, 0xe8d9b8, 0.85);
+scene.add(hemi);
+var sun = new THREE.DirectionalLight(0xfff4dd, 1.25);
+sun.position.set(120, 200, 80);
+scene.add(sun);
+
+var skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: {
+    uTop: { value: new THREE.Color('#7ec8ee') },
+    uBot: { value: new THREE.Color('#eaf7fd') },
+    uSunDir: { value: new THREE.Vector3(0.4, 0.7, 0.3) },
+    uSunC: { value: new THREE.Color('#fff2c0') },
+    uNight: { value: 0 },
+    uTime: { value: 0 }
+  },
+  vertexShader: 'varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*viewMatrix*vec4(position+cameraPosition,1.0);}',
+  fragmentShader: [
+    'uniform vec3 uTop,uBot,uSunC;uniform vec3 uSunDir;uniform float uNight,uTime;varying vec3 vD;',
+    'float h3(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,45.164)))*43758.5453);}',
+    'void main(){vec3 d=normalize(vD);float h=clamp(d.y*0.5+0.5,0.0,1.0);',
+    'vec3 col=mix(uBot,uTop,pow(h,0.85));',
+    'float s=max(dot(d,normalize(uSunDir)),0.0);',
+    'col+=uSunC*(pow(s,320.0)*1.4+pow(s,7.0)*0.14);',
+    'if(d.y>0.02&&uNight>0.01){vec3 g=floor(d*160.0);float st=h3(g);',
+    'if(st>0.9975){float tw=0.55+0.45*sin(uTime*2.5+st*80.0);col+=vec3(0.9,0.95,1.0)*uNight*tw*smoothstep(0.02,0.25,d.y);}}',
+    'gl_FragColor=vec4(col,1.0);',
+    '#include <colorspace_fragment>',
+    '}'
+  ].join('\n')
+});
+var skyMesh = new THREE.Mesh(new THREE.SphereGeometry(1400, 28, 18), skyMat);
+skyMesh.renderOrder = -10;
+scene.add(skyMesh);
+
+var seaMat = new THREE.ShaderMaterial({
+  fog: false,
+  uniforms: {
+    uTime: { value: 0 }, uAmp: { value: 0.55 },
+    cDeep: { value: new THREE.Color('#37a7d8') },
+    cShallow: { value: new THREE.Color('#8fd8ef') },
+    cFog: { value: new THREE.Color('#eaf7fd') },
+    uSun: { value: new THREE.Vector3(0.4, 0.7, 0.3) },
+    uFogFar: { value: 760 }
+  },
+  vertexShader: [
+    'uniform float uTime,uAmp;varying vec3 vW;varying float vWave;',
+    'float wav(vec2 p,float t){return (sin(p.x*0.055+t*1.1)+sin(p.y*0.047-t*0.9)+sin((p.x+p.y)*0.031+t*0.6)*1.3)*uAmp*0.62;}',
+    'void main(){vec4 wp=modelMatrix*vec4(position,1.0);float h=wav(wp.xz,uTime);wp.y+=h;vW=wp.xyz;vWave=h;',
+    'gl_Position=projectionMatrix*viewMatrix*wp;}'
+  ].join('\n'),
+  fragmentShader: [
+    'uniform vec3 cDeep,cShallow,cFog,uSun;uniform float uTime,uFogFar;varying vec3 vW;varying float vWave;',
+    'void main(){float t=clamp(vWave*0.35+0.5,0.0,1.0);',
+    'vec3 col=mix(cDeep,cShallow,t*0.7+0.12);',
+    'vec2 rv=vec2(sin(vW.x*0.9+uTime*2.0)+sin(vW.z*1.13-uTime*1.7),cos(vW.x*0.71-uTime*1.3)+cos(vW.z*0.83+uTime*1.1));',
+    'col+=vec3(0.055)*smoothstep(1.2,2.6,rv.x+rv.y);',
+    'vec3 vd=normalize(cameraPosition-vW);vec3 sn=normalize(vec3(rv.x*0.08,1.0,rv.y*0.08));',
+    'vec3 rf=reflect(-normalize(uSun),sn);float sp=pow(max(dot(vd,rf),0.0),70.0);',
+    'col+=vec3(1.0,0.95,0.8)*sp*0.85;',
+    'float fd=distance(cameraPosition,vW);col=mix(col,cFog,smoothstep(uFogFar*0.35,uFogFar,fd));',
+    'gl_FragColor=vec4(col,1.0);',
+    '#include <colorspace_fragment>',
+    '}'
+  ].join('\n')
+});
+var seaGeo = new THREE.PlaneGeometry(2400, 2400, 120, 120);
+seaGeo.rotateX(-Math.PI / 2);
+var seaMesh = new THREE.Mesh(seaGeo, seaMat);
+scene.add(seaMesh);
+
+var MAT = {
+  hull: new THREE.MeshLambertMaterial({ color: 0xb5793f }),
+  hullDk: new THREE.MeshLambertMaterial({ color: 0x8a5a2e }),
+  deck: new THREE.MeshLambertMaterial({ color: 0xd8b98a }),
+  mast: new THREE.MeshLambertMaterial({ color: 0x9a6a38 }),
+  sail: new THREE.MeshLambertMaterial({ color: 0xfdfdf8, side: THREE.DoubleSide }),
+  flag: new THREE.MeshLambertMaterial({ color: 0xef6f3c, side: THREE.DoubleSide }),
+  rock: new THREE.MeshLambertMaterial({ color: 0x5e7d8e }),
+  sand: new THREE.MeshLambertMaterial({ color: 0xf2dfae }),
+  grass: new THREE.MeshLambertMaterial({ color: 0x8fc95e }),
+  trunk: new THREE.MeshLambertMaterial({ color: 0xa9743f }),
+  leaf: new THREE.MeshLambertMaterial({ color: 0x62b04a }),
+  barrel: new THREE.MeshLambertMaterial({ color: 0xc98d4e }),
+  crate: new THREE.MeshLambertMaterial({ color: 0xd8a86a }),
+  crateDk: new THREE.MeshLambertMaterial({ color: 0xb0824a }),
+  water: new THREE.MeshLambertMaterial({ color: 0x59b8e8 }),
+  goldM: new THREE.MeshLambertMaterial({ color: 0xf2c14e, emissive: 0x664c10 }),
+  chest: new THREE.MeshLambertMaterial({ color: 0x9a6a38 }),
+  chestGold: new THREE.MeshLambertMaterial({ color: 0xffd75e, emissive: 0x8a6a10 }),
+  white: new THREE.MeshLambertMaterial({ color: 0xffffff }),
+  ring: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false }),
+  ringGold: new THREE.MeshBasicMaterial({ color: 0xffd75e, transparent: true, opacity: 0.5, depthWrite: false })
+};
+
+function box(w, h, d, m) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); }
+function cyl(rt, rb, h, m, seg) { return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 10), m); }
+
+var boat = new THREE.Group();
+(function buildBoat() {
+  var body = box(2.4, 1.0, 5.4, MAT.hull); body.position.y = 0.1; boat.add(body);
+  var bowL = box(2.4, 1.0, 1.6, MAT.hull); bowL.position.set(0, 0.1, 3.3); bowL.rotation.y = Math.PI / 4; bowL.scale.set(0.72, 1, 0.72); boat.add(bowL);
+  var bowR = box(2.4, 1.0, 1.6, MAT.hull); bowR.position.set(0, 0.1, 3.3); bowR.rotation.y = -Math.PI / 4; bowR.scale.set(0.72, 1, 0.72); boat.add(bowR);
+  var stern = box(2.2, 0.9, 1.0, MAT.hull); stern.position.set(0, 0.15, -2.9); boat.add(stern);
+  var deckM = box(2.0, 0.12, 5.0, MAT.deck); deckM.position.y = 0.62; boat.add(deckM);
+  var rail1 = box(0.14, 0.22, 5.6, MAT.hullDk); rail1.position.set(1.18, 0.76, 0); boat.add(rail1);
+  var rail2 = rail1.clone(); rail2.position.x = -1.18; boat.add(rail2);
+  var rail3 = box(2.5, 0.22, 0.14, MAT.hullDk); rail3.position.set(0, 0.76, -2.8); boat.add(rail3);
+  var mast = cyl(0.09, 0.13, 5.2, MAT.mast); mast.position.set(0, 3.2, 0.2); boat.add(mast);
+  var yard = cyl(0.06, 0.06, 2.9, MAT.mast); yard.rotation.z = Math.PI / 2; yard.position.set(0, 5.0, 0.2); boat.add(yard);
+  var sailGeo = new THREE.PlaneGeometry(2.7, 3.4, 10, 1);
+  var sail = new THREE.Mesh(sailGeo, MAT.sail); sail.position.set(0, 3.3, 0.16); boat.add(sail);
+  boat.userData.sail = sail;
+  var foreMast = cyl(0.06, 0.08, 3.4, MAT.mast); foreMast.position.set(0, 2.3, 2.6); boat.add(foreMast);
+  var foreSail = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.0, 8, 1), MAT.sail);
+  foreSail.position.set(0, 2.5, 2.7); boat.add(foreSail);
+  boat.userData.foreSail = foreSail;
+  var flag = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.5), MAT.flag);
+  flag.position.set(0.5, 5.6, 0.2); boat.add(flag);
+  boat.userData.flag = flag;
+  var lampPole = cyl(0.05, 0.05, 1.1, MAT.mast);
+  lampPole.position.set(0, 1.2, -2.6); boat.add(lampPole);
+  var lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }));
+  lampBulb.position.set(0, 1.8, -2.6); boat.add(lampBulb);
+  boat.userData.lampBulb = lampBulb;
+  var lampLight = new THREE.PointLight(0xffdf90, 0, 26, 2);
+  lampLight.position.set(0, 2.1, -2.6); boat.add(lampLight);
+  boat.userData.lampLight = lampLight;
+  var cabin = box(1.5, 0.9, 1.2, MAT.hullDk); cabin.position.set(0, 1.1, -1.7); boat.add(cabin);
+  var cabinRoof = box(1.7, 0.14, 1.4, MAT.deck); cabinRoof.position.set(0, 1.6, -1.7); boat.add(cabinRoof);
+})();
+scene.add(boat);
+
+var ISLAND_NAMES = ['椰风屿', '海鸥岩', '星沙洲', '月牙湾', '翠竹屿', '浪花礁', '晨曦岛', '迷雾洲', '珊瑚屿', '望归崖', '白帆洲', '鲸背岛'];
+var islands = [];
+(function buildIslands() {
+  for (var i = 0; i < 11; i++) {
+    var ang = (i / 11) * Math.PI * 2 + rand(-0.2, 0.2);
+    var dist = 210 + (i % 5) * 135 + rand(-40, 40);
+    var ix = Math.cos(ang) * dist, iz = Math.sin(ang) * dist;
+    var g = new THREE.Group();
+    var r = rand(14, 22);
+    var base = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 6), MAT.sand);
+    base.scale.y = 0.28; base.position.y = -r * 0.16; g.add(base);
+    var hill = new THREE.Mesh(new THREE.ConeGeometry(r * 0.55, r * 0.7, 7), MAT.grass);
+    hill.position.y = r * 0.16; g.add(hill);
+    for (var p = 0; p < 3; p++) {
+      var palm = new THREE.Group();
+      var tr = cyl(0.16, 0.28, 4.2, MAT.trunk, 7);
+      tr.position.y = 2.1; tr.rotation.z = rand(-0.18, 0.18); palm.add(tr);
+      for (var l = 0; l < 5; l++) {
+        var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.6, 4), MAT.leaf);
+        var la = (l / 5) * Math.PI * 2;
+        leaf.position.set(Math.cos(la) * 1.0, 4.3, Math.sin(la) * 1.0);
+        leaf.rotation.set(Math.sin(la) * 1.1, 0, -Math.cos(la) * 1.1 + Math.PI / 2);
+        palm.add(leaf);
+      }
+      var pa = rand(0, Math.PI * 2), pr = rand(2, r * 0.55);
+      palm.position.set(Math.cos(pa) * pr, 0.5, Math.sin(pa) * pr);
+      g.add(palm);
+    }
+    g.position.set(ix, 0, iz);
+    g.userData = { x: ix, z: iz, r: r + 3, name: ISLAND_NAMES[i], id: 'is' + i, found: false };
+    scene.add(g);
+    islands.push(g);
+  }
+})();
+
+var rocks = [];
+(function buildRocks() {
+  for (var i = 0; i < 34; i++) {
+    var ang = rand(0, Math.PI * 2);
+    var dist = rand(120, WORLD_R - 60);
+    var m = new THREE.Mesh(new THREE.DodecahedronGeometry(rand(1.6, 3.4), 0), MAT.rock);
+    var rx = Math.cos(ang) * dist, rz = Math.sin(ang) * dist;
+    m.position.set(rx, rand(-1.2, -0.4), rz);
+    m.rotation.set(rand(0, 3), rand(0, 3), rand(0, 3));
+    m.userData = { x: rx, z: rz, r: 3 };
+    scene.add(m); rocks.push(m);
+  }
+})();
+
+var clouds = [];
+(function buildClouds() {
+  var cm = new THREE.MeshLambertMaterial({ color: 0xffffff, fog: false, transparent: true, opacity: 0.92 });
+  for (var i = 0; i < 8; i++) {
+    var g = new THREE.Group();
+    var n = randi(4, 6);
+    for (var j = 0; j < n; j++) {
+      var s = new THREE.Mesh(new THREE.SphereGeometry(rand(7, 14), 8, 6), cm);
+      s.position.set(rand(-16, 16), rand(-2, 3), rand(-7, 7));
+      s.scale.y = 0.55; g.add(s);
+    }
+    g.position.set(rand(-700, 700), rand(95, 150), rand(-700, 700));
+    g.userData = { vx: rand(1.2, 2.6) };
+    scene.add(g); clouds.push(g);
+  }
+})();
+
+var gulls = [];
+(function buildGulls() {
+  var gm = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false });
+  for (var i = 0; i < 4; i++) {
+    var g = new THREE.Group();
+    var wL = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.4), gm); wL.position.x = -0.65;
+    var wR = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.4), gm); wR.position.x = 0.65;
+    g.add(wL); g.add(wR);
+    g.userData = { a: rand(0, Math.PI * 2), r: rand(18, 34), h: rand(9, 15), sp: rand(0.25, 0.45), wL: wL, wR: wR, ph: rand(0, 6) };
+    scene.add(g); gulls.push(g);
+  }
+})();
+
+var floaters = [];
+function makeFloater(kind) {
+  var g = new THREE.Group();
+  if (kind === 'wood') {
+    for (var i = 0; i < 3; i++) {
+      var log = cyl(0.28, 0.28, 2.2, MAT.trunk, 8);
+      log.rotation.z = Math.PI / 2; log.rotation.y = rand(-0.3, 0.3);
+      log.position.set(rand(-0.2, 0.2), 0.28 + (i % 2) * 0.5, rand(-0.2, 0.2));
+      g.add(log);
+    }
+  } else if (kind === 'food') {
+    var cr = box(1.3, 0.9, 1.3, MAT.crate); cr.position.y = 0.45; g.add(cr);
+    var lid = box(1.4, 0.14, 1.4, MAT.crateDk); lid.position.y = 0.95; g.add(lid);
+  } else if (kind === 'water') {
+    var bar = cyl(0.62, 0.62, 1.1, MAT.barrel, 12); bar.position.y = 0.55; g.add(bar);
+    var band = cyl(0.66, 0.66, 0.16, MAT.water, 12); band.position.y = 0.55; g.add(band);
+  } else if (kind === 'gold') {
+    var bag = new THREE.Mesh(new THREE.SphereGeometry(0.62, 10, 8), MAT.crateDk);
+    bag.scale.y = 0.9; bag.position.y = 0.5; g.add(bag);
+    var coin = cyl(0.36, 0.36, 0.1, MAT.goldM, 12); coin.position.y = 1.15; coin.rotation.x = 0.35; g.add(coin);
+    var coin2 = cyl(0.26, 0.26, 0.08, MAT.goldM, 12); coin2.position.set(0.2, 1.3, 0.1); coin2.rotation.z = 0.5; g.add(coin2);
+  } else {
+    var cb = box(1.5, 0.8, 1.0, MAT.chest); cb.position.y = 0.4; g.add(cb);
+    var cl = box(1.5, 0.3, 1.0, MAT.chest); cl.position.set(0, 0.95, -0.3); cl.rotation.x = -0.5; g.add(cl);
+    var gl = box(1.1, 0.2, 0.7, MAT.chestGold); gl.position.y = 0.86; g.add(gl);
+  }
+  var rm = kind === 'chest' ? MAT.ringGold : MAT.ring;
+  var ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 24), rm);
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.1;
+  g.add(ring);
+  g.userData = { kind: kind, ring: ring, ph: rand(0, 6.28), drift: rand(0, Math.PI * 2), life: 0 };
+  return g;
+}
+function spawnFloater(kind, x, z) {
+  var m = makeFloater(kind);
+  m.position.set(x, 0, z);
+  scene.add(m);
+  floaters.push(m);
+  return m;
+}
+function removeFloater(m) {
+  var i = floaters.indexOf(m);
+  if (i >= 0) floaters.splice(i, 1);
+  scene.remove(m);
+  m.traverse(function (o) { if (o.geometry && o.geometry !== seaGeo) o.geometry.dispose(); });
+}
+
+var RAIN_N = 1200;
+var rainGeo = new THREE.BufferGeometry();
+var rainPos = new Float32Array(RAIN_N * 6);
+var rainDat = [];
+for (var ri = 0; ri < RAIN_N; ri++) rainDat.push({ x: 0, y: -100, z: 0, v: 0 });
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+var rainMat = new THREE.LineBasicMaterial({ color: 0xbfe0f0, transparent: true, opacity: 0.0 });
+var rainMesh = new THREE.LineSegments(rainGeo, rainMat);
+rainMesh.frustumCulled = false;
+scene.add(rainMesh);
+
+var FOAM_N = 150;
+var foamGeo = new THREE.BufferGeometry();
+var foamPos = new Float32Array(FOAM_N * 3);
+var foamDat = [];
+for (var fi = 0; fi < FOAM_N; fi++) foamDat.push({ life: 0, x: 0, y: 0, z: 0, vy: 0 });
+foamGeo.setAttribute('position', new THREE.BufferAttribute(foamPos, 3));
+var foamMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.55, transparent: true, opacity: 0.85, depthWrite: false });
+var foamMesh = new THREE.Points(foamGeo, foamMat);
+foamMesh.frustumCulled = false;
+scene.add(foamMesh);
+
+var camCtl = { dist: 16, yaw: 0, pitch: 0.42, user: 0 };
+var keys = {};
+window.addEventListener('keydown', function (e) {
+  keys[e.code] = true;
+  if (e.code === 'KeyE' && state.phase === 'play') togglePanel();
+  if (e.code === 'KeyM') { setMute(!state.mute); toast(state.mute ? '声音已关闭' : '声音已开启'); }
+  if ((e.code === 'KeyP' || e.code === 'Escape') && (state.phase === 'play' || state.phase === 'pause')) togglePause();
+  if (e.code === 'Space' && state.phase === 'play') e.preventDefault();
+});
+window.addEventListener('keyup', function (e) { keys[e.code] = false; });
+
+canvas.addEventListener('wheel', function (e) {
+  e.preventDefault();
+  camCtl.dist = clamp(camCtl.dist + e.deltaY * 0.012, 9, 34);
+}, { passive: false });
+
+var touch = { joy: null, cam: null, steer: 0, sailIn: 0 };
+canvas.addEventListener('touchstart', function (e) {
+  e.preventDefault();
+  for (var i = 0; i < e.changedTouches.length; i++) {
+    var t = e.changedTouches[i];
+    if (t.clientX < window.innerWidth * 0.55 && !touch.joy) touch.joy = { id: t.identifier, x0: t.clientX, y0: t.clientY };
+    else if (!touch.cam) touch.cam = { id: t.identifier, x: t.clientX };
+  }
+}, { passive: false });
+canvas.addEventListener('touchmove', function (e) {
+  e.preventDefault();
+  for (var i = 0; i < e.changedTouches.length; i++) {
+    var t = e.changedTouches[i];
+    if (touch.joy && t.identifier === touch.joy.id) {
+      var dx = t.clientX - touch.joy.x0, dy = t.clientY - touch.joy.y0;
+      touch.steer = clamp(dx / 62, -1, 1);
+      touch.sailIn = clamp(-dy / 62, -1, 1);
+    } else if (touch.cam && t.identifier === touch.cam.id) {
+      camCtl.user -= (t.clientX - touch.cam.x) * 0.008;
+      touch.cam.x = t.clientX;
+    }
+  }
+}, { passive: false });
+function touchEnd(e) {
+  for (var i = 0; i < e.changedTouches.length; i++) {
+    var t = e.changedTouches[i];
+    if (touch.joy && t.identifier === touch.joy.id) { touch.joy = null; touch.steer = 0; touch.sailIn = 0; }
+    if (touch.cam && t.identifier === touch.cam.id) touch.cam = null;
+  }
+}
+canvas.addEventListener('touchend', touchEnd);
+canvas.addEventListener('touchcancel', touchEnd);
+
+var visW = {
+  amp: 0.55, fogFar: 760, sunI: 1.0,
+  skyTop: new THREE.Color('#7ec8ee'), skyBot: new THREE.Color('#eaf7fd'),
+  seaDeep: new THREE.Color('#37a7d8'), seaShal: new THREE.Color('#8fd8ef'),
+  fogC: new THREE.Color('#eaf7fd'), rain: 0, wind: 0.62
+};
+var lightning = { t: 5, flash: 0 };
+var hitCD = 0, edgeCD = 0, eatT = 0, drinkT = 0, fixT = 0, spawnT = 1.5, expT = 0, fullHintCD = 0;
+var windAng = 0;
+
+function pickWeatherNext(cur) {
+  var n = pick(WSEQ[cur]);
+  var d = ringDist(state.boat.x, state.boat.z);
+  if (n === 'storm' && d < 300 && Math.random() < 0.45) n = 'breeze';
+  if (n !== 'storm' && n !== 'fog' && d > 620 && Math.random() < 0.22) n = 'storm';
+  return n;
+}
+
+function updateWeather(dt) {
+  var w = state.weather;
+  w.t -= dt;
+  if (w.t <= 8 && w.t + dt > 8 && w.next !== w.cur) showWarn(w.next);
+  if (w.t <= 0) {
+    w.prev = w.cur; w.cur = w.next;
+    w.next = pickWeatherNext(w.cur);
+    w.t = rand(WTIME[w.cur][0], WTIME[w.cur][1]);
+    hideWarn();
+    onWeatherChange();
+  }
+  var def = WDEF[w.cur];
+  var targetFar = w.cur === 'fog' ? fogFarBase() : def.fogFar;
+  visW.amp = lerp(visW.amp, def.amp, dt * 0.5);
+  visW.fogFar = lerp(visW.fogFar, targetFar, dt * 0.5);
+  visW.sunI = lerp(visW.sunI, def.sunI, dt * 0.5);
+  visW.skyTop.lerp(new THREE.Color(def.sky[0]), dt * 0.5);
+  visW.skyBot.lerp(new THREE.Color(def.sky[1]), dt * 0.5);
+  visW.seaDeep.lerp(new THREE.Color(def.sea[0]), dt * 0.5);
+  visW.seaShal.lerp(new THREE.Color(def.sea[1]), dt * 0.5);
+  visW.fogC.copy(visW.skyBot);
+  var rainT = w.cur === 'storm' ? 0.5 : 0;
+  visW.rain = lerp(visW.rain, rainT, dt * 0.8);
+  visW.wind = lerp(visW.wind, def.w, dt * 0.4);
+
+  if (w.cur === 'storm') {
+    var dmg = Math.max(0.3, 1.55 - (state.lv.hull - 1) * 0.24);
+    state.stats.hull -= dmg * dt;
+    state.res.water = Math.min(holdCap(state.lv.hold)[2], state.res.water + 1.5 * dt);
+    lightning.t -= dt;
+    if (lightning.t <= 0) {
+      lightning.t = rand(2.5, 8);
+      lightning.flash = 1;
+      sfxThunder();
+    }
+  }
+  lightning.flash = Math.max(0, lightning.flash - dt * 2.8);
+  windAng += dt * 0.12;
+}
+
+function onWeatherChange() {
+  var w = state.weather;
+  var msgs = {
+    sun: '天气转晴，海面平静', breeze: '起风了，正好扬帆',
+    fog: '浓雾来袭，打开船灯慢行', storm: '雷暴来袭！尽快修船'
+  };
+  toast(msgs[w.cur], w.cur === 'storm' ? 'gold' : '');
+  if (ambG) ambG.gain.value = w.cur === 'storm' ? 0.16 : w.cur === 'breeze' ? 0.08 : 0.05;
+  if (ambFilter) ambFilter.frequency.value = w.cur === 'storm' ? 700 : 420;
+  updateWeatherHUD();
+}
+
+function updateDayNight(dt) {
+  state.dayT += dt / DAYLEN;
+  if (state.dayT >= 1) { state.dayT -= 1; state.day++; toast('第 ' + state.day + ' 天开始了', 'gold'); }
+  var elev = Math.sin((state.dayT - 0.25) * Math.PI * 2);
+  var night = clamp(-elev * 1.8, 0, 1);
+  var dusk = clamp(1 - Math.abs(elev) * 2.6, 0, 1);
+  var sunA = (state.dayT - 0.25) * Math.PI * 2;
+  var sd = new THREE.Vector3(Math.cos(sunA) * 0.7, Math.max(0.12, Math.sin(sunA)), 0.45).normalize();
+  skyMat.uniforms.uSunDir.value.copy(elev > 0 ? sd : new THREE.Vector3(-0.3, 0.5, -0.4));
+  seaMat.uniforms.uSun.value.copy(skyMat.uniforms.uSunDir.value);
+
+  var dayTop = visW.skyTop.clone(), dayBot = visW.skyBot.clone();
+  var nightTop = new THREE.Color('#1c3a5e'), nightBot = new THREE.Color('#41678e');
+  nightTop.lerp(new THREE.Color('#0f2440'), 0.35);
+  var duskTop = new THREE.Color('#7a6f96'), duskBot = new THREE.Color('#f4c99a');
+  var top = dayTop.clone().lerp(duskTop, dusk).lerp(nightTop, night);
+  var bot = dayBot.clone().lerp(duskBot, dusk).lerp(nightBot, night);
+  skyMat.uniforms.uTop.value.copy(top);
+  skyMat.uniforms.uBot.value.copy(bot);
+  skyMat.uniforms.uNight.value = night;
+
+  var dayFogC = visW.fogC.clone();
+  var nightFogC = new THREE.Color('#3d5c7e');
+  var fc = dayFogC.lerp(nightFogC, night * 0.8);
+  scene.fog.color.copy(fc);
+  var farScale = 1 - night * 0.3;
+  scene.fog.far = visW.fogFar * farScale;
+  scene.fog.near = scene.fog.far * 0.09;
+
+  hemi.intensity = lerp(0.85 * visW.sunI + 0.25, 0.62, night);
+  hemi.color.set(night > 0.5 ? '#8fb4d8' : '#bfe8ff');
+  if (elev > -0.08) {
+    sun.color.set(night > 0.4 ? '#a8c8ee' : dusk > 0.4 ? '#ffd9a8' : '#fff4dd');
+    sun.intensity = lerp(Math.max(0.25, visW.sunI * 1.25), 0.5, night) + lightning.flash * 2.2;
+    sun.position.copy(sd).multiplyScalar(260);
+  } else {
+    sun.color.set('#a8c8ee');
+    sun.intensity = 0.42 + lightning.flash * 2.2;
+    sun.position.set(-90, 140, -120);
+  }
+  var lampOn = night > 0.25 || state.weather.cur === 'fog' || state.weather.cur === 'storm';
+  boat.userData.lampLight.intensity = lampOn ? 0.9 + Math.sin(state.time * 7) * 0.06 : 0;
+  boat.userData.lampBulb.material.color.set(lampOn ? '#ffe9a8' : '#d8c9a0');
+}
+
+function updateBoat(dt) {
+  var b = state.boat;
+  var up = (keys.KeyW || keys.ArrowUp || touch.sailIn > 0.15) ? 1 : 0;
+  var dn = (keys.KeyS || keys.ArrowDown || touch.sailIn < -0.15) ? 1 : 0;
+  var lf = (keys.KeyA || keys.ArrowLeft || touch.steer < -0.1) ? 1 : 0;
+  var rt = (keys.KeyD || keys.ArrowRight || touch.steer > 0.1) ? 1 : 0;
+  b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
+  var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
+  var target = b.sail * maxS;
+  b.speed = lerp(b.speed, target, dt * (target > b.speed ? 0.32 : 0.5));
+  var rud = (rt - lf) * (touch.steer !== 0 ? Math.abs(touch.steer) : 1);
+  if (touch.steer !== 0) rud = touch.steer;
+  var spdF = 0.35 + (b.speed / Math.max(1, boatSpeedMax())) * 0.7;
+  b.heading -= rud * dt * 1.15 * spdF;
+  var fx = Math.sin(b.heading), fz = Math.cos(b.heading);
+  b.x += fx * b.speed * dt;
+  b.z += fz * b.speed * dt;
+
+  if (state.weather.cur === 'storm') {
+    b.x += Math.cos(windAng) * 1.1 * dt;
+    b.z += Math.sin(windAng) * 1.1 * dt;
+  }
+
+  var d = ringDist(b.x, b.z);
+  if (d > WORLD_R) {
+    b.x *= WORLD_R / d; b.z *= WORLD_R / d;
+    edgeCD -= dt;
+    if (edgeCD <= 0) { toast('已是海域尽头，调头探索别处吧'); edgeCD = 8; }
+  }
+
+  hitCD = Math.max(0, hitCD - dt);
+  for (var i = 0; i < islands.length; i++) {
+    var u = islands[i].userData;
+    var dd = Math.hypot(b.x - u.x, b.z - u.z);
+    if (dd < u.r + 2.2) {
+      var nx = (b.x - u.x) / dd, nz = (b.z - u.z) / dd;
+      b.x = u.x + nx * (u.r + 2.2); b.z = u.z + nz * (u.r + 2.2);
+      if (hitCD <= 0 && b.speed > 2) {
+        state.stats.hull -= 5; hitCD = 1.2; sfxCrash();
+        toast('撞上了 ' + u.name + ' 的浅滩！');
+      }
+      b.speed *= 0.4;
+    } else if (!u.found && dd < u.r + 75) {
+      u.found = true;
+      state.islandsFound[u.id] = 1;
+      state.res.gold += 15;
+      toast('发现新岛屿：' + u.name + '，金币 +15', 'gold');
+      blip(660, 0.3, 'triangle', 0.2, 990);
+    }
+  }
+  for (var r = 0; r < rocks.length; r++) {
+    var ru = rocks[r].userData;
+    var rd = Math.hypot(b.x - ru.x, b.z - ru.z);
+    if (rd < ru.r + 1.8) {
+      var push = (ru.r + 1.8) / Math.max(rd, 0.01);
+      b.x = ru.x + (b.x - ru.x) * push;
+      b.z = ru.z + (b.z - ru.z) * push;
+      if (hitCD <= 0 && b.speed > 2.5) {
+        state.stats.hull -= 9; hitCD = 1.2; sfxCrash();
+        toast('触礁了！船体受损');
+      }
+      b.speed *= 0.3;
+    }
+  }
+
+  var wh = waveH(b.x, b.z, state.time, visW.amp);
+  var sl = waveSlope(b.x, b.z, state.time, visW.amp);
+  boat.position.set(b.x, wh + 0.32, b.z);
+  var tPitch = clamp(sl.x * Math.cos(b.heading) + sl.z * Math.sin(b.heading), -0.4, 0.4) + (b.speed > 0.5 ? -0.05 : 0);
+  var tRoll = clamp(-sl.x * Math.sin(b.heading) + sl.z * Math.cos(b.heading), -0.45, 0.45);
+  if (state.weather.cur === 'storm') { tRoll += Math.sin(state.time * 1.7) * 0.06; tPitch += Math.sin(state.time * 1.3) * 0.03; }
+  boat.rotation.x = lerp(boat.rotation.x, tPitch, dt * 2.5);
+  boat.rotation.z = lerp(boat.rotation.z, tRoll, dt * 2.5);
+  boat.rotation.y = b.heading;
+
+  var sailB = 0.12 + b.sail * 0.88;
+  boat.userData.sail.scale.z = sailB;
+  boat.userData.foreSail.scale.z = sailB;
+  boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
+  boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
+
+  if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 24) spawnFoam(
+    b.x - fx * 2.6 + rand(-0.8, 0.8), b.z - fz * 2.6 + rand(-0.8, 0.8), b.speed
+  );
+}
+
+function spawnFoam(x, z, sp) {
+  for (var i = 0; i < FOAM_N; i++) {
+    if (foamDat[i].life <= 0) {
+      foamDat[i].life = rand(0.7, 1.3);
+      foamDat[i].x = x; foamDat[i].z = z;
+      foamDat[i].y = waveH(x, z, state.time, visW.amp) + 0.2;
+      foamDat[i].vy = rand(0.8, 2.0);
+      foamDat[i].s = sp;
+      return;
+    }
+  }
+}
+
+function floaterKindFor(d, storm) {
+  var g = d > 500 ? 0.24 : d > 250 ? 0.18 : 0.13;
+  var c = storm ? 0.13 : 0.055;
+  var r = Math.random();
+  if (r < 0.28) return 'wood';
+  if (r < 0.52) return 'food';
+  if (r < 0.76) return 'water';
+  if (r < 0.76 + g) return 'gold';
+  if (r < 0.76 + g + c) return 'chest';
+  return 'wood';
+}
+
+function updateFloaters(dt) {
+  spawnT -= dt;
+  if (spawnT <= 0 && floaters.length < 40) {
+    spawnT = state.weather.cur === 'storm' ? 1.5 : 2.3;
+    var ang = rand(0, Math.PI * 2);
+    var dist = rand(38, 130);
+    var x = state.boat.x + Math.cos(ang) * dist;
+    var z = state.boat.z + Math.sin(ang) * dist;
+    if (ringDist(x, z) < WORLD_R - 10) {
+      spawnFloater(floaterKindFor(ringDist(x, z), state.weather.cur === 'storm'), x, z);
+    }
+  }
+  var pr = pickupR();
+  var take = [];
+  for (var i = 0; i < floaters.length; i++) {
+    var m = floaters[i];
+    var u = m.userData;
+    m.position.x += Math.cos(u.drift) * 0.25 * dt;
+    m.position.z += Math.sin(u.drift) * 0.25 * dt;
+    u.drift += Math.sin(state.time * 0.4 + u.ph) * 0.15 * dt;
+    m.position.y = waveH(m.position.x, m.position.z, state.time, visW.amp) + 0.12 + Math.sin(state.time * 1.4 + u.ph) * 0.06;
+    m.rotation.y += dt * 0.25;
+    u.ring.rotation.z = state.time * 0.8 + u.ph;
+    var s = 1 + Math.sin(state.time * 2.2 + u.ph) * 0.09;
+    u.ring.scale.set(s, s, 1);
+    var bd = Math.hypot(m.position.x - state.boat.x, m.position.z - state.boat.z);
+    if (pr > 0 && bd < pr) take.push(m);
+    else if (bd > 210) take.push(m);
+  }
+  for (var t = 0; t < take.length; t++) collectFloater(take[t]);
+}
+
+function collectFloater(m) {
+  var k = m.userData.kind;
+  var far = ringDist(m.position.x, m.position.z) > 400 ? 1.5 : 1;
+  if (m.userData.life >= 0 && Math.hypot(m.position.x - state.boat.x, m.position.z - state.boat.z) > pickupR()) {
+    removeFloater(m); return;
+  }
+  var cap = holdCap(state.lv.hold);
+  var gained = false;
+  if (k === 'wood') {
+    var gw = Math.round(rand(6, 10) * far);
+    var bw = Math.min(gw, cap[0] - Math.floor(state.res.wood));
+    if (bw > 0) { state.res.wood += bw; gained = true; toastGet('木材 +' + bw); }
+  } else if (k === 'food') {
+    var gf = Math.round(rand(8, 13) * far);
+    var bf = Math.min(gf, cap[1] - Math.floor(state.res.food));
+    if (bf > 0) { state.res.food += bf; gained = true; toastGet('食物 +' + bf); }
+  } else if (k === 'water') {
+    var gt = Math.round(rand(8, 13) * far);
+    var bt = Math.min(gt, cap[2] - Math.floor(state.res.water));
+    if (bt > 0) { state.res.water += bt; gained = true; toastGet('淡水 +' + bt); }
+  } else if (k === 'gold') {
+    var gg = Math.round(rand(5, 12) * far);
+    state.res.gold += gg; gained = true; toastGet('金币 +' + gg, 'gold');
+  } else {
+    state.res.gold += Math.round(rand(22, 48) * far);
+    var cw = Math.min(Math.round(rand(12, 22) * far), cap[0] - Math.floor(state.res.wood));
+    if (cw > 0) state.res.wood += cw;
+    gained = true;
+    toast('打捞到漂流宝箱！金币与木材大丰收', 'gold');
+  }
+  if (gained) {
+    sfxPickup(k);
+    if (fullHintCD <= 0 && (k === 'wood' && cap[0] - Math.floor(state.res.wood) <= 0 || k === 'food' && cap[1] - Math.floor(state.res.food) <= 0 || k === 'water' && cap[2] - Math.floor(state.res.water) <= 0)) {
+      toast('货舱满了，去船坞升级货舱'); fullHintCD = 10;
+    }
+  } else if (fullHintCD <= 0) {
+    toast('货舱已满，无法装载'); fullHintCD = 10;
+  }
+  removeFloater(m);
+}
+
+function updateSurvival(dt) {
+  var raining = state.weather.cur === 'storm';
+  state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1);
+  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : 1);
+  eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
+  if (state.stats.hunger < 62 && state.res.food >= 1 && eatT <= 0) {
+    state.res.food -= 1; state.stats.hunger = Math.min(100, state.stats.hunger + 16); eatT = 3.0;
+    if (!state.hintShown.ate) { state.hintShown.ate = 1; toast('自动进食：饱食不足时消耗食物'); }
+  }
+  if (state.stats.thirst < 62 && state.res.water >= 1 && drinkT <= 0) {
+    state.res.water -= 1; state.stats.thirst = Math.min(100, state.stats.thirst + 16); drinkT = 3.0;
+  }
+  var nearIsland = false;
+  for (var i = 0; i < islands.length; i++) {
+    var u = islands[i].userData;
+    if (Math.hypot(state.boat.x - u.x, state.boat.z - u.z) < u.r + 55) { nearIsland = true; break; }
+  }
+  if (nearIsland) state.stats.hull = Math.min(maxHull(), state.stats.hull + 1.6 * dt);
+  if (fixT <= 0) {
+    fixT = 1.0;
+    if (state.stats.hull < maxHull() - 2 && state.res.wood >= 1) {
+      var use = Math.min(state.res.wood, 0.6);
+      state.res.wood -= use;
+      state.stats.hull = Math.min(maxHull(), state.stats.hull + use * 5);
+    }
+  }
+  state.stats.hunger = clamp(state.stats.hunger, 0, 100);
+  state.stats.thirst = clamp(state.stats.thirst, 0, 100);
+  state.stats.hull = clamp(state.stats.hull, 0, maxHull());
+  if (state.stats.hunger <= 0) gameOver('hunger');
+  else if (state.stats.thirst <= 0) gameOver('thirst');
+  else if (state.stats.hull <= 0) gameOver('hull');
+}
+
+function updateExplore(dt) {
+  expT -= dt;
+  if (expT > 0) return;
+  expT = 0.5;
+  var gx = Math.round(state.boat.x / CELL), gz = Math.round(state.boat.z / CELL);
+  var added = 0;
+  for (var dx = -1; dx <= 1; dx++) for (var dz = -1; dz <= 1; dz++) {
+    var kx = gx + dx, kz = gz + dz;
+    if (Math.abs(kx) > GRID_R || Math.abs(kz) > GRID_R) continue;
+    var key = kx + ',' + kz;
+    if (!state.explored[key]) { state.explored[key] = 1; added++; }
+  }
+  if (added > 0) {
+    var pct = explorePct();
+    var marks = [[25, 30], [50, 60], [75, 100], [100, 200]];
+    for (var i = 0; i < marks.length; i++) {
+      if (pct >= marks[i][0] && !state.hintShown['ex' + marks[i][0]]) {
+        state.hintShown['ex' + marks[i][0]] = 1;
+        state.res.gold += marks[i][1];
+        toast('海图探索 ' + marks[i][0] + '%！奖励金币 +' + marks[i][1], 'gold');
+        sfxUp();
+      }
+    }
+  }
+}
+function explorePct() {
+  var total = (GRID_R * 2 + 1) * (GRID_R * 2 + 1);
+  var n = 0, key;
+  for (key in state.explored) if (state.explored[key]) n++;
+  return Math.min(100, Math.round(n / total * 100));
+}
+
+function canUpgrade(key) {
+  var u = UPG[key];
+  if (state.lv[key] >= u.max) return { ok: false, why: 'max' };
+  var i = state.lv[key] - 1;
+  if (state.res.gold < u.costG[i] || state.res.wood < u.costW[i]) return { ok: false, why: 'cost' };
+  return { ok: true };
+}
+function doUpgrade(key) {
+  var c = canUpgrade(key);
+  if (!c.ok) return false;
+  var u = UPG[key];
+  var i = state.lv[key] - 1;
+  state.res.gold -= u.costG[i];
+  state.res.wood -= u.costW[i];
+  state.lv[key]++;
+  if (key === 'hull') state.stats.hull = maxHull();
+  sfxUp();
+  toast(u.name + ' 升级到 ' + state.lv[key] + ' 级！', 'gold');
+  renderUpList();
+  updateHUD();
+  save();
+  return true;
+}
+function canBuild() {
+  return state.lv.sail >= BUILD_NEED.sail && state.lv.hull >= BUILD_NEED.hull &&
+    state.res.wood >= BUILD_NEED.wood && state.res.gold >= BUILD_NEED.gold;
+}
+function doBuild() {
+  if (!canBuild()) return;
+  state.phase = 'win';
+  sfxWin();
+  save();
+  showOver(true);
+}
+var $ = function (id) { return document.getElementById(id); };
+var hudT = 0, miniT = 0, saveT = 0, timeScale = 1;
+var overMode = 'lose';
+
+function toast(msg, cls) {
+  var box = $('toasts');
+  while (box.children.length >= 4) box.removeChild(box.firstChild);
+  var d = document.createElement('div');
+  d.className = 'toast' + (cls ? ' ' + cls : '');
+  d.textContent = msg;
+  box.appendChild(d);
+  setTimeout(function () { d.style.transition = 'opacity .4s'; d.style.opacity = '0'; }, 2200);
+  setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2650);
+}
+function toastGet(msg, cls) {
+  var box = $('toasts');
+  var d = document.createElement('div');
+  d.className = 'toast' + (cls ? ' ' + cls : '');
+  d.textContent = msg;
+  box.appendChild(d);
+  setTimeout(function () { d.style.transition = 'opacity .3s'; d.style.opacity = '0'; }, 900);
+  setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 1250);
+}
+
+var WARN_TXT = {
+  breeze: '风渐起 · 浪将增大',
+  fog: '浓雾将至 · 减速慢行',
+  storm: '雷暴逼近 · 检查木材储备！',
+  sun: '天气即将放晴'
+};
+function showWarn(next) {
+  var w = WDEF[next];
+  $('warntxt').textContent = '预警：' + WARN_TXT[next];
+  $('warn').classList.add('on');
+}
+function hideWarn() { $('warn').classList.remove('on'); }
+
+function updateWeatherHUD() {
+  var def = WDEF[state.weather.cur];
+  $('wIcon').className = { sun: 'sun', breeze: 'cloudy', fog: 'fogw', storm: 'stormy' }[state.weather.cur];
+  $('wName').textContent = def.name;
+  $('wDesc').textContent = def.desc;
+}
+
+function updateHUD() {
+  var cap = holdCap(state.lv.hold);
+  $('rvW').textContent = Math.floor(state.res.wood);
+  $('rcW').textContent = '/' + cap[0];
+  $('rvF').textContent = Math.floor(state.res.food);
+  $('rcF').textContent = '/' + cap[1];
+  $('rvT').textContent = Math.floor(state.res.water);
+  $('rcT').textContent = '/' + cap[2];
+  $('rvG').textContent = state.res.gold;
+  $('piW').style.width = clamp(state.res.wood / cap[0] * 100, 0, 100) + '%';
+  $('piF').style.width = clamp(state.res.food / cap[1] * 100, 0, 100) + '%';
+  $('piT').style.width = clamp(state.res.water / cap[2] * 100, 0, 100) + '%';
+  $('piG').style.width = '100%';
+  $('bh').style.width = state.stats.hunger + '%';
+  $('bt').style.width = state.stats.thirst + '%';
+  $('bp').style.width = state.stats.hull / maxHull() * 100 + '%';
+  $('vh').textContent = Math.ceil(state.stats.hunger);
+  $('vt').textContent = Math.ceil(state.stats.thirst);
+  $('vp').textContent = Math.ceil(state.stats.hull);
+  $('hudDay').textContent = '第 ' + state.day + ' 天';
+  $('hudClock').textContent = fmtClock(state.dayT) + ' · ' + WDEF[state.weather.cur].name;
+  $('expl').textContent = explorePct() + '%';
+}
+
+var mini = $('mini'), mctx = mini.getContext('2d');
+function drawMini() {
+  var W = mini.width, H = mini.height;
+  var sc = W / ((GRID_R * 2 + 2) * CELL);
+  var cx = W / 2, cy = H / 2;
+  mctx.fillStyle = '#e9f2f7';
+  mctx.fillRect(0, 0, W, H);
+  mctx.fillStyle = '#a3d4ea';
+  var key;
+  for (key in state.explored) {
+    if (!state.explored[key]) continue;
+    var p = key.split(',');
+    var gx = parseInt(p[0], 10), gz = parseInt(p[1], 10);
+    mctx.fillRect(cx + gx * CELL * sc - CELL * sc / 2, cy + gz * CELL * sc / 2 - CELL * sc / 2, CELL * sc + 0.5, CELL * sc + 0.5);
+  }
+  mctx.strokeStyle = 'rgba(120,160,185,.35)';
+  mctx.lineWidth = 2;
+  mctx.strokeRect(cx - WORLD_R * sc, cy - WORLD_R * sc, WORLD_R * 2 * sc, WORLD_R * 2 * sc);
+  for (var i = 0; i < islands.length; i++) {
+    var u = islands[i].userData;
+    var ix = cx + u.x * sc, iz = cy + u.z * sc;
+    mctx.fillStyle = u.found ? '#e8c87a' : '#c4d8e2';
+    mctx.beginPath();
+    mctx.arc(ix, iz, Math.max(3, u.r * sc * 1.6), 0, 6.29);
+    mctx.fill();
+    if (u.found) {
+      mctx.fillStyle = '#7db95c';
+      mctx.beginPath();
+      mctx.arc(ix, iz, Math.max(1.5, u.r * sc * 0.7), 0, 6.29);
+      mctx.fill();
+    }
+  }
+  var b = state.boat;
+  mctx.save();
+  mctx.translate(cx + b.x * sc, cy + b.z * sc);
+  mctx.rotate(-b.heading);
+  mctx.fillStyle = '#ef6f3c';
+  mctx.beginPath();
+  mctx.moveTo(0, -9);
+  mctx.lineTo(6, 7);
+  mctx.lineTo(-6, 7);
+  mctx.closePath();
+  mctx.fill();
+  mctx.strokeStyle = '#fff';
+  mctx.lineWidth = 2;
+  mctx.stroke();
+  mctx.restore();
+}
+
+function lvDots(cur, max) {
+  var s = '<span class="lv">';
+  for (var i = 1; i <= max; i++) s += '<b class="' + (i <= cur ? 'f' : '') + '"></b>';
+  return s + '</span>';
+}
+function renderUpList() {
+  var html = '';
+  var order = ['sail', 'hull', 'hold', 'lamp', 'net'];
+  for (var i = 0; i < order.length; i++) {
+    var k = order[i];
+    var u = UPG[k];
+    var lv = state.lv[k];
+    var idx = lv - 1;
+    var maxed = lv >= u.max;
+    var costG = maxed ? 0 : u.costG[idx];
+    var costW = maxed ? 0 : u.costW[idx];
+    var afford = !maxed && state.res.gold >= costG && state.res.wood >= costW;
+    html += '<div class="upitem"><div class="upicon ' + u.icon + '"></div>' +
+      '<div class="upmain"><div class="upname">' + u.name + ' ' + lvDots(lv, u.max) + '</div>' +
+      '<div class="updesc">' + u.eff(lv) + (maxed ? '' : ' → ' + u.eff(lv + 1)) + '</div></div>';
+    if (maxed) html += '<button class="upbtn upmax" disabled>已满级</button>';
+    else html += '<button class="upbtn ' + (afford ? 'upok' : 'upno') + '"' + (afford ? '' : ' disabled') +
+      ' data-up="' + k + '">金币' + costG + '<br>木材' + costW + '</button>';
+    html += '</div>';
+  }
+  var ok = canBuild();
+  html += '<div class="upitem" id="builditem"><div class="upicon ui-lamp"></div>' +
+    '<div class="upmain"><div class="upname">建造远洋巨轮</div>' +
+    '<div class="updesc">需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + state.res.wood + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold + ' → 建成即通关！</div></div>' +
+    '<button class="upbtn upok" id="btnBuild"' + (ok ? '' : ' disabled') + '>' + (ok ? '建 造' : '未达成') + '</button></div>';
+  $('uplist').innerHTML = html;
+  var btns = $('uplist').querySelectorAll('[data-up]');
+  for (var b = 0; b < btns.length; b++) btns[b].onclick = function () { doUpgrade(this.getAttribute('data-up')); };
+  var bb = $('btnBuild');
+  if (bb) bb.onclick = doBuild;
+}
+
+function togglePanel() {
+  var pw = $('panelWrap');
+  var open = !pw.classList.contains('on');
+  pw.classList.toggle('on', open);
+  timeScale = open ? 0.25 : 1;
+  if (open) renderUpList();
+}
+function togglePause() {
+  if (state.phase === 'play') {
+    state.phase = 'pause';
+    overMode = 'pause';
+    $('ovtitle').textContent = '已 暂 停';
+    $('ovtitle').className = 'win';
+    $('ovsub').innerHTML = '第 ' + state.day + ' 天 · 海图探索 ' + explorePct() + '%<br>按 P 键或点击按钮继续航行';
+    $('btnRestart').textContent = '继 续 航 行';
+    $('over').classList.add('on');
+    save();
+  } else if (state.phase === 'pause') {
+    state.phase = 'play';
+    $('over').classList.remove('on');
+  }
+}
+
+function gameOver(why) {
+  state.phase = 'over';
+  sfxLose();
+  clearSave();
+  overMode = 'lose';
+  var whyTxt = {
+    hunger: '食物耗尽，你饿晕在甲板上，被路过的商船救起…',
+    thirst: '淡水喝干了，商船把你送回了港口…',
+    hull: '船体在风浪中解体，你抱着木板漂回了岸边…'
+  }[why];
+  $('ovtitle').textContent = '航 程 结 束';
+  $('ovtitle').className = 'lose';
+  $('ovsub').innerHTML = whyTxt + '<br><br>生存 <b>' + state.day + '</b> 天 · 海图探索 <b>' + explorePct() + '%</b> · 积攒 <b>' + state.res.gold + '</b> 金币<br><span style="font-size:12px;color:#7d9cb2">下次记得多备淡水和木材，风暴前靠岛休整</span>';
+  $('btnRestart').textContent = '再 次 出 海';
+  $('over').classList.add('on');
+}
+function showOver(win) {
+  overMode = 'win';
+  $('ovtitle').textContent = '通 关 !';
+  $('ovtitle').className = 'win';
+  $('ovsub').innerHTML = '远洋巨轮建成！<br>你带着满舱物资驶向地平线，结束漂流生涯。<br><br>共生存 <b>' + state.day + '</b> 天 · 海图探索 <b>' + explorePct() + '%</b> · 发现 <b>' + Object.keys(state.islandsFound).length + '</b> 座岛屿';
+  $('btnRestart').textContent = '开 启 新 航 程';
+  $('over').classList.add('on');
+}
+
+function updateCamera(dt) {
+  var b = state.boat;
+  var camYaw = boat.userData.camYaw === undefined ? b.heading + Math.PI : boat.userData.camYaw;
+  var wantYaw = b.heading + Math.PI + camCtl.user;
+  camYaw = angLerp(camYaw, wantYaw, dt * 2.2);
+  boat.userData.camYaw = camYaw;
+  var cp = camCtl.pitch, cd = camCtl.dist;
+  var tx = b.x, ty = boat.position.y + 2.2, tz = b.z;
+  var px = tx + Math.sin(camYaw) * Math.cos(cp) * cd;
+  var pz = tz + Math.cos(camYaw) * Math.cos(cp) * cd;
+  var py = ty + Math.sin(cp) * cd;
+  camera.position.x = lerp(camera.position.x, px, dt * 4.5);
+  camera.position.y = lerp(camera.position.y, py, dt * 4.5);
+  camera.position.z = lerp(camera.position.z, pz, dt * 4.5);
+  camera.lookAt(tx, ty + 1, tz);
+}
+
+function updateFX(dt) {
+  seaMat.uniforms.uTime.value = state.time;
+  seaMat.uniforms.uAmp.value = visW.amp;
+  seaMat.uniforms.cDeep.value.copy(visW.seaDeep);
+  seaMat.uniforms.cShallow.value.copy(visW.seaShal);
+  seaMat.uniforms.cFog.value.copy(scene.fog.color);
+  seaMat.uniforms.uFogFar.value = scene.fog.far;
+  seaMesh.position.x = camera.position.x;
+  seaMesh.position.z = camera.position.z;
+  skyMesh.position.copy(camera.position);
+  skyMat.uniforms.uTime.value = state.time;
+
+  rainMat.opacity = visW.rain;
+  if (visW.rain > 0.02) {
+    var cx = camera.position.x, cz = camera.position.z;
+    for (var i = 0; i < RAIN_N; i++) {
+      var r = rainDat[i];
+      r.y -= r.v * dt;
+      if (r.y < -2) {
+        r.x = cx + rand(-48, 48); r.z = cz + rand(-48, 48);
+        r.y = camera.position.y + rand(14, 30);
+        r.v = rand(36, 55);
+      }
+      rainPos[i * 6] = r.x; rainPos[i * 6 + 1] = r.y; rainPos[i * 6 + 2] = r.z;
+      rainPos[i * 6 + 3] = r.x + 0.25; rainPos[i * 6 + 4] = r.y - 1.7; rainPos[i * 6 + 5] = r.z;
+    }
+    rainGeo.attributes.position.needsUpdate = true;
+  }
+
+  var fp = foamGeo.attributes.position.array;
+  for (var f = 0; f < FOAM_N; f++) {
+    var d = foamDat[f];
+    if (d.life > 0) {
+      d.life -= dt;
+      d.x += Math.sin(d.s * f * 0.13 + state.time * 2) * dt * 1.5;
+      d.z += Math.cos(d.s * f * 0.17 + state.time * 2) * dt * 1.5;
+      var wy = waveH(d.x, d.z, state.time, visW.amp);
+      fp[f * 3] = d.x; fp[f * 3 + 1] = d.life > 0 ? wy + 0.18 : -999; fp[f * 3 + 2] = d.z;
+    } else fp[f * 3 + 1] = -999;
+  }
+  foamGeo.attributes.position.needsUpdate = true;
+  foamMat.opacity = 0.85;
+
+  for (var g = 0; g < gulls.length; g++) {
+    var gu = gulls[g].userData;
+    gu.a += gu.sp * dt;
+    var gx = state.boat.x + Math.cos(gu.a) * gu.r;
+    var gz = state.boat.z + Math.sin(gu.a) * gu.r;
+    gulls[g].position.set(gx, gu.h + Math.sin(state.time * 1.2 + gu.ph) * 1.4, gz);
+    gulls[g].rotation.y = -gu.a;
+    var flap = Math.sin(state.time * 9 + gu.ph) * 0.55;
+    gu.wL.rotation.y = flap;
+    gu.wR.rotation.y = -flap;
+  }
+  for (var c = 0; c < clouds.length; c++) {
+    var cl = clouds[c];
+    cl.position.x += cl.userData.vx * dt;
+    if (cl.position.x > 800) cl.position.x = -800;
+  }
+}
+
+function step(dt) {
+  state.time += dt;
+  state.playSec += dt;
+  updateDayNight(dt);
+  updateWeather(dt);
+  updateBoat(dt);
+  updateFloaters(dt);
+  updateSurvival(dt);
+  updateExplore(dt);
+  updateCamera(dt);
+  hudT -= dt;
+  if (hudT <= 0) { hudT = 0.15; updateHUD(); }
+  miniT -= dt;
+  if (miniT <= 0) { miniT = 0.3; drawMini(); }
+  saveT -= dt;
+  if (saveT <= 0) { saveT = 10; save(); }
+}
+
+var menuA = 0;
+function menuIdle(dt) {
+  state.time += dt * 0.5;
+  menuA += dt * 0.1;
+  var b = state.boat;
+  var wh = waveH(b.x, b.z, state.time, 0.55);
+  boat.position.set(0, wh + 0.32, 0);
+  boat.rotation.set(Math.sin(state.time * 0.7) * 0.03, b.heading + menuA, Math.sin(state.time * 0.5) * 0.05);
+  boat.userData.sail.scale.z = 0.35 + Math.sin(state.time * 0.4) * 0.1;
+  boat.userData.foreSail.scale.z = 0.3;
+  var cd = 20;
+  camera.position.set(Math.sin(menuA * 2) * cd, 8.5 + Math.sin(state.time * 0.3) * 0.8, Math.cos(menuA * 2) * cd);
+  camera.lookAt(0, 2.5, 0);
+  visW.rain = 0;
+}
+
+function newGame() {
+  clearSave();
+  var keepMute = state.mute;
+  state = {
+    phase: 'play', time: state.time, day: 1, dayT: 0.3,
+    boat: { x: 0, z: 0, heading: rand(0, 6.28), speed: 0, sail: 0 },
+    res: { wood: 10, food: 6, water: 6, gold: 0 },
+    stats: { hunger: 100, thirst: 100, hull: 100 },
+    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1 },
+    weather: { cur: 'sun', prev: 'sun', next: pickWeatherNext('sun'), t: 55, warnT: 0, blend: 0 },
+    explored: {}, islandsFound: {}, mute: keepMute, playSec: 0, hintShown: {}
+  };
+  for (var i = islands.length - 1; i >= 0; i--) islands[i].userData.found = !!false;
+  while (floaters.length) removeFloater(floaters[0]);
+  for (var s = 0; s < 7; s++) {
+    var a = rand(0, 6.28), dd = rand(15, 55);
+    spawnFloater(pick(['wood', 'food', 'water', 'wood', 'gold']), Math.cos(a) * dd, Math.sin(a) * dd);
+  }
+  boat.userData.camYaw = state.boat.heading + Math.PI;
+  updateWeatherHUD();
+  updateHUD();
+  drawMini();
+  $('menu').classList.add('off');
+  $('hud').classList.add('on');
+  $('over').classList.remove('on');
+  state.phase = 'play';
+  setTimeout(function () { toast('W 升帆出发，靠近漂浮物自动打捞'); }, 600);
+  setTimeout(function () { toast('雷雨天记得储备木材修船', ''); }, 4200);
+}
+
+function loadGame(d) {
+  var keepMute = state.mute;
+  state = {
+    phase: 'play', time: state.time, day: d.day, dayT: d.dayT,
+    boat: d.boat, res: d.res, stats: d.stats, lv: d.lv,
+    weather: { cur: d.weather.cur, prev: d.weather.cur, next: pickWeatherNext(d.weather.cur), t: d.weather.t, warnT: 0, blend: 0 },
+    explored: d.explored, islandsFound: d.islandsFound, mute: d.mute !== undefined ? d.mute : keepMute,
+    playSec: d.playSec || 0, hintShown: { ate: 1 }
+  };
+  var def = WDEF[state.weather.cur];
+  visW.amp = def.amp; visW.sunI = def.sunI;
+  visW.skyTop = new THREE.Color(def.sky[0]);
+  visW.skyBot = new THREE.Color(def.sky[1]);
+  visW.seaDeep = new THREE.Color(def.sea[0]);
+  visW.seaShal = new THREE.Color(def.sea[1]);
+  visW.rain = state.weather.cur === 'storm' ? 0.5 : 0;
+  visW.wind = def.w;
+  for (var i = 0; i < islands.length; i++) islands[i].userData.found = !!state.islandsFound[islands[i].userData.id];
+  while (floaters.length) removeFloater(floaters[0]);
+  boat.userData.camYaw = state.boat.heading + Math.PI;
+  updateWeatherHUD();
+  updateHUD();
+  drawMini();
+  $('menu').classList.add('off');
+  $('hud').classList.add('on');
+  $('over').classList.remove('on');
+  state.phase = 'play';
+  toast('欢迎回来，继续你的航行');
+}
+
+var lastT = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  var dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  if (state.phase === 'play') step(dt * timeScale);
+  else if (state.phase === 'menu') menuIdle(dt);
+  updateFX(state.phase === 'pause' ? 0 : dt);
+  renderer.render(scene, camera);
+}
+
+function boot() {
+  window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  var saved = loadSave();
+  if (saved) $('btnResume').classList.add('on');
+  $('btnStart').onclick = function () { initAudio(); newGame(); };
+  $('btnResume').onclick = function () { initAudio(); var d = loadSave(); if (d) loadGame(d); else newGame(); };
+  $('btnHelp').onclick = function () {
+    var h = $('mhelp');
+    h.style.display = h.style.display === 'none' ? 'block' : 'none';
+  };
+  $('btnUpgrade').onclick = function () { if (state.phase === 'play') togglePanel(); };
+  $('upclose').onclick = togglePanel;
+  $('panelWrap').addEventListener('click', function (e) { if (e.target === this) togglePanel(); });
+  $('btnPause').onclick = togglePause;
+  $('btnRestart').onclick = function () {
+    if (overMode === 'pause') { togglePause(); return; }
+    clearSave();
+    newGame();
+  };
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && state.phase === 'play') { save(); togglePause(); }
+  });
+  if ('ontouchstart' in window) {
+    $('ctrlhint').innerHTML = '左侧滑动 升帆转向 · 右侧拖动 转视角 · <b>船坞</b> 按钮升级';
+  }
+  $('loadnote').classList.add('off');
+  requestAnimationFrame(loop);
+}
+boot();
+
+</script>
+</body>
+</html>
