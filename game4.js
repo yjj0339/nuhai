@@ -521,6 +521,18 @@ function updateFX(dt) {
   }
   foamGeo.attributes.position.needsUpdate = true;
 
+  for (var sp2 = 0; sp2 < SPARK_N; sp2++) {
+    var sk = sparkPool[sp2];
+    if (sk.t > 0) {
+      sk.t -= dt * 2;
+      var k2 = 1 - Math.max(0, sk.t);
+      sk.spr.scale.setScalar(sk.base + k2 * 4);
+      sk.spr.material.opacity = Math.max(0, sk.t) * 0.85;
+      sk.spr.position.y += dt * 1.6;
+      if (sk.t <= 0) sk.spr.visible = false;
+    }
+  }
+
   for (var g = 0; g < gulls.length; g++) {
     var gu = gulls[g].userData;
     gu.a += gu.sp * dt;
