@@ -80,7 +80,7 @@ var UPG = {
   }
 };
 
-var BUILD_NEED = { sail: 3, hull: 3, wood: 120, gold: 150 };
+var BUILD_NEED = { sail: 3, hull: 3, wood: 100, gold: 150 };
 
 var QUESTS = [
   { id: 'pickup', name: '初试身手', desc: '打捞 3 个漂浮物', target: 3, rg: 15 },
