@@ -2,9 +2,8 @@ shots/
 server.log
 node_modules/
 game.js
-game1.js
-game2.js
-game3.js
-game4.js
-part1.html
 test.js
+test2.js
+test3.js
+.mimosa/
+qr-live.png
