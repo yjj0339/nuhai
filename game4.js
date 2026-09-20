@@ -65,6 +65,11 @@ function updateWeatherTime() {
   var total = WTIME[state.weather.cur];
   var f = clamp(state.weather.t / total[1], 0, 1);
   $('wTimeFill').style.width = (f * 100).toFixed(1) + '%';
+  var b = state.boat;
+  var tail = Math.sin(b.heading + windAng);
+  var side = Math.cos(b.heading + windAng);
+  var deg = Math.atan2(side, tail) * 180 / Math.PI;
+  $('windArrow').style.transform = 'rotate(' + deg.toFixed(0) + 'deg)';
 }
 
 function updateHUD() {
@@ -144,6 +149,17 @@ function updateBuffHUD() {
     d2.className = 'buff glass';
     d2.innerHTML = '<div class="bdot" style="background:#8a6ac8"></div>漩涡引力 · 全速驶离！';
     row.appendChild(d2);
+  }
+  if (state.tail > 0.55) {
+    var d6 = document.createElement('div');
+    d6.className = 'buff glass';
+    d6.innerHTML = '<div class="bdot" style="background:#67c7f2"></div>顺风满帆 · 航速+16%';
+    row.appendChild(d6);
+  } else if (state.tail < -0.55) {
+    var d7 = document.createElement('div');
+    d7.className = 'buff glass';
+    d7.innerHTML = '<div class="bdot" style="background:#9a8ac8"></div>逆风 · 航速-16%';
+    row.appendChild(d7);
   }
   if (state.weather.cur === 'storm') {
     var d4 = document.createElement('div');
@@ -523,6 +539,30 @@ function updateFX(dt) {
     } else fp[f * 3 + 1] = -999;
   }
   foamGeo.attributes.position.needsUpdate = true;
+
+  var ripTick = (updateFX.ripT = (updateFX.ripT || 0) - dt);
+  if (visW.rain > 0.15 && ripTick <= 0) {
+    updateFX.ripT = 0.12;
+    for (var rr = 0; rr < RAINRIP_N; rr++) {
+      var rp = rainRipples[rr];
+      if (rp.t <= 0) {
+        rp.t = 1;
+        rp.m.visible = true;
+        rp.m.position.set(camera.position.x + rand(-26, 26), 0.05, camera.position.z + rand(-26, 26));
+        break;
+      }
+    }
+  }
+  for (var rr2 = 0; rr2 < RAINRIP_N; rr2++) {
+    var rp2 = rainRipples[rr2];
+    if (rp2.t > 0) {
+      rp2.t -= dt * 1.7;
+      var rs = 0.6 + (1 - Math.max(0, rp2.t)) * 2.2;
+      rp2.m.scale.set(rs, rs, 1);
+      rp2.m.material.opacity = Math.max(0, rp2.t) * 0.5;
+      if (rp2.t <= 0) rp2.m.visible = false;
+    }
+  }
 
   for (var sp2 = 0; sp2 < SPARK_N; sp2++) {
     var sk = sparkPool[sp2];
