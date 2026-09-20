@@ -21,6 +21,9 @@ var state = {
   dist: 0,
   quest: 0,
   luck: 0,
+  burst: 0,
+  burstCd: 0,
+  caches: {},
   ach: {},
   islandDock: {},
   settings: { hiRes: true },
@@ -65,6 +68,12 @@ var UPG = {
     eff: function (l) { return '转向灵敏度 +' + Math.round((l - 1) * 18) + '%'; },
     costG: [30, 80, 150],
     costW: [6, 12, 24]
+  },
+  lookout: {
+    name: '瞭望台', icon: 'ui-look', max: 3, svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 20L14 10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M12.5 4.5l7 7-3 3-7-7 3-3z" fill="currentColor" opacity=".85"/><path d="M17.5 3l3.5 3.5-1.8 1.8-3.5-3.5L17.5 3z" fill="currentColor" opacity=".55"/></svg>',
+    eff: function (l) { return '发现岛屿距离 +' + Math.round((l - 1) * 40) + '%'; },
+    costG: [40, 90, 160],
+    costW: [6, 14, 26]
   }
 };
 
@@ -104,16 +113,18 @@ var WDEF = {
   sun: { name: '晴朗', desc: '风平浪静，适合航行', amp: 0.55, fogFar: 760, sunI: 1.0, sky: ['#7ec8ee', '#eaf7fd'], sea: ['#37a7d8', '#8fd8ef'], w: 0.62 },
   breeze: { name: '起风', desc: '浪渐增大，航速提升', amp: 1.0, fogFar: 640, sunI: 0.92, sky: ['#8fcbe8', '#eef6f8'], sea: ['#2f9ccc', '#84cfe8'], w: 0.24 },
   fog: { name: '浓雾', desc: '视野受限，小心礁石', amp: 0.7, fogFar: 0, sunI: 0.75, sky: ['#b8d2de', '#eef3f5'], sea: ['#4f9fbf', '#93c4d4'], w: 0.14 },
+  drizzle: { name: '细雨', desc: '蒙蒙细雨，淡水自生', amp: 0.8, fogFar: 560, sunI: 0.85, sky: ['#9db8c8', '#dfe9ee'], sea: ['#3395bd', '#7fc3da'], w: 0.35 },
   storm: { name: '雷暴', desc: '巨浪拍船！打捞有加成', amp: 2.1, fogFar: 420, sunI: 0.55, sky: ['#5f7f9a', '#a8bfd0'], sea: ['#2a7ba6', '#6fb0c9'], w: 0 }
 };
 
-var WSEQ = { sun: ['breeze', 'fog'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
-var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], storm: [30, 46] };
+var WSEQ = { sun: ['breeze', 'fog', 'drizzle'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze', 'drizzle'], drizzle: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
+var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], drizzle: [40, 70], storm: [30, 46] };
 
 var WSVG = {
   sun: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.6" fill="#ffd75e"/><g stroke="#f5b93c" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></g></svg>',
   breeze: '<svg viewBox="0 0 24 24" fill="none"><path d="M7 9a3.4 3.4 0 0 1 0-6.8c1.6 0 2.6 1 3 2.2" stroke="#5b8fb5" stroke-width="2" stroke-linecap="round"/><path d="M7 9h9.5a3 3 0 1 1 0 6H8" stroke="#5b8fb5" stroke-width="2" stroke-linecap="round"/><path d="M5 15h6.5" stroke="#8fc3e5" stroke-width="2" stroke-linecap="round"/></svg>',
   fog: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 8c2.5-2.2 5.5-2.2 8 0s5.5 2.2 8 0" stroke="#7fa0b8" stroke-width="2.2" stroke-linecap="round"/><path d="M4 13c2.5-2.2 5.5-2.2 8 0s5.5 2.2 8 0" stroke="#9db9cc" stroke-width="2.2" stroke-linecap="round"/><path d="M6 18c2-1.6 4.4-1.6 6.4 0s4 1.6 5.6 0" stroke="#b9d0de" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  drizzle: '<svg viewBox="0 0 24 24" fill="none"><path d="M6.5 12a4.2 4.2 0 0 1 .5-8.4 5.4 5.4 0 0 1 10.2 1.3A3.8 3.8 0 0 1 17.3 12H6.5z" fill="#7d9cb5"/><g stroke="#5fa8d6" stroke-width="2" stroke-linecap="round"><path d="M8 15.5l-1 2.6M12.5 15.5l-1 2.6M17 15.5l-1 2.6"/></g></svg>',
   storm: '<svg viewBox="0 0 24 24" fill="none"><path d="M6.5 14a4 4 0 0 1 .5-8 5.2 5.2 0 0 1 9.8 1.2A3.6 3.6 0 0 1 17 14H6.5z" fill="#5c7d99"/><path d="M12.5 14l-3 4.4h2.6l-1.6 3.8 4.7-5.3h-2.5l1.8-2.9h-2z" fill="#ffd75e"/></svg>'
 };
 
@@ -127,12 +138,13 @@ function turnMult() { return 1 + (state.lv.rudder - 1) * 0.18; }
 function save() {
   try {
     var d = {
-      v: 3, time: state.time, day: state.day, dayT: state.dayT,
+      v: 4, time: state.time, day: state.day, dayT: state.dayT,
       boat: state.boat, res: state.res, stats: state.stats, lv: state.lv,
       weather: { cur: state.weather.cur, t: state.weather.t },
       explored: state.explored, islandsFound: state.islandsFound,
       cnt: state.cnt, dist: state.dist, quest: state.quest, luck: state.luck,
-      ach: state.ach, islandDock: state.islandDock, settings: state.settings,
+      ach: state.ach, islandDock: state.islandDock, caches: state.caches,
+      settings: state.settings,
       playSec: state.playSec, mute: state.mute
     };
     localStorage.setItem('nuhai_save', JSON.stringify(d));
@@ -143,7 +155,7 @@ function loadSave() {
     var s = localStorage.getItem('nuhai_save');
     if (!s) return null;
     var d = JSON.parse(s);
-    if (!d || (d.v !== 3 && d.v !== 2 && d.v !== 1)) return null;
+    if (!d || (d.v !== 4 && d.v !== 3 && d.v !== 2 && d.v !== 1)) return null;
     return d;
   } catch (e) { return null; }
 }
@@ -229,6 +241,23 @@ function sfxWin() {
   for (var i = 0; i < seq.length; i++) (function (f, d) { setTimeout(function () { blip(f, 0.35, 'triangle', 0.2); }, d); })(seq[i], i * 180);
 }
 function sfxDolphin() { blip(980, 0.12, 'sine', 0.14, 1400); setTimeout(function () { blip(1180, 0.1, 'sine', 0.12, 1500); }, 110); }
+function sfxBurst() {
+  if (!AC || state.mute) return;
+  try {
+    var dur = 0.7, len = Math.floor(AC.sampleRate * dur);
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var ch = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) {
+      var t = i / len;
+      ch[i] = (Math.random() * 2 - 1) * Math.sin(t * Math.PI) * 0.5;
+    }
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.8;
+    var g = AC.createGain(); g.gain.value = 0.3;
+    src.connect(f); f.connect(g); g.connect(masterG); src.start();
+    blip(340, 0.4, 'sine', 0.1, 620);
+  } catch (e) { }
+}
 
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 function lerp(a, b, t) { return a + (b - a) * t; }
