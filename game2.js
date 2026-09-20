@@ -329,6 +329,39 @@ var boat = new THREE.Group();
   anchorS.position.set(1.05, 0.5, 1.7);
   anchorS.rotation.z = 0.5;
   boat.add(anchorS);
+
+  var goldTrimL = box(0.1, 0.07, 4.3, MAT.goldM);
+  goldTrimL.position.set(1.24, 0.62, -0.25);
+  goldTrimL.visible = false;
+  boat.add(goldTrimL);
+  var goldTrimR = goldTrimL.clone();
+  goldTrimR.position.x = -1.24;
+  boat.add(goldTrimR);
+  boat.userData.goldTrims = [goldTrimL, goldTrimR];
+
+  var netMesh = new THREE.Group();
+  for (var ni = 0; ni < 4; ni++) {
+    var nv = box(0.03, 0.85, 0.03, MAT.rope);
+    nv.position.set(-0.36 + ni * 0.24, 0, 0);
+    netMesh.add(nv);
+  }
+  for (var nj = 0; nj < 4; nj++) {
+    var nh = box(0.82, 0.03, 0.03, MAT.rope);
+    nh.position.set(0, -0.36 + nj * 0.24, 0);
+    netMesh.add(nh);
+  }
+  netMesh.position.set(0, 0.75, -3.15);
+  netMesh.rotation.x = 0.28;
+  netMesh.visible = false;
+  boat.add(netMesh);
+  boat.userData.netMesh = netMesh;
+
+  var pennant = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 4), MAT.sailStripe);
+  pennant.rotation.z = -Math.PI / 2;
+  pennant.position.set(0.3, 4.95, 0.3);
+  pennant.visible = false;
+  boat.add(pennant);
+  boat.userData.pennant = pennant;
 })();
 scene.add(boat);
 
@@ -603,6 +636,53 @@ function sparkle(x, y, z, big) {
     scene.add(m);
   }
 })();
+
+var shootingStar = null;
+var starTrail = [];
+function makeShootingStar() {
+  shootingStar = makeGlow(2.4, 0xfff8dc);
+  shootingStar.visible = false;
+  shootingStar.material.opacity = 0.95;
+  scene.add(shootingStar);
+  for (var i = 0; i < 5; i++) {
+    var t = makeGlow(1.4 - i * 0.2, 0xcfe8ff);
+    t.visible = false;
+    scene.add(t);
+    starTrail.push(t);
+  }
+}
+makeShootingStar();
+var starState = { on: false, t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 };
+function launchStar() {
+  var a = rand(0, Math.PI * 2);
+  starState.on = true;
+  starState.t = 2.2;
+  starState.x = camera.position.x + Math.cos(a) * 260;
+  starState.y = rand(120, 190);
+  starState.z = camera.position.z + Math.sin(a) * 260;
+  var ta = a + Math.PI + rand(-0.5, 0.5);
+  var sp = rand(90, 130);
+  starState.vx = Math.cos(ta) * sp;
+  starState.vy = -rand(20, 40);
+  starState.vz = Math.sin(ta) * sp;
+  shootingStar.visible = true;
+}
+function textSprite(txt) {
+  var cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 64;
+  var ctx = cv.getContext('2d');
+  ctx.font = '900 40px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(255,255,255,.9)';
+  ctx.lineWidth = 6;
+  ctx.strokeText(txt, 128, 32);
+  ctx.fillStyle = '#1d5a86';
+  ctx.fillText(txt, 128, 32);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
+  sp.scale.set(26, 6.5, 1);
+  return sp;
+}
 
 var rocks = [];
 (function buildRocks() {
