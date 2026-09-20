@@ -14,11 +14,28 @@ canvas.addEventListener('wheel', function (e) {
 }, { passive: false });
 
 var touch = { joy: null, cam: null, steer: 0, sailIn: 0 };
+var joyBase = null, joyKnob = null;
+function joyShow(x, y) {
+  if (!joyBase) { joyBase = document.getElementById('joyBase'); joyKnob = document.getElementById('joyKnob'); }
+  joyBase.style.display = 'block';
+  joyBase.style.left = x + 'px';
+  joyBase.style.top = y + 'px';
+  joyKnob.style.transform = 'translate(-50%,-50%)';
+}
+function joyMove(x, y) {
+  if (!joyBase) return;
+  joyKnob.style.transform = 'translate(calc(-50% + ' + x + 'px), calc(-50% + ' + y + 'px))';
+}
+function joyHide() { if (joyBase) joyBase.style.display = 'none'; }
+
 canvas.addEventListener('touchstart', function (e) {
   e.preventDefault();
   for (var i = 0; i < e.changedTouches.length; i++) {
     var t = e.changedTouches[i];
-    if (t.clientX < window.innerWidth * 0.55 && !touch.joy) touch.joy = { id: t.identifier, x0: t.clientX, y0: t.clientY };
+    if (t.clientX < window.innerWidth * 0.55 && !touch.joy) {
+      touch.joy = { id: t.identifier, x0: t.clientX, y0: t.clientY };
+      joyShow(t.clientX, t.clientY);
+    }
     else if (!touch.cam) touch.cam = { id: t.identifier, x: t.clientX };
   }
 }, { passive: false });
@@ -30,6 +47,9 @@ canvas.addEventListener('touchmove', function (e) {
       var dx = t.clientX - touch.joy.x0, dy = t.clientY - touch.joy.y0;
       touch.steer = clamp(dx / 62, -1, 1);
       touch.sailIn = clamp(-dy / 62, -1, 1);
+      var len = Math.hypot(dx, dy);
+      if (len > 40) { dx = dx / len * 40; dy = dy / len * 40; }
+      joyMove(dx, dy);
     } else if (touch.cam && t.identifier === touch.cam.id) {
       camCtl.user -= (t.clientX - touch.cam.x) * 0.008;
       touch.cam.x = t.clientX;
@@ -39,7 +59,7 @@ canvas.addEventListener('touchmove', function (e) {
 function touchEnd(e) {
   for (var i = 0; i < e.changedTouches.length; i++) {
     var t = e.changedTouches[i];
-    if (touch.joy && t.identifier === touch.joy.id) { touch.joy = null; touch.steer = 0; touch.sailIn = 0; }
+    if (touch.joy && t.identifier === touch.joy.id) { touch.joy = null; touch.steer = 0; touch.sailIn = 0; joyHide(); }
     if (touch.cam && t.identifier === touch.cam.id) touch.cam = null;
   }
 }
@@ -92,10 +112,10 @@ function updateWeather(dt) {
   visW.amp = lerp(visW.amp, def.amp, dt * 0.5);
   visW.fogFar = lerp(visW.fogFar, targetFar, dt * 0.5);
   visW.sunI = lerp(visW.sunI, def.sunI, dt * 0.5);
-  visW.skyTop.lerp(new THREE.Color(def.sky[0]), dt * 0.5);
-  visW.skyBot.lerp(new THREE.Color(def.sky[1]), dt * 0.5);
-  visW.seaDeep.lerp(new THREE.Color(def.sea[0]), dt * 0.5);
-  visW.seaShal.lerp(new THREE.Color(def.sea[1]), dt * 0.5);
+  visW.skyTop.lerp(def.skyC[0], dt * 0.5);
+  visW.skyBot.lerp(def.skyC[1], dt * 0.5);
+  visW.seaDeep.lerp(def.seaC[0], dt * 0.5);
+  visW.seaShal.lerp(def.seaC[1], dt * 0.5);
   visW.fogC.copy(visW.skyBot);
   var rainT = w.cur === 'storm' ? 0.5 : w.cur === 'drizzle' ? 0.22 : 0;
   visW.rain = lerp(visW.rain, rainT, dt * 0.8);
@@ -145,31 +165,37 @@ function onWeatherChange() {
   updateWeatherHUD();
 }
 
+var _cNightTop = new THREE.Color('#1c3a5e').lerp(new THREE.Color('#0f2440'), 0.35);
+var _cNightBot = new THREE.Color('#41678e');
+var _cDuskTop = new THREE.Color('#7a6f96');
+var _cDuskBot = new THREE.Color('#f4c99a');
+var _cNightFog = new THREE.Color('#3d5c7e');
+var _sunDirBack = new THREE.Vector3(-0.3, 0.5, -0.4);
+var _sunDir = new THREE.Vector3();
+var _cTop = new THREE.Color();
+var _cBot = new THREE.Color();
+
 function updateDayNight(dt) {
   state.dayT += dt / DAYLEN;
-  if (state.dayT >= 1) { state.dayT -= 1; state.day++; toast('第 ' + state.day + ' 天开始了', 'gold'); }
+  if (state.dayT >= 1) { state.dayT -= 1; state.day++; toast('第 ' + state.day + ' 天开始了', 'gold'); placeWhirlpools(state.day); }
   var elev = Math.sin((state.dayT - 0.25) * Math.PI * 2);
   var night = clamp(-elev * 1.8, 0, 1);
   var dusk = clamp(1 - Math.abs(elev) * 2.6, 0, 1);
   var sunA = (state.dayT - 0.25) * Math.PI * 2;
-  var sd = new THREE.Vector3(Math.cos(sunA) * 0.7, Math.max(0.12, Math.sin(sunA)), 0.45).normalize();
+  var sd = _sunDir.set(Math.cos(sunA) * 0.7, Math.max(0.12, Math.sin(sunA)), 0.45).normalize();
   var moonA = sunA + Math.PI;
   skyMat.uniforms.uMoonDir.value.set(Math.cos(moonA) * 0.7, Math.max(0.12, Math.sin(moonA)), 0.45).normalize();
-  skyMat.uniforms.uSunDir.value.copy(elev > 0 ? sd : new THREE.Vector3(-0.3, 0.5, -0.4));
+  skyMat.uniforms.uSunDir.value.copy(elev > 0 ? sd : _sunDirBack);
   seaMat.uniforms.uSun.value.copy(skyMat.uniforms.uSunDir.value);
 
-  var dayTop = visW.skyTop.clone(), dayBot = visW.skyBot.clone();
-  var nightTop = new THREE.Color('#1c3a5e').lerp(new THREE.Color('#0f2440'), 0.35);
-  var nightBot = new THREE.Color('#41678e');
-  var duskTop = new THREE.Color('#7a6f96'), duskBot = new THREE.Color('#f4c99a');
-  var top = dayTop.clone().lerp(duskTop, dusk).lerp(nightTop, night);
-  var bot = dayBot.clone().lerp(duskBot, dusk).lerp(nightBot, night);
-  skyMat.uniforms.uTop.value.copy(top);
-  skyMat.uniforms.uBot.value.copy(bot);
+  _cTop.copy(visW.skyTop).lerp(_cDuskTop, dusk).lerp(_cNightTop, night);
+  _cBot.copy(visW.skyBot).lerp(_cDuskBot, dusk).lerp(_cNightBot, night);
+  skyMat.uniforms.uTop.value.copy(_cTop);
+  skyMat.uniforms.uBot.value.copy(_cBot);
   skyMat.uniforms.uNight.value = night;
 
-  var fc = visW.fogC.clone().lerp(new THREE.Color('#3d5c7e'), night * 0.8);
-  scene.fog.color.copy(fc);
+  _cBot.copy(visW.fogC).lerp(_cNightFog, night * 0.8);
+  scene.fog.color.copy(_cBot);
   scene.fog.far = visW.fogFar * (1 - night * 0.3);
   scene.fog.near = scene.fog.far * 0.09;
 
@@ -684,6 +710,10 @@ function updateWhirlpools(dt) {
       u.foamPts[f].material.opacity = 0.28 + Math.sin(fa * 2) * 0.15;
     }
     var d = Math.hypot(b.x - w.position.x, b.z - w.position.z);
+    if (d < 35 && !state.hintShown.whirl) {
+      state.hintShown.whirl = 1;
+      toast('海面的螺旋是漩涡，会吸住船体——绕开走！');
+    }
     if (d < 15) {
       u.wasIn = true;
       var pullF = (1 - d / 15) * 3.4 * dt;
@@ -720,6 +750,10 @@ function updateCaches(dt) {
     c.userData.ring.scale.set(s, s, 1);
     c.userData.gl.material.opacity = (isNight() ? 0.8 : 0.45) * (0.8 + Math.sin(state.time * 3 + c.userData.ph) * 0.2);
     var d = Math.hypot(b.x - c.userData.x, b.z - c.userData.z);
+    if (d < 10 && !state.hintShown.cache && state.islandsFound[c.userData.islId]) {
+      state.hintShown.cache = 1;
+      toast('岛边停着一座沉睡的宝藏箱，停稳船即可打开');
+    }
     if (d < 4.5 && b.speed < 1.5) {
       c.userData.hold += dt;
       if (c.userData.hold > 1.2) {
