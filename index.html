@@ -335,6 +335,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
     <div id="ovstats"></div>
     <div id="ovsub"></div>
     <button class="gbtn hot big" id="btnRestart">再 次 出 海</button>
+    <div style="margin-top:10px"><button class="gbtn" id="btnFree" style="display:none">继续自由航行</button></div>
   </div>
 </div>
 <script src="vendor/three.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/three@0.158.0/build/three.min.js';document.head.appendChild(s);"></script>
@@ -358,10 +359,13 @@ var state = {
   weather: { cur: 'sun', prev: 'sun', next: 'breeze', t: 60, warnT: 0, blend: 0 },
   explored: {},
   islandsFound: {},
-  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0, cacheOpen: 0, whirlEsc: 0, letters: 0 },
   dist: 0,
   quest: 0,
   luck: 0,
+  windfall: 0,
+  letterDay: 0,
+  freeplay: 0,
   burst: 0,
   burstCd: 0,
   caches: {},
@@ -428,7 +432,7 @@ var QUESTS = [
   { id: 'fish2', name: '满载而归', desc: '在鱼群上停船撒网捕鱼 2 次', target: 2, rg: 25 },
   { id: 'storm1', name: '风暴挑战者', desc: '完整挺过一场雷暴天气', target: 1, rg: 40 },
   { id: 'net2', name: '大网撒开', desc: '把渔网升到 2 级', target: 2, rg: 0, rw: 25 },
-  { id: 'exp25', name: '绘制海图', desc: '海图探索达到 25%', target: 25, rg: 60 }
+  { id: 'exp20', name: '绘制海图', desc: '海图探索达到 20%', target: 20, rg: 60 }
 ];
 
 var ACHS = [
@@ -441,7 +445,11 @@ var ACHS = [
   { id: 'maxsail', name: '满帆疾驰', desc: '船帆升到满级', rew: 60, t: function () { return state.lv.sail >= 5; } },
   { id: 'rich', name: '小有积蓄', desc: '同时持有 300 金币', rew: 20, t: function () { return state.res.gold >= 300; } },
   { id: 'bottle3', name: '漂流瓶笔友', desc: '捡到 3 个漂流瓶', rew: 40, t: function () { return state.cnt.bottles >= 3; } },
-  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; } }
+  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; } },
+  { id: 'whirl1', name: '漩口余生', desc: '第一次逃出漩涡引力', rew: 30, t: function () { return state.cnt.whirlEsc >= 1; } },
+  { id: 'cache3', name: '藏宝图大师', desc: '打开 3 座岛屿宝藏', rew: 50, t: function () { return state.cnt.cacheOpen >= 3; } },
+  { id: 'rich2', name: '海上富商', desc: '同时持有 800 金币', rew: 60, t: function () { return state.res.gold >= 800; } },
+  { id: 'ready', name: '巨轮在望', desc: '船帆与船体都升到 3 级', rew: 50, t: function () { return state.lv.sail >= 3 && state.lv.hull >= 3; } }
 ];
 
 var TRADES = [
@@ -1031,7 +1039,7 @@ function makePalm(seed) {
   }
   return g;
 }
-function makeIsland(i, ix, iz, r, rocky) {
+function makeIsland(i, ix, iz, r, rocky, lighthouse) {
   var g = new THREE.Group();
   var seed = i * 13.7 + 1;
   var base = sph(r, MAT.sand, 11, 7);
@@ -1051,7 +1059,35 @@ function makeIsland(i, ix, iz, r, rocky) {
   var hill = new THREE.Mesh(hillGeo, rocky ? MAT.rock : MAT.grass);
   hill.position.y = r * 0.1;
   g.add(hill);
-  if (!rocky) {
+  if (lighthouse) {
+    var tw = new THREE.Group();
+    var t1 = cyl(r * 0.11, r * 0.16, r * 0.42, MAT.white, 12);
+    t1.position.y = r * 0.21; tw.add(t1);
+    var band1 = cyl(r * 0.135, r * 0.145, r * 0.07, MAT.flag, 12);
+    band1.position.y = r * 0.24; tw.add(band1);
+    var band2 = cyl(r * 0.12, r * 0.125, r * 0.07, MAT.flag, 12);
+    band2.position.y = r * 0.37; tw.add(band2);
+    var room = cyl(r * 0.1, r * 0.1, r * 0.1, MAT.ironBand, 10);
+    room.position.y = r * 0.47; tw.add(room);
+    var lampD = sph(r * 0.075, MAT.goldM, 8, 6);
+    lampD.position.y = r * 0.53; tw.add(lampD);
+    var cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.11, r * 0.08, 10), MAT.flag);
+    cap.position.y = r * 0.6; tw.add(cap);
+    var pivot = new THREE.Group();
+    pivot.position.y = r * 0.53;
+    var beam = new THREE.Mesh(
+      new THREE.ConeGeometry(3.2, 42, 14, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xfff2b8, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })
+    );
+    beam.rotation.z = Math.PI / 2;
+    beam.position.x = 21;
+    pivot.add(beam);
+    tw.add(pivot);
+    tw.position.y = r * 0.28;
+    g.add(tw);
+    g.userData.beam = pivot;
+  }
+  if (!rocky && !lighthouse) {
     var hillTop = new THREE.Mesh(new THREE.ConeGeometry(r * 0.4, r * 0.42, 8, 2), MAT.grassDk);
     hillTop.position.y = r * 0.48;
     g.add(hillTop);
@@ -1075,7 +1111,7 @@ function makeIsland(i, ix, iz, r, rocky) {
       g.add(rock);
     }
   }
-  var shallow = new THREE.Mesh(new THREE.RingGeometry(r * 1.02, r * 1.85, 26), new THREE.MeshBasicMaterial({ color: 0xa8e4d8, transparent: true, opacity: 0.4, depthWrite: false }));
+  var shallow = new THREE.Mesh(new THREE.RingGeometry(r * 1.02, r * 1.7, 26), new THREE.MeshBasicMaterial({ color: 0xa8e4d8, transparent: true, opacity: 0.22, depthWrite: false }));
   shallow.rotation.x = -Math.PI / 2;
   shallow.position.y = -0.4;
   g.add(shallow);
@@ -1083,7 +1119,10 @@ function makeIsland(i, ix, iz, r, rocky) {
   foam.rotation.x = -Math.PI / 2;
   foam.position.y = 0.02;
   g.add(foam);
-  g.userData = { x: ix, z: iz, r: r + 3, name: ISLAND_NAMES[i % ISLAND_NAMES.length], id: 'is' + i, found: false, foam: foam };
+  g.userData.x = ix; g.userData.z = iz; g.userData.r = r + 3;
+  g.userData.name = lighthouse ? '长明灯塔' : ISLAND_NAMES[i % ISLAND_NAMES.length];
+  g.userData.lighthouse = !!lighthouse;
+  g.userData.id = 'is' + i; g.userData.found = false; g.userData.foam = foam;
   g.position.set(ix, 0, iz);
   scene.add(g);
   return g;
@@ -1094,7 +1133,7 @@ function makeIsland(i, ix, iz, r, rocky) {
     var dist = 210 + (i % 5) * 135 + rand(-40, 40);
     var ix = Math.cos(ang) * dist, iz = Math.sin(ang) * dist;
     var r = rand(14, 22);
-    islands.push(makeIsland(i, ix, iz, r, i % 3 === 2));
+    islands.push(makeIsland(i, ix, iz, r, i % 3 === 2, i === 4 || i === 9));
   }
 })();
 
@@ -1374,6 +1413,27 @@ function makeFishSchool() {
   g.add(ripple);
   return g;
 }
+function makeLetter() {
+  var g = new THREE.Group();
+  var scroll = cyl(0.22, 0.22, 0.9, MAT.white, 9);
+  scroll.rotation.z = Math.PI / 2;
+  scroll.position.y = 0.28;
+  g.add(scroll);
+  var seal = cyl(0.13, 0.13, 0.06, MAT.flag, 8);
+  seal.rotation.z = Math.PI / 2;
+  seal.position.set(0.1, 0.28, 0.16);
+  g.add(seal);
+  var band = cyl(0.235, 0.235, 0.1, MAT.goldM, 9);
+  band.rotation.z = Math.PI / 2;
+  band.position.y = 0.28;
+  g.add(band);
+  var gl = makeGlow(2.6, 0xffd75e);
+  gl.position.y = 0.5;
+  gl.material.opacity = 0.7;
+  gl.name = 'glow';
+  g.add(gl);
+  return g;
+}
 function buildFloater(kind) {
   var g;
   if (kind === 'wood') g = makeLogStack();
@@ -1383,6 +1443,7 @@ function buildFloater(kind) {
   else if (kind === 'chest') g = makeChest();
   else if (kind === 'bottle') g = makeBottle();
   else if (kind === 'glow') g = makeGlowBuoy();
+  else if (kind === 'letter') g = makeLetter();
   else g = makeFishSchool();
   var rm = kind === 'chest' || kind === 'glow' ? MAT.ringGold : kind === 'fish' ? MAT.ringFish : MAT.ring;
   var ring = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.85, 26), rm);
@@ -1790,14 +1851,16 @@ function updateBoat(dt) {
   var rt = (keys.KeyD || keys.ArrowRight || touch.steer > 0.1) ? 1 : 0;
   b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
   var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
+  if (state.windfall > 0) maxS *= 1.15;
   if (state.burst > 0) maxS *= 1.55;
   var target = b.sail * maxS;
   var oldX = b.x, oldZ = b.z;
   b.speed = lerp(b.speed, target, dt * (target > b.speed ? 0.32 : 0.5));
   var rud = rt - lf;
   if (touch.steer !== 0) rud = touch.steer;
+  b.rud = b.rud === undefined ? 0 : lerp(b.rud, rud, Math.min(1, dt * 7));
   var spdF = 0.35 + (b.speed / Math.max(1, boatSpeedMax())) * 0.7;
-  b.heading -= rud * dt * 1.15 * spdF * turnMult();
+  b.heading -= b.rud * dt * 1.15 * spdF * turnMult();
   var fx = Math.sin(b.heading), fz = Math.cos(b.heading);
   b.x += fx * b.speed * dt;
   b.z += fz * b.speed * dt;
@@ -1830,8 +1893,13 @@ function updateBoat(dt) {
     } else if (!u.found && dd < (u.r + 75) * (1 + (state.lv.lookout - 1) * 0.4)) {
       u.found = true;
       state.islandsFound[u.id] = 1;
-      state.res.gold += 15;
-      toast('发现新岛屿：' + u.name + '，金币 +15', 'gold');
+      var ig = u.lighthouse ? 30 : 15;
+      state.res.gold += ig;
+      if (u.lighthouse) {
+        toast('发现 ' + u.name + '！灯塔守望者赠予金币 +' + ig, 'gold');
+      } else {
+        toast('发现新岛屿：' + u.name + '，金币 +' + ig, 'gold');
+      }
       blip(660, 0.3, 'triangle', 0.2, 990);
       checkQuests();
       checkAch();
@@ -1907,7 +1975,7 @@ function updateBoat(dt) {
   }
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
-  boat.userData.wheel.rotation.z -= rud * dt * 4 * spdF;
+  boat.userData.wheel.rotation.z -= b.rud * dt * 4 * spdF;
   updateCargoVisual();
 
   if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 26) spawnFoam(
@@ -1969,6 +2037,13 @@ function floaterKindFor(d, storm) {
 
 function updateFloaters(dt) {
   spawnT -= dt;
+  if (state.letterDay !== state.day) {
+    state.letterDay = state.day;
+    var la = rand(0, 6.28);
+    var ld = rand(35, 60);
+    spawnFloater('letter', state.boat.x + Math.cos(la) * ld, state.boat.z + Math.sin(la) * ld);
+    toast('一封金色的信随波漂来…', 'gold');
+  }
   if (spawnT <= 0 && floaters.length < 42) {
     spawnT = state.weather.cur === 'storm' ? 1.4 : (state.luck > 0 ? 1.9 : 2.3);
     var ang = rand(0, Math.PI * 2);
@@ -2071,6 +2146,15 @@ function collectFloater(m) {
     var gg2 = Math.round(rand(14, 24) * mult);
     state.res.gold += gg2; gained = true;
     toast('捞起一枚发光浮标，金币 +' + gg2, 'gold');
+  } else if (k === 'letter') {
+    var lg = Math.round(rand(40, 80) * far);
+    state.res.gold += lg;
+    state.windfall = 60;
+    state.cnt.letters++;
+    gained = true;
+    toast('顺风信件！金币 +' + lg + '，60 秒顺风加速', 'gold');
+    sfxWin();
+    buzz(25);
   } else if (k === 'bottle') {
     var msg = pick(BOTTLE_MSGS);
     if (msg.indexOf('木材') >= 0) { var aw = Math.min(15, cap[0] - Math.floor(state.res.wood)); state.res.wood += aw; }
@@ -2108,6 +2192,7 @@ function updateSurvival(dt) {
   state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1);
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
   if (state.luck > 0) state.luck -= dt;
+  if (state.windfall > 0) state.windfall -= dt;
   if (state.stats.hunger < 62 && state.res.food >= 1 && eatT <= 0) {
     state.res.food -= 1; state.stats.hunger = Math.min(100, state.stats.hunger + 16); eatT = 3.0;
     if (!state.hintShown.ate) { state.hintShown.ate = 1; toast('自动进食：饱食不足时消耗食物'); }
@@ -2149,7 +2234,7 @@ function questProgress() {
   else if (q.id === 'fish2') cur = Math.min(state.cnt.fish, q.target);
   else if (q.id === 'storm1') cur = Math.min(state.cnt.storms, 1);
   else if (q.id === 'net2') cur = state.lv.net;
-  else if (q.id === 'exp25') cur = Math.min(explorePct(), q.target);
+  else if (q.id === 'exp20') cur = Math.min(explorePct(), q.target);
   return { cur: cur, max: q.target };
 }
 function checkQuests() {
@@ -2193,7 +2278,7 @@ function updateExplore(dt) {
   expT = 0.5;
   var gx = Math.round(state.boat.x / CELL), gz = Math.round(state.boat.z / CELL);
   var added = 0;
-  for (var dx = -1; dx <= 1; dx++) for (var dz = -1; dz <= 1; dz++) {
+  for (var dx = -2; dx <= 2; dx++) for (var dz = -2; dz <= 2; dz++) {
     var kx = gx + dx, kz = gz + dz;
     if (Math.abs(kx) > GRID_R || Math.abs(kz) > GRID_R) continue;
     var key = kx + ',' + kz;
@@ -2201,7 +2286,7 @@ function updateExplore(dt) {
   }
   if (added > 0) {
     var pct = explorePct();
-    var marks = [[50, 80], [75, 120], [100, 220]];
+    var marks = [[30, 60], [60, 100], [90, 200]];
     for (var i = 0; i < marks.length; i++) {
       if (pct >= marks[i][0] && !state.hintShown['ex' + marks[i][0]]) {
         state.hintShown['ex' + marks[i][0]] = 1;
@@ -2240,6 +2325,7 @@ function updateWhirlpools(dt) {
     }
     var d = Math.hypot(b.x - w.position.x, b.z - w.position.z);
     if (d < 15) {
+      u.wasIn = true;
       var pullF = (1 - d / 15) * 3.4 * dt;
       b.x -= (b.x - w.position.x) / Math.max(d, 0.5) * pullF;
       b.z -= (b.z - w.position.z) / Math.max(d, 0.5) * pullF;
@@ -2255,6 +2341,11 @@ function updateWhirlpools(dt) {
         whirlMsgT = 6;
         toast('漩涡在吸引船身，快划出去！');
       }
+    } else if (u.wasIn && d >= 15) {
+      u.wasIn = false;
+      state.cnt.whirlEsc++;
+      toast('成功逃出漩涡引力！', 'gold');
+      checkAch();
     }
   }
 }
@@ -2540,6 +2631,12 @@ function updateBuffHUD() {
     d.innerHTML = '<div class="bdot"></div>海豚好运 · 打捞+25% · ' + Math.ceil(state.luck) + 's';
     row.appendChild(d);
   }
+  if (state.windfall > 0) {
+    var d5 = document.createElement('div');
+    d5.className = 'buff glass';
+    d5.innerHTML = '<div class="bdot" style="background:#ffd75e"></div>顺风 · 航速+15% · ' + Math.ceil(state.windfall) + 's';
+    row.appendChild(d5);
+  }
   if (state.burst > 0) {
     var d3 = document.createElement('div');
     d3.className = 'buff glass';
@@ -2594,7 +2691,7 @@ function renderTradeCard() {
 }
 
 var mini = $('mini'), mctx = mini.getContext('2d');
-var FKC = { wood: '#a9743f', food: '#e0704a', water: '#3e9fd6', gold: '#e0a52e', fish: '#4dc06a', glow: '#4dc0a8', chest: '#e0a52e', bottle: '#5fae72' };
+var FKC = { wood: '#a9743f', food: '#e0704a', water: '#3e9fd6', gold: '#e0a52e', fish: '#4dc06a', glow: '#4dc0a8', chest: '#e0a52e', bottle: '#5fae72', letter: '#ffd75e' };
 function islandsFoundById(id) { return !!state.islandsFound[id]; }
 function drawMini() {
   var W = mini.width, H = mini.height;
@@ -2726,11 +2823,12 @@ function renderUpList() {
       ' data-up="' + k + '">金币' + costG + '<br>木材' + costW + '</button>';
     html += '</div>';
   }
-  var ok = canBuild();
+  var ok = canBuild() && !state.freeplay;
+  var buildLabel = state.freeplay ? '已 建 成' : (ok ? '建 造' : '未达成');
   html += '<div class="upitem' + (ok ? ' armed' : '') + '" id="builditem"><div class="upicon ui-lamp"><svg viewBox="0 0 24 24" fill="none"><path d="M4 14l1.6-7A2.4 2.4 0 0 1 8 5h8a2.4 2.4 0 0 1 2.4 2L20 14" stroke="#a8781f" stroke-width="2" stroke-linejoin="round"/><path d="M4 14h16v3.4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V14z" fill="#a8781f" opacity=".85"/><path d="M9 19.6V21M15 19.6V21" stroke="#a8781f" stroke-width="2" stroke-linecap="round"/><path d="M12 3.2c2.8 1.8 2.8 5 0 6.8-2.8-1.8-2.8-5 0-6.8z" fill="#2f9bd6"/></svg></div>' +
-    '<div class="upmain"><div class="upname">建造远洋巨轮 · 通关</div>' +
-    '<div class="updesc">需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + Math.floor(state.res.wood) + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold + '</div></div>' +
-    '<button class="upbtn upok" id="btnBuild"' + (ok ? '' : ' disabled') + '>' + (ok ? '建 造' : '未达成') + '</button></div>';
+    '<div class="upmain"><div class="upname">' + (state.freeplay ? '远洋巨轮 · 已建成' : '建造远洋巨轮 · 通关') + '</div>' +
+    '<div class="updesc">' + (state.freeplay ? '巨轮已建成，享受自由航行吧' : '需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + Math.floor(state.res.wood) + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold) + '</div></div>' +
+    '<button class="upbtn upok" id="btnBuild"' + (ok ? '' : ' disabled') + '>' + buildLabel + '</button></div>';
   $('uplist').innerHTML = html;
   var btns = $('uplist').querySelectorAll('[data-up]');
   for (var b = 0; b < btns.length; b++) btns[b].onclick = function () { doUpgrade(this.getAttribute('data-up')); };
@@ -2766,6 +2864,10 @@ function renderLog() {
     ['挺过风暴', state.cnt.storms],
     ['发现岛屿', Object.keys(state.islandsFound).length],
     ['漂流瓶', state.cnt.bottles],
+    ['岛屿宝藏', state.cnt.cacheOpen || 0],
+    ['逃出漩涡', state.cnt.whirlEsc || 0],
+    ['顺风信件', state.cnt.letters || 0],
+    ['成就', Object.keys(state.ach).length + ' / ' + ACHS.length],
     ['探索度', explorePct() + '%']
   ];
   var h = '';
@@ -2821,6 +2923,7 @@ function gameOver(why) {
   overMode = 'lose';
   hidePrompt();
   hideTradeCard();
+  $('btnFree').style.display = 'none';
   var whyTxt = {
     hunger: '食物耗尽，你饿晕在甲板上，被路过的商船救起…',
     thirst: '淡水喝干了，商船把你送回了港口…',
@@ -2840,7 +2943,16 @@ function showOver(win) {
   renderOvStats();
   $('ovsub').innerHTML = '远洋巨轮建成！你带着满舱物资驶向地平线，结束漂流生涯。<br>发现 <b>' + Object.keys(state.islandsFound).length + '</b> 座岛屿 · 航行 <b>' + (state.dist / 1000).toFixed(1) + '</b> 公里 · 成就 <b>' + Object.keys(state.ach).length + '</b>/' + ACHS.length;
   $('btnRestart').textContent = '开 启 新 航 程';
+  $('btnFree').style.display = 'inline-block';
   $('over').classList.add('on');
+}
+function freeplay() {
+  state.freeplay = 1;
+  state.phase = 'play';
+  $('over').classList.remove('on');
+  $('btnFree').style.display = 'none';
+  toast('自由航行：这片海还有更多秘密等你发现', 'gold');
+  save();
 }
 
 function updateCamera(dt) {
@@ -2936,6 +3048,11 @@ function updateFX(dt) {
       var fs = 1 + Math.sin(state.time * 1.5 + il * 1.3) * 0.03;
       fm2.scale.set(fs, fs, 1);
       fm2.material.opacity = 0.35 + Math.sin(state.time * 1.5 + il * 1.3) * 0.15;
+    }
+    var beam = islands[il].userData.beam;
+    if (beam) {
+      beam.visible = (state.nightF || 0) > 0.22;
+      beam.rotation.y += dt * 0.55;
     }
   }
   for (var dp = 0; dp < dolphins.length; dp++) {
@@ -3041,8 +3158,8 @@ function newGame() {
     lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: 'sun', prev: 'sun', next: pickWeatherNext('sun'), t: 55, warnT: 0, blend: 0 },
     explored: {}, islandsFound: {},
-    cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
-    dist: 0, quest: 0, luck: 0,
+    cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0, cacheOpen: 0, whirlEsc: 0, letters: 0 },
+    dist: 0, quest: 0, luck: 0, windfall: 0, letterDay: 0, freeplay: 0,
     burst: 0, burstCd: 0,
     ach: {}, islandDock: {}, caches: {}, settings: keepSet,
     mute: keepMute, playSec: 0, hintShown: {}
@@ -3075,8 +3192,9 @@ function loadGame(d) {
     lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: d.weather.cur, prev: d.weather.cur, next: pickWeatherNext(d.weather.cur), t: d.weather.t, warnT: 0, blend: 0 },
     explored: d.explored, islandsFound: d.islandsFound,
-    cnt: d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+    cnt: Object.assign({ cacheOpen: 0, whirlEsc: 0, letters: 0 }, d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 }),
     dist: d.dist || 0, quest: d.quest || 0, luck: d.luck || 0,
+    windfall: 0, letterDay: d.day || 1, freeplay: d.freeplay || 0,
     ach: d.ach || {}, islandDock: d.islandDock || {}, caches: d.caches || {}, settings: d.settings || keepSet,
     mute: d.mute !== undefined ? d.mute : keepMute,
     playSec: d.playSec || 0, hintShown: { ate: 1 }
@@ -3117,7 +3235,8 @@ function loop(now) {
   requestAnimationFrame(loop);
   var dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
-  if (state.phase === 'play') step(dt * timeScale);
+  var ts = window.__ts || 1;
+  if (state.phase === 'play') { for (var k = 0; k < ts; k++) step(dt * timeScale); }
   else if (state.phase === 'menu') menuIdle(dt);
   updateFX(state.phase === 'pause' ? 0 : dt);
   renderer.render(scene, camera);
@@ -3172,6 +3291,7 @@ function boot() {
     clearSave();
     newGame();
   };
+  $('btnFree').onclick = freeplay;
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && state.phase === 'play') { save(); togglePause(); }
   });
