@@ -29,7 +29,7 @@ var state = {
   caches: {},
   ach: {},
   islandDock: {},
-  settings: { hiRes: true },
+  settings: { hiRes: true, music: true },
   mute: false,
   playSec: 0,
   hintShown: {}
@@ -96,18 +96,18 @@ var QUESTS = [
 var ACHS = [
   { id: 'catch1', name: '初试身手', desc: '打捞第一个漂浮物', rew: 10, t: function () { return state.cnt.pickup >= 1; } },
   { id: 'chest1', name: '寻宝猎人', desc: '打捞第一个漂流宝箱', rew: 30, t: function () { return state.cnt.chests >= 1; } },
-  { id: 'fish5', name: '开心的渔夫', desc: '捕鱼 5 次', rew: 30, t: function () { return state.cnt.fish >= 5; } },
-  { id: 'storm3', name: '风暴老手', desc: '完整挺过 3 场雷暴', rew: 50, t: function () { return state.cnt.storms >= 3; } },
-  { id: 'isl5', name: '群岛贵客', desc: '发现 5 座岛屿', rew: 50, t: function () { return Object.keys(state.islandsFound).length >= 5; } },
-  { id: 'dist10', name: '远航者', desc: '累计航行 10 公里', rew: 40, t: function () { return state.dist >= 10000; } },
-  { id: 'maxsail', name: '满帆疾驰', desc: '船帆升到满级', rew: 60, t: function () { return state.lv.sail >= 5; } },
+  { id: 'fish5', name: '开心的渔夫', desc: '捕鱼攒渔获', rew: 30, t: function () { return state.cnt.fish >= 5; }, p: function () { return [Math.min(state.cnt.fish, 5), 5]; } },
+  { id: 'storm3', name: '风暴老手', desc: '完整挺过雷暴', rew: 50, t: function () { return state.cnt.storms >= 3; }, p: function () { return [Math.min(state.cnt.storms, 3), 3]; } },
+  { id: 'isl5', name: '群岛贵客', desc: '发现岛屿', rew: 50, t: function () { return Object.keys(state.islandsFound).length >= 5; }, p: function () { return [Math.min(Object.keys(state.islandsFound).length, 5), 5]; } },
+  { id: 'dist10', name: '远航者', desc: '累计航行 10 公里', rew: 40, t: function () { return state.dist >= 10000; }, p: function () { return [Math.min(Math.round(state.dist / 100) / 10, 10), 10]; } },
+  { id: 'maxsail', name: '满帆疾驰', desc: '船帆升到满级', rew: 60, t: function () { return state.lv.sail >= 5; }, p: function () { return [Math.min(state.lv.sail, 5), 5]; } },
   { id: 'rich', name: '小有积蓄', desc: '同时持有 300 金币', rew: 20, t: function () { return state.res.gold >= 300; } },
-  { id: 'bottle3', name: '漂流瓶笔友', desc: '捡到 3 个漂流瓶', rew: 40, t: function () { return state.cnt.bottles >= 3; } },
-  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; } },
+  { id: 'bottle3', name: '漂流瓶笔友', desc: '捡到漂流瓶', rew: 40, t: function () { return state.cnt.bottles >= 3; }, p: function () { return [Math.min(state.cnt.bottles, 3), 3]; } },
+  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; }, p: function () { return [Math.min(explorePct(), 50), 50]; } },
   { id: 'whirl1', name: '漩口余生', desc: '第一次逃出漩涡引力', rew: 30, t: function () { return state.cnt.whirlEsc >= 1; } },
-  { id: 'cache3', name: '藏宝图大师', desc: '打开 3 座岛屿宝藏', rew: 50, t: function () { return state.cnt.cacheOpen >= 3; } },
+  { id: 'cache3', name: '藏宝图大师', desc: '打开岛屿宝藏', rew: 50, t: function () { return state.cnt.cacheOpen >= 3; }, p: function () { return [Math.min(state.cnt.cacheOpen, 3), 3]; } },
   { id: 'rich2', name: '海上富商', desc: '同时持有 800 金币', rew: 60, t: function () { return state.res.gold >= 800; } },
-  { id: 'ready', name: '巨轮在望', desc: '船帆与船体都升到 3 级', rew: 50, t: function () { return state.lv.sail >= 3 && state.lv.hull >= 3; } }
+  { id: 'ready', name: '巨轮在望', desc: '船帆与船体都升到 3 级', rew: 50, t: function () { return state.lv.sail >= 3 && state.lv.hull >= 3; }, p: function () { return [Math.min(state.lv.sail, 3) + Math.min(state.lv.hull, 3), 6]; } }
 ];
 
 var TRADES = [
@@ -126,6 +126,12 @@ var WDEF = {
 
 var WSEQ = { sun: ['breeze', 'fog', 'drizzle'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze', 'drizzle'], drizzle: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
 var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], drizzle: [40, 70], storm: [30, 46] };
+(function () {
+  for (var k in WDEF) {
+    WDEF[k].skyC = [new THREE.Color(WDEF[k].sky[0]), new THREE.Color(WDEF[k].sky[1])];
+    WDEF[k].seaC = [new THREE.Color(WDEF[k].sea[0]), new THREE.Color(WDEF[k].sea[1])];
+  }
+})();
 
 var WSVG = {
   sun: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.6" fill="#ffd75e"/><g stroke="#f5b93c" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></g></svg>',
