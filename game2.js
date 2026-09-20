@@ -1080,6 +1080,18 @@ var foamMesh = new THREE.Points(foamGeo, foamMat);
 foamMesh.frustumCulled = false;
 scene.add(foamMesh);
 
+var RAINRIP_N = 12;
+var rainRipples = [];
+(function () {
+  for (var i = 0; i < RAINRIP_N; i++) {
+    var m = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.3, 14), new THREE.MeshBasicMaterial({ color: 0xdff2fa, transparent: true, opacity: 0, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2;
+    m.visible = false;
+    scene.add(m);
+    rainRipples.push({ m: m, t: 0 });
+  }
+})();
+
 var rainbow = null;
 var rainbowTex = (function () {
   var cv = document.createElement('canvas');
