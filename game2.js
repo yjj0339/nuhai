@@ -91,6 +91,7 @@ var MAT = {
   mast: new THREE.MeshPhongMaterial({ color: 0x9a6a38, flatShading: true }),
   rope: new THREE.LineBasicMaterial({ color: 0x6e4c26, transparent: true, opacity: 0.85 }),
   sail: new THREE.MeshLambertMaterial({ color: 0xfdfdf8, side: THREE.DoubleSide }),
+  sailGold: new THREE.MeshLambertMaterial({ color: 0xfbf0d0, side: THREE.DoubleSide }),
   sailStripe: new THREE.MeshLambertMaterial({ color: 0xf2b56a, side: THREE.DoubleSide }),
   flag: new THREE.MeshLambertMaterial({ color: 0xef6f3c, side: THREE.DoubleSide }),
   rock: new THREE.MeshPhongMaterial({ color: 0x5e7d8e, flatShading: true }),
@@ -241,6 +242,16 @@ var boat = new THREE.Group();
   stripe.position.set(0, 4.35, 0.36);
   boat.add(stripe);
   boat.userData.stripe = stripe;
+  var stripe2 = new THREE.Mesh(new THREE.PlaneGeometry(2.95, 0.42, 12, 1), MAT.sailStripe);
+  stripe2.position.set(0, 2.62, 0.36);
+  stripe2.visible = false;
+  boat.add(stripe2);
+  boat.userData.stripe2 = stripe2;
+  var goldEdge = new THREE.Mesh(new THREE.PlaneGeometry(3.05, 0.16, 12, 1), MAT.goldM);
+  goldEdge.position.set(0, 5.22, 0.32);
+  goldEdge.visible = false;
+  boat.add(goldEdge);
+  boat.userData.goldEdge = goldEdge;
 
   var foreMast = cyl(0.06, 0.09, 3.6, MAT.mast, 8);
   foreMast.position.set(0, 2.4, 2.55); boat.add(foreMast);
@@ -450,6 +461,80 @@ function makeIsland(i, ix, iz, r, rocky) {
     var ix = Math.cos(ang) * dist, iz = Math.sin(ang) * dist;
     var r = rand(14, 22);
     islands.push(makeIsland(i, ix, iz, r, i % 3 === 2));
+  }
+})();
+
+var whirlpools = [];
+function makeWhirlpool(idx) {
+  var g = new THREE.Group();
+  var core = new THREE.Mesh(new THREE.CircleGeometry(2.6, 22), new THREE.MeshBasicMaterial({ color: 0x1d4a66, transparent: true, opacity: 0.75, depthWrite: false }));
+  core.rotation.x = -Math.PI / 2;
+  core.position.y = 0.06;
+  g.add(core);
+  var rings = [];
+  var cols = [0x2a6a8e, 0x3a86ac, 0x5aa8cc];
+  for (var i = 0; i < 3; i++) {
+    var seg = new THREE.Mesh(
+      new THREE.RingGeometry(3 + i * 2.6, 4.6 + i * 2.6, 26, 1, idx * 2 + i * 1.4, Math.PI * 1.45),
+      new THREE.MeshBasicMaterial({ color: cols[i], transparent: true, opacity: 0.62 - i * 0.12, depthWrite: false, side: THREE.DoubleSide })
+    );
+    seg.rotation.x = -Math.PI / 2;
+    seg.position.y = 0.12 + i * 0.06;
+    g.add(seg);
+    rings.push(seg);
+  }
+  var foamPts = [];
+  for (var f = 0; f < 8; f++) {
+    var fp = makeGlow(1.1, 0xd8f0fa);
+    fp.material.opacity = 0.5;
+    g.add(fp);
+    foamPts.push(fp);
+  }
+  g.userData = { rings: rings, foamPts: foamPts, ph: idx * 2.1, idx: idx };
+  scene.add(g);
+  whirlpools.push(g);
+  return g;
+}
+function placeWhirlpools(day) {
+  for (var i = 0; i < 3; i++) {
+    if (!whirlpools[i]) makeWhirlpool(i);
+    var w = whirlpools[i];
+    var ang = hashSeed(day * 17.3 + i * 7.7) * Math.PI * 2;
+    var dist = 170 + hashSeed(day * 5.1 + i * 13.9) * 520;
+    w.position.set(Math.cos(ang) * dist, 0, Math.sin(ang) * dist);
+    w.userData.driftA = rand(0, 6.28);
+    w.userData.baseX = w.position.x;
+    w.userData.baseZ = w.position.z;
+  }
+}
+(function initWhirlpools() { for (var i = 0; i < 3; i++) makeWhirlpool(i); })();
+
+var islandCaches = [];
+(function buildIslandCaches() {
+  for (var i = 0; i < islands.length; i++) {
+    var u = islands[i].userData;
+    var ang = hashSeed(i * 31.7 + 3) * Math.PI * 2;
+    var cx = u.x + Math.cos(ang) * (u.r + 5.5);
+    var cz = u.z + Math.sin(ang) * (u.r + 5.5);
+    var g = new THREE.Group();
+    var boxM = box(0.9, 0.5, 0.6, MAT.chest);
+    boxM.position.y = 0.25; g.add(boxM);
+    var lidM = box(0.94, 0.18, 0.64, MAT.ironBand);
+    lidM.position.y = 0.56; g.add(lidM);
+    var lockM = box(0.14, 0.18, 0.08, MAT.goldM);
+    lockM.position.set(0, 0.42, 0.32); g.add(lockM);
+    var gl = makeGlow(2.2, 0xffd75e);
+    gl.position.y = 0.7;
+    gl.material.opacity = 0.6;
+    g.add(gl);
+    var ring = new THREE.Mesh(new THREE.RingGeometry(1.3, 1.6, 22), MAT.ringGold);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.08;
+    g.add(ring);
+    g.position.set(cx, 0, cz);
+    g.userData = { islId: u.id, x: cx, z: cz, taken: false, gl: gl, ring: ring, ph: rand(0, 6.28), hold: 0 };
+    scene.add(g);
+    islandCaches.push(g);
   }
 })();
 
