@@ -523,6 +523,17 @@ function loadSave() {
 function clearSave() { try { localStorage.removeItem('nuhai_save'); } catch (e) { } }
 
 var AC = null, masterG = null, ambG = null, ambSrc = null, ambFilter = null;
+var rainG = null, rainSrc = null, rainFilter = null;
+function makeNoiseSrc() {
+  var len = AC.sampleRate * 2;
+  var buf = AC.createBuffer(1, len, AC.sampleRate);
+  var ch = buf.getChannelData(0);
+  var last = 0;
+  for (var i = 0; i < len; i++) { var wn = Math.random() * 2 - 1; last = (last + 0.02 * wn) / 1.02; ch[i] = last * 3.2; }
+  var src = AC.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  return src;
+}
 function initAudio() {
   if (AC) return;
   try {
@@ -530,17 +541,16 @@ function initAudio() {
     masterG = AC.createGain();
     masterG.gain.value = state.mute ? 0 : 0.8;
     masterG.connect(AC.destination);
-    var len = AC.sampleRate * 2;
-    var buf = AC.createBuffer(1, len, AC.sampleRate);
-    var ch = buf.getChannelData(0);
-    var last = 0;
-    for (var i = 0; i < len; i++) { var wn = Math.random() * 2 - 1; last = (last + 0.02 * wn) / 1.02; ch[i] = last * 3.2; }
-    ambSrc = AC.createBufferSource();
-    ambSrc.buffer = buf; ambSrc.loop = true;
+    ambSrc = makeNoiseSrc();
     ambFilter = AC.createBiquadFilter(); ambFilter.type = 'lowpass'; ambFilter.frequency.value = 420;
     ambG = AC.createGain(); ambG.gain.value = 0.05;
     ambSrc.connect(ambFilter); ambFilter.connect(ambG); ambG.connect(masterG);
     ambSrc.start();
+    rainSrc = makeNoiseSrc();
+    rainFilter = AC.createBiquadFilter(); rainFilter.type = 'highpass'; rainFilter.frequency.value = 1800;
+    rainG = AC.createGain(); rainG.gain.value = 0;
+    rainSrc.connect(rainFilter); rainFilter.connect(rainG); rainG.connect(masterG);
+    rainSrc.start();
   } catch (e) { AC = null; }
 }
 function setMute(m) {
@@ -582,6 +592,11 @@ function sfxPickup(kind) {
   else blip(440 + Math.random() * 120, 0.16, 'sine', 0.16, 620);
 }
 function sfxUp() { blip(392, 0.16, 'triangle', 0.18); setTimeout(function () { blip(523, 0.16, 'triangle', 0.18); }, 120); setTimeout(function () { blip(659, 0.3, 'triangle', 0.18); }, 240); }
+function sfxQuest() {
+  var seq = [523.25, 659.25, 783.99, 1046.5];
+  for (var i = 0; i < seq.length; i++) (function (f, d) { setTimeout(function () { sfxPluck(f, i === 3); }, d); })(seq[i], i * 130);
+}
+function sfxGull() { blip(1180 + Math.random() * 300, 0.14, 'sawtooth', 0.045, 1600); setTimeout(function () { blip(1000 + Math.random() * 200, 0.1, 'sawtooth', 0.035, 700); }, 150); }
 function sfxThunder() {
   if (!AC || state.mute) return;
   try {
@@ -983,6 +998,39 @@ var boat = new THREE.Group();
   anchorS.position.set(1.05, 0.5, 1.7);
   anchorS.rotation.z = 0.5;
   boat.add(anchorS);
+
+  var goldTrimL = box(0.1, 0.07, 4.3, MAT.goldM);
+  goldTrimL.position.set(1.24, 0.62, -0.25);
+  goldTrimL.visible = false;
+  boat.add(goldTrimL);
+  var goldTrimR = goldTrimL.clone();
+  goldTrimR.position.x = -1.24;
+  boat.add(goldTrimR);
+  boat.userData.goldTrims = [goldTrimL, goldTrimR];
+
+  var netMesh = new THREE.Group();
+  for (var ni = 0; ni < 4; ni++) {
+    var nv = box(0.03, 0.85, 0.03, MAT.rope);
+    nv.position.set(-0.36 + ni * 0.24, 0, 0);
+    netMesh.add(nv);
+  }
+  for (var nj = 0; nj < 4; nj++) {
+    var nh = box(0.82, 0.03, 0.03, MAT.rope);
+    nh.position.set(0, -0.36 + nj * 0.24, 0);
+    netMesh.add(nh);
+  }
+  netMesh.position.set(0, 0.75, -3.15);
+  netMesh.rotation.x = 0.28;
+  netMesh.visible = false;
+  boat.add(netMesh);
+  boat.userData.netMesh = netMesh;
+
+  var pennant = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 4), MAT.sailStripe);
+  pennant.rotation.z = -Math.PI / 2;
+  pennant.position.set(0.3, 4.95, 0.3);
+  pennant.visible = false;
+  boat.add(pennant);
+  boat.userData.pennant = pennant;
 })();
 scene.add(boat);
 
@@ -1257,6 +1305,53 @@ function sparkle(x, y, z, big) {
     scene.add(m);
   }
 })();
+
+var shootingStar = null;
+var starTrail = [];
+function makeShootingStar() {
+  shootingStar = makeGlow(2.4, 0xfff8dc);
+  shootingStar.visible = false;
+  shootingStar.material.opacity = 0.95;
+  scene.add(shootingStar);
+  for (var i = 0; i < 5; i++) {
+    var t = makeGlow(1.4 - i * 0.2, 0xcfe8ff);
+    t.visible = false;
+    scene.add(t);
+    starTrail.push(t);
+  }
+}
+makeShootingStar();
+var starState = { on: false, t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 };
+function launchStar() {
+  var a = rand(0, Math.PI * 2);
+  starState.on = true;
+  starState.t = 2.2;
+  starState.x = camera.position.x + Math.cos(a) * 260;
+  starState.y = rand(120, 190);
+  starState.z = camera.position.z + Math.sin(a) * 260;
+  var ta = a + Math.PI + rand(-0.5, 0.5);
+  var sp = rand(90, 130);
+  starState.vx = Math.cos(ta) * sp;
+  starState.vy = -rand(20, 40);
+  starState.vz = Math.sin(ta) * sp;
+  shootingStar.visible = true;
+}
+function textSprite(txt) {
+  var cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 64;
+  var ctx = cv.getContext('2d');
+  ctx.font = '900 40px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(255,255,255,.9)';
+  ctx.lineWidth = 6;
+  ctx.strokeText(txt, 128, 32);
+  ctx.fillStyle = '#1d5a86';
+  ctx.fillText(txt, 128, 32);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
+  sp.scale.set(26, 6.5, 1);
+  return sp;
+}
 
 var rocks = [];
 (function buildRocks() {
@@ -1806,6 +1901,7 @@ function updateWeather(dt) {
   visW.fogC.copy(visW.skyBot);
   var rainT = w.cur === 'storm' ? 0.5 : w.cur === 'drizzle' ? 0.22 : 0;
   visW.rain = lerp(visW.rain, rainT, dt * 0.8);
+  if (rainG) rainG.gain.value = visW.rain * 0.14;
   visW.wind = lerp(visW.wind, def.w, dt * 0.4);
 
   if (w.cur === 'storm') {
@@ -1861,6 +1957,9 @@ var _sunDirBack = new THREE.Vector3(-0.3, 0.5, -0.4);
 var _sunDir = new THREE.Vector3();
 var _cTop = new THREE.Color();
 var _cBot = new THREE.Color();
+var _cNightSea = new THREE.Color('#1e4a6e');
+var _cSea1 = new THREE.Color();
+var _cSea2 = new THREE.Color();
 
 function updateDayNight(dt) {
   state.dayT += dt / DAYLEN;
@@ -1973,6 +2072,15 @@ function updateBoat(dt) {
       } else {
         toast('发现新岛屿：' + u.name + '，金币 +' + ig, 'gold');
       }
+      if (!u.tag) {
+        u.tag = textSprite(u.name);
+        u.tag.position.set(u.x, r + 26, u.z);
+        u.tag.userData.life = 4;
+        scene.add(u.tag);
+      } else {
+        u.tag.userData.life = 4;
+        u.tag.visible = true;
+      }
       blip(660, 0.3, 'triangle', 0.2, 990);
       checkQuests();
       checkAch();
@@ -2045,6 +2153,14 @@ function updateBoat(dt) {
     boat.userData.sailTier = slv;
     boat.userData.sail.material = slv >= 5 ? MAT.sailGold : MAT.sail;
     boat.userData.stripe.material = slv >= 5 ? MAT.sailGold : MAT.sailStripe;
+  }
+  var decoKey = (state.lv.hull >= 3 ? 1 : 0) | (state.lv.net >= 2 ? 2 : 0) | (state.lv.lookout >= 2 ? 4 : 0);
+  if (boat.userData.decoKey !== decoKey) {
+    boat.userData.decoKey = decoKey;
+    var trims = boat.userData.goldTrims;
+    for (var ti = 0; ti < trims.length; ti++) trims[ti].visible = !!(decoKey & 1);
+    boat.userData.netMesh.visible = !!(decoKey & 2);
+    boat.userData.pennant.visible = !!(decoKey & 4);
   }
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
@@ -2322,8 +2438,8 @@ function checkQuests() {
       var rwTxt = [];
       if (q.rg) { state.res.gold += q.rg; rwTxt.push('金币+' + q.rg); }
       if (q.rw) { state.res.wood += q.rw; rwTxt.push('木材+' + q.rw); }
-      toast('目标达成：' + q.name + '！奖励 ' + rwTxt.join(' '), 'gold');
-      sfxUp();
+      showBanner('目标达成', '「' + q.name + '」 ' + rwTxt.join(' '));
+      sfxQuest();
       state.quest++;
       updateQuestHUD();
     } else break;
@@ -3072,10 +3188,13 @@ function updateCamera(dt) {
 }
 
 function updateFX(dt) {
+  var nf = state.nightF || 0;
+  _cSea1.copy(visW.seaDeep).lerp(_cNightSea, nf * 0.45);
+  _cSea2.copy(visW.seaShal).lerp(_cNightSea, nf * 0.35);
   seaMat.uniforms.uTime.value = state.time;
   seaMat.uniforms.uAmp.value = visW.amp;
-  seaMat.uniforms.cDeep.value.copy(visW.seaDeep);
-  seaMat.uniforms.cShallow.value.copy(visW.seaShal);
+  seaMat.uniforms.cDeep.value.copy(_cSea1);
+  seaMat.uniforms.cShallow.value.copy(_cSea2);
   seaMat.uniforms.cFog.value.copy(scene.fog.color);
   seaMat.uniforms.uFogFar.value = scene.fog.far;
   seaMesh.position.x = camera.position.x;
@@ -3123,6 +3242,39 @@ function updateFX(dt) {
       sk.spr.material.opacity = Math.max(0, sk.t) * 0.85;
       sk.spr.position.y += dt * 1.6;
       if (sk.t <= 0) sk.spr.visible = false;
+    }
+  }
+
+  if (nf > 0.5 && !starState.on && Math.random() < dt * 0.03) launchStar();
+  if (starState.on) {
+    starState.t -= dt;
+    starState.x += starState.vx * dt;
+    starState.y += starState.vy * dt;
+    starState.z += starState.vz * dt;
+    shootingStar.position.set(starState.x, starState.y, starState.z);
+    for (var st2 = 0; st2 < starTrail.length; st2++) {
+      var tr = starTrail[st2];
+      tr.visible = true;
+      tr.position.set(starState.x - starState.vx * (st2 + 1) * 0.035, starState.y - starState.vy * (st2 + 1) * 0.035, starState.z - starState.vz * (st2 + 1) * 0.035);
+      tr.material.opacity = 0.6 - st2 * 0.12;
+    }
+    if (starState.t <= 0) {
+      starState.on = false;
+      shootingStar.visible = false;
+      for (var st3 = 0; st3 < starTrail.length; st3++) starTrail[st3].visible = false;
+      if (state.phase === 'play') {
+        state.res.gold += 10;
+        toast('对流星许了个愿：金币 +10', 'gold');
+        updateHUD();
+      }
+    }
+  }
+  for (var il2 = 0; il2 < islands.length; il2++) {
+    var tag = islands[il2].userData.tag;
+    if (tag && tag.userData.life > 0) {
+      tag.userData.life -= dt;
+      tag.material.opacity = Math.min(1, tag.userData.life / 1.2);
+      if (tag.userData.life <= 0) tag.visible = false;
     }
   }
 
@@ -3174,6 +3326,7 @@ function updateFX(dt) {
   boat.userData.lampGlow.scale.setScalar(0.9 + state.lv.lamp * 0.3);
 }
 
+var gullT = 6;
 function step(dt) {
   state.time += dt;
   state.playSec += dt;
@@ -3189,6 +3342,11 @@ function step(dt) {
   if (musicT <= 0) {
     musicT = rand(2.4, 4.6);
     if (!state.mute && state.settings.music !== false && AC && state.weather.cur !== 'storm') sfxPluck(pick(MNOTES), Math.random() < 0.35);
+  }
+  gullT -= dt;
+  if (gullT <= 0) {
+    gullT = rand(7, 16);
+    if (!state.mute && AC && state.weather.cur !== 'storm' && state.weather.cur !== 'fog') sfxGull();
   }
   hudT -= dt;
   if (hudT <= 0) {
