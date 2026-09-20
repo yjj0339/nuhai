@@ -132,6 +132,14 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
 .achrew{margin-left:auto;font-size:11px;font-weight:800;color:#a8781f;white-space:nowrap}
 #setRows{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
 .ui-rud{background:linear-gradient(150deg,#e8eef4,#c9d8e6);color:#43647c}
+.ui-look{background:linear-gradient(150deg,#e2f0ec,#c2dfd4);color:#3a7a68}
+
+#burstBtn{position:absolute;right:16px;bottom:236px;width:64px;height:64px;border-radius:50%;pointer-events:auto;cursor:pointer;border:1.2px solid rgba(255,255,255,.9);font-family:inherit;font-weight:900;font-size:12.5px;color:var(--txt);letter-spacing:2px;overflow:hidden;padding:0;box-shadow:0 6px 18px rgba(23,74,110,.2),inset 0 1.5px 0 rgba(255,255,255,.95);background:linear-gradient(155deg,rgba(255,255,255,.85),rgba(255,255,255,.55));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:transform .13s}
+#burstBtn:hover{transform:scale(1.06)}
+#burstBtn:active{transform:scale(.94)}
+#burstBtn.ready{border-color:rgba(120,200,240,.95);box-shadow:0 6px 20px rgba(47,155,214,.35),inset 0 1.5px 0 #fff}
+#burstBtn span{position:relative;z-index:2}
+#burstCd{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(180deg,rgba(103,199,242,.4),rgba(47,155,214,.5));z-index:1;transition:height .3s linear}
 
 #menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
 #menu.off{display:none}
@@ -221,6 +229,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
  #wDesc{display:none}
  #logStats{grid-template-columns:repeat(2,1fr)}
  #btns .gbtn{padding:9px 11px;font-size:12px}
+ #burstBtn{right:12px;bottom:196px;width:56px;height:56px;font-size:11px}
 }
 </style>
 </head>
@@ -269,6 +278,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
     <canvas id="mini" width="344" height="344"></canvas>
     <div id="minilbl">海图探索 <b id="expl">0%</b></div>
   </div>
+  <button id="burstBtn" class="glass ready"><div id="burstCd"></div><span>冲刺</span></button>
   <div id="btns">
     <button class="gbtn blue" id="btnUpgrade">船坞升级</button>
     <button class="gbtn" id="btnLog">航行日志</button>
