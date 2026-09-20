@@ -119,6 +119,7 @@ function updateWeather(dt) {
   visW.fogC.copy(visW.skyBot);
   var rainT = w.cur === 'storm' ? 0.5 : w.cur === 'drizzle' ? 0.22 : 0;
   visW.rain = lerp(visW.rain, rainT, dt * 0.8);
+  if (rainG) rainG.gain.value = visW.rain * 0.14;
   visW.wind = lerp(visW.wind, def.w, dt * 0.4);
 
   if (w.cur === 'storm') {
@@ -174,6 +175,9 @@ var _sunDirBack = new THREE.Vector3(-0.3, 0.5, -0.4);
 var _sunDir = new THREE.Vector3();
 var _cTop = new THREE.Color();
 var _cBot = new THREE.Color();
+var _cNightSea = new THREE.Color('#1e4a6e');
+var _cSea1 = new THREE.Color();
+var _cSea2 = new THREE.Color();
 
 function updateDayNight(dt) {
   state.dayT += dt / DAYLEN;
@@ -286,6 +290,15 @@ function updateBoat(dt) {
       } else {
         toast('发现新岛屿：' + u.name + '，金币 +' + ig, 'gold');
       }
+      if (!u.tag) {
+        u.tag = textSprite(u.name);
+        u.tag.position.set(u.x, r + 26, u.z);
+        u.tag.userData.life = 4;
+        scene.add(u.tag);
+      } else {
+        u.tag.userData.life = 4;
+        u.tag.visible = true;
+      }
       blip(660, 0.3, 'triangle', 0.2, 990);
       checkQuests();
       checkAch();
@@ -358,6 +371,14 @@ function updateBoat(dt) {
     boat.userData.sailTier = slv;
     boat.userData.sail.material = slv >= 5 ? MAT.sailGold : MAT.sail;
     boat.userData.stripe.material = slv >= 5 ? MAT.sailGold : MAT.sailStripe;
+  }
+  var decoKey = (state.lv.hull >= 3 ? 1 : 0) | (state.lv.net >= 2 ? 2 : 0) | (state.lv.lookout >= 2 ? 4 : 0);
+  if (boat.userData.decoKey !== decoKey) {
+    boat.userData.decoKey = decoKey;
+    var trims = boat.userData.goldTrims;
+    for (var ti = 0; ti < trims.length; ti++) trims[ti].visible = !!(decoKey & 1);
+    boat.userData.netMesh.visible = !!(decoKey & 2);
+    boat.userData.pennant.visible = !!(decoKey & 4);
   }
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
@@ -635,8 +656,8 @@ function checkQuests() {
       var rwTxt = [];
       if (q.rg) { state.res.gold += q.rg; rwTxt.push('金币+' + q.rg); }
       if (q.rw) { state.res.wood += q.rw; rwTxt.push('木材+' + q.rw); }
-      toast('目标达成：' + q.name + '！奖励 ' + rwTxt.join(' '), 'gold');
-      sfxUp();
+      showBanner('目标达成', '「' + q.name + '」 ' + rwTxt.join(' '));
+      sfxQuest();
       state.quest++;
       updateQuestHUD();
     } else break;
