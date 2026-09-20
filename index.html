@@ -304,10 +304,11 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
       <button class="gbtn" id="btnHelp">玩法说明</button>
     </div>
     <div id="mhelp" style="display:none">
-      驾驶小船在无边大海中生存。<b>W/S</b> 升降帆、<b>A/D</b> 转舵，靠近漂浮物自动打捞。
-      <div class="sec"><b>生存</b>：饱食与水分持续下降，物资充足时会自动进食饮水；风暴伤船，木材会自动修船，靠岛时免费修复。</div>
-      <div class="sec"><b>玩法</b>：跟着左上目标卡一步步走；停船在鱼群上可撒网捕鱼；漂流瓶藏着奖励；商筏路过时按 T 交易；海豚伴航有打捞加成。</div>
-      <div class="sec"><b>通关</b>：船帆3级+船体3级+木材120+金币150，建造远洋巨轮。夜晚有发光浮标，雷暴中打捞有额外加成。</div>
+      驾驶小船在无边大海中生存。<b>W/S</b> 升降帆、<b>A/D</b> 转舵、<b>空格</b> 乘风突进，靠近漂浮物自动打捞。
+      <div class="sec"><b>生存</b>：饱食与水分持续下降（天数越多消耗越快），物资充足时自动进食饮水；细雨天淡水自生；雷暴伤船但打捞+50%，风暴过后常有彩虹。</div>
+      <div class="sec"><b>玩法</b>：跟着左侧目标卡走；停稳在鱼群涟漪上撒网捕鱼；绕岛寻找沉睡的宝藏箱；慢速靠岛可补给；漂流商筏靠近交易；海豚伴航带来好运；小心会吸住船的漩涡；每天有一封金色顺风信。</div>
+      <div class="sec"><b>升级</b>：船坞升级船帆/船体/货舱/船灯/渔网/舵轮/瞭望台，帆面和灯光随等级变化。</div>
+      <div class="sec"><b>通关</b>：船帆3级+船体3级+木材120+金币150，建造远洋巨轮。通关后可继续自由航行。</div>
     </div>
   </div>
 </div>
@@ -1219,6 +1220,41 @@ var islandCaches = [];
     g.userData = { islId: u.id, x: cx, z: cz, taken: false, gl: gl, ring: ring, ph: rand(0, 6.28), hold: 0 };
     scene.add(g);
     islandCaches.push(g);
+  }
+})();
+
+var SPARK_N = 14;
+var sparkPool = [];
+(function buildSparks() {
+  for (var i = 0; i < SPARK_N; i++) {
+    var s = makeGlow(2, 0xffe9a8);
+    s.visible = false;
+    scene.add(s);
+    sparkPool.push({ spr: s, t: 0, base: 2 });
+  }
+})();
+function sparkle(x, y, z, big) {
+  for (var i = 0; i < SPARK_N; i++) {
+    var s = sparkPool[i];
+    if (s.t <= 0) {
+      s.t = 1;
+      s.base = big ? 3.4 : 2;
+      s.spr.visible = true;
+      s.spr.position.set(x, y + 0.8, z);
+      s.spr.material.opacity = 0.9;
+      s.spr.scale.setScalar(s.base);
+      return;
+    }
+  }
+}
+
+(function buildEdgeMist() {
+  for (var i = 0; i < 40; i++) {
+    var a = (i / 40) * Math.PI * 2 + rand(-0.05, 0.05);
+    var m = makeGlow(rand(70, 120), 0xffffff);
+    m.material.opacity = rand(0.22, 0.4);
+    m.position.set(Math.cos(a) * (WORLD_R + 30), rand(4, 26), Math.sin(a) * (WORLD_R + 30));
+    scene.add(m);
   }
 })();
 
@@ -2144,6 +2180,7 @@ function catchFish(m) {
     toast('鱼获满满，但货舱装不下了');
   }
   sfxPickup('fish');
+  sparkle(m.position.x, m.position.y + 0.5, m.position.z, false);
   removeFloater(m);
   checkQuests();
   checkAch();
@@ -2211,6 +2248,7 @@ function collectFloater(m) {
   if (gained) {
     sfxPickup(k);
     buzz(12);
+    sparkle(m.position.x, m.position.y + 0.6, m.position.z, k === 'chest' || k === 'letter');
     if (fullHintCD <= 0 && (k === 'wood' && cap[0] - Math.floor(state.res.wood) <= 0 || k === 'food' && cap[1] - Math.floor(state.res.food) <= 0 || k === 'water' && cap[2] - Math.floor(state.res.water) <= 0)) {
       toast('货舱满了，去船坞升级货舱'); fullHintCD = 10;
     }
@@ -2225,8 +2263,9 @@ function collectFloater(m) {
 function updateSurvival(dt) {
   var raining = state.weather.cur === 'storm';
   var drizzling = state.weather.cur === 'drizzle';
-  state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1);
-  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1);
+  var ramp = Math.min(1.5, 1 + Math.max(0, state.day - 4) * 0.04);
+  state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1) * ramp;
+  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1) * ramp;
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
   if (state.luck > 0) state.luck -= dt;
   if (state.windfall > 0) state.windfall -= dt;
@@ -2419,6 +2458,7 @@ function updateCaches(dt) {
         toast('打开岛屿宝藏！金币 +' + gg + (gw > 0 ? ' 木材 +' + gw : ''), 'gold');
         sfxPickup('chest');
         buzz(25);
+        sparkle(c.userData.x, waveH(c.userData.x, c.userData.z, state.time, visW.amp), c.userData.z, true);
         updateHUD();
         checkAch();
       }
@@ -3073,6 +3113,18 @@ function updateFX(dt) {
     } else fp[f * 3 + 1] = -999;
   }
   foamGeo.attributes.position.needsUpdate = true;
+
+  for (var sp2 = 0; sp2 < SPARK_N; sp2++) {
+    var sk = sparkPool[sp2];
+    if (sk.t > 0) {
+      sk.t -= dt * 2;
+      var k2 = 1 - Math.max(0, sk.t);
+      sk.spr.scale.setScalar(sk.base + k2 * 4);
+      sk.spr.material.opacity = Math.max(0, sk.t) * 0.85;
+      sk.spr.position.y += dt * 1.6;
+      if (sk.t <= 0) sk.spr.visible = false;
+    }
+  }
 
   for (var g = 0; g < gulls.length; g++) {
     var gu = gulls[g].userData;
