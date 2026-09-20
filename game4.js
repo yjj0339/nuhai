@@ -45,6 +45,7 @@ function hidePrompt() {
 var WARN_TXT = {
   breeze: '风渐起 · 浪将增大',
   fog: '浓雾将至 · 减速慢行',
+  drizzle: '细雨将至 · 淡水自生',
   storm: '雷暴逼近 · 检查木材储备！',
   sun: '天气即将放晴'
 };
@@ -88,6 +89,9 @@ function updateHUD() {
   $('hudClock').textContent = fmtClock(state.dayT);
   $('expl').textContent = explorePct() + '%';
   $('vignette').style.opacity = state.phase === 'play' ? clamp((0.32 - state.stats.hull / maxHull()) * 3.2, 0, 0.62).toFixed(2) : 0;
+  var cdR = 1 - clamp(state.burstCd / 25, 0, 1);
+  $('burstCd').style.height = (cdR * 100).toFixed(0) + '%';
+  $('burstBtn').classList.toggle('ready', state.burstCd <= 0);
   updateWeatherTime();
 }
 
@@ -119,11 +123,27 @@ function updateBuffHUD() {
     d.innerHTML = '<div class="bdot"></div>海豚好运 · 打捞+25% · ' + Math.ceil(state.luck) + 's';
     row.appendChild(d);
   }
-  if (state.weather.cur === 'storm') {
+  if (state.burst > 0) {
+    var d3 = document.createElement('div');
+    d3.className = 'buff glass';
+    d3.innerHTML = '<div class="bdot" style="background:#67c7f2"></div>乘风突进 · 航速大增';
+    row.appendChild(d3);
+  }
+  var nearWhirl = false;
+  for (var wi = 0; wi < whirlpools.length; wi++) {
+    if (Math.hypot(state.boat.x - whirlpools[wi].position.x, state.boat.z - whirlpools[wi].position.z) < 40) { nearWhirl = true; break; }
+  }
+  if (nearWhirl) {
     var d2 = document.createElement('div');
     d2.className = 'buff glass';
-    d2.innerHTML = '<div class="bdot" style="background:#f2a63c"></div>雷暴 · 打捞+50% · 注意船体';
+    d2.innerHTML = '<div class="bdot" style="background:#8a6ac8"></div>漩涡引力 · 全速驶离！';
     row.appendChild(d2);
+  }
+  if (state.weather.cur === 'storm') {
+    var d4 = document.createElement('div');
+    d4.className = 'buff glass';
+    d4.innerHTML = '<div class="bdot" style="background:#f2a63c"></div>雷暴 · 打捞+50% · 注意船体';
+    row.appendChild(d4);
   }
 }
 
@@ -158,6 +178,7 @@ function renderTradeCard() {
 
 var mini = $('mini'), mctx = mini.getContext('2d');
 var FKC = { wood: '#a9743f', food: '#e0704a', water: '#3e9fd6', gold: '#e0a52e', fish: '#4dc06a', glow: '#4dc0a8', chest: '#e0a52e', bottle: '#5fae72' };
+function islandsFoundById(id) { return !!state.islandsFound[id]; }
 function drawMini() {
   var W = mini.width, H = mini.height;
   var sc = W / ((GRID_R * 2 + 2) * CELL);
@@ -200,6 +221,34 @@ function drawMini() {
     mctx.fill();
   }
   mctx.globalAlpha = 1;
+  for (var wp2 = 0; wp2 < whirlpools.length; wp2++) {
+    var wx = cx + whirlpools[wp2].position.x * sc, wz = cy + whirlpools[wp2].position.z * sc;
+    if (wx < 5 || wx > W - 5 || wz < 5 || wz > H - 5) continue;
+    mctx.strokeStyle = '#8a6ac8';
+    mctx.lineWidth = 2;
+    mctx.beginPath();
+    mctx.arc(wx, wz, 4.5, 0, 4.8);
+    mctx.stroke();
+    mctx.fillStyle = '#8a6ac8';
+    mctx.beginPath();
+    mctx.arc(wx, wz, 2, 0, 6.29);
+    mctx.fill();
+  }
+  for (var ic2 = 0; ic2 < islandCaches.length; ic2++) {
+    var cc = islandCaches[ic2];
+    if (cc.userData.taken || !islandsFoundById(cc.userData.islId)) continue;
+    var cx2 = cx + cc.userData.x * sc, cz2 = cy + cc.userData.z * sc;
+    if (cx2 < 5 || cx2 > W - 5 || cz2 < 5 || cz2 > H - 5) continue;
+    mctx.save();
+    mctx.translate(cx2, cz2);
+    mctx.rotate(Math.PI / 4);
+    mctx.fillStyle = '#ffd75e';
+    mctx.fillRect(-3.2, -3.2, 6.4, 6.4);
+    mctx.strokeStyle = '#a8781f';
+    mctx.lineWidth = 1.4;
+    mctx.strokeRect(-3.2, -3.2, 6.4, 6.4);
+    mctx.restore();
+  }
   if (whale) {
     mctx.fillStyle = '#4a6a8a';
     mctx.beginPath();
@@ -242,7 +291,7 @@ function lvDots(cur, max) {
 }
 function renderUpList() {
   var html = '';
-  var order = ['sail', 'hull', 'hold', 'lamp', 'net', 'rudder'];
+  var order = ['sail', 'hull', 'hold', 'lamp', 'net', 'rudder', 'lookout'];
   for (var i = 0; i < order.length; i++) {
     var k = order[i];
     var u = UPG[k];
@@ -553,6 +602,14 @@ function resetWorld() {
   for (var wp = 0; wp < WAKE_N; wp++) wakePts.push({ x: state.boat.x, z: state.boat.z, h: 0 });
   boat.userData.cargoN = -1;
   updateCargoVisual();
+  placeWhirlpools(state.day);
+  for (var ci = 0; ci < islandCaches.length; ci++) {
+    islandCaches[ci].userData.taken = false;
+    islandCaches[ci].userData.hold = 0;
+    islandCaches[ci].visible = true;
+  }
+  state.burst = 0;
+  state.burstCd = 0;
   hidePrompt();
 }
 
@@ -564,12 +621,13 @@ function newGame() {
     boat: { x: 0, z: 0, heading: rand(0, 6.28), speed: 0, sail: 0 },
     res: { wood: 10, food: 6, water: 6, gold: 0 },
     stats: { hunger: 100, thirst: 100, hull: 100 },
-    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1 },
+    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: 'sun', prev: 'sun', next: pickWeatherNext('sun'), t: 55, warnT: 0, blend: 0 },
     explored: {}, islandsFound: {},
     cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
     dist: 0, quest: 0, luck: 0,
-    ach: {}, islandDock: {}, settings: keepSet,
+    burst: 0, burstCd: 0,
+    ach: {}, islandDock: {}, caches: {}, settings: keepSet,
     mute: keepMute, playSec: 0, hintShown: {}
   };
   resetWorld();
@@ -597,12 +655,12 @@ function loadGame(d) {
   state = {
     phase: 'play', time: keepTime, day: d.day, dayT: d.dayT, nightF: 0,
     boat: d.boat, res: d.res, stats: d.stats,
-    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1 },
+    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: d.weather.cur, prev: d.weather.cur, next: pickWeatherNext(d.weather.cur), t: d.weather.t, warnT: 0, blend: 0 },
     explored: d.explored, islandsFound: d.islandsFound,
     cnt: d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
     dist: d.dist || 0, quest: d.quest || 0, luck: d.luck || 0,
-    ach: d.ach || {}, islandDock: d.islandDock || {}, settings: d.settings || keepSet,
+    ach: d.ach || {}, islandDock: d.islandDock || {}, caches: d.caches || {}, settings: d.settings || keepSet,
     mute: d.mute !== undefined ? d.mute : keepMute,
     playSec: d.playSec || 0, hintShown: { ate: 1 }
   };
@@ -618,6 +676,12 @@ function loadGame(d) {
   visW.wind = def.w;
   resetWorld();
   for (var i = 0; i < islands.length; i++) islands[i].userData.found = !!state.islandsFound[islands[i].userData.id];
+  for (var ci = 0; ci < islandCaches.length; ci++) {
+    if (state.caches[islandCaches[ci].userData.islId]) {
+      islandCaches[ci].userData.taken = true;
+      islandCaches[ci].visible = false;
+    }
+  }
   boat.userData.camYaw = state.boat.heading + Math.PI;
   updateWeatherHUD();
   updateHUD();
@@ -685,6 +749,7 @@ function boot() {
     }
   };
   $('btnPause').onclick = togglePause;
+  $('burstBtn').onclick = tryBurst;
   $('btnRestart').onclick = function () {
     if (overMode === 'pause') { togglePause(); return; }
     clearSave();
