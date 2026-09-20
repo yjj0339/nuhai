@@ -370,10 +370,13 @@ function renderLog() {
     var a = ACHS[j];
     var ok = !!state.ach[a.id];
     if (ok) done++;
-    ahs += '<div class="achitem' + (ok ? ' done' : '') + '"><div class="achdot">' + (ok ? '✓' : (j + 1)) + '</div><div><div class="achname">' + a.name + '</div><div class="achdesc">' + a.desc + '</div></div><div class="achrew">' + (ok ? '已获得' : '金币+' + a.rew) + '</div></div>';
+    var pr = !ok && a.p ? a.p() : null;
+    var prTxt = pr ? '（' + pr[0] + ' / ' + pr[1] + '）' : '';
+    ahs += '<div class="achitem' + (ok ? ' done' : '') + '"><div class="achdot">' + (ok ? '✓' : (j + 1)) + '</div><div><div class="achname">' + a.name + '</div><div class="achdesc">' + a.desc + prTxt + '</div></div><div class="achrew">' + (ok ? '已获得' : '金币+' + a.rew) + '</div></div>';
   }
   $('achlist').innerHTML = ahs + '<div style="font-size:11px;color:#7fa0b8;text-align:right;margin-top:3px;font-weight:700">成就 ' + done + ' / ' + ACHS.length + '</div>';
   $('btnMute').textContent = '音效：' + (state.mute ? '关' : '开');
+  $('btnMusic').textContent = '音乐：' + (state.settings.music === false ? '关' : '开');
   $('btnHiRes').textContent = '高清画质：' + (state.settings.hiRes ? '开' : '关');
 }
 
@@ -580,7 +583,7 @@ function step(dt) {
   musicT -= dt;
   if (musicT <= 0) {
     musicT = rand(2.4, 4.6);
-    if (!state.mute && AC && state.weather.cur !== 'storm') sfxPluck(pick(MNOTES), Math.random() < 0.35);
+    if (!state.mute && state.settings.music !== false && AC && state.weather.cur !== 'storm') sfxPluck(pick(MNOTES), Math.random() < 0.35);
   }
   hudT -= dt;
   if (hudT <= 0) {
@@ -723,6 +726,7 @@ function loadGame(d) {
 }
 
 var lastT = performance.now();
+var fpsN = 0, fpsT = 0, autoDropped = 0;
 function loop(now) {
   requestAnimationFrame(loop);
   var dt = Math.min(0.05, (now - lastT) / 1000);
@@ -730,6 +734,18 @@ function loop(now) {
   var ts = window.__ts || 1;
   if (state.phase === 'play') { for (var k = 0; k < ts; k++) step(dt * timeScale); }
   else if (state.phase === 'menu') menuIdle(dt);
+  fpsN++;
+  fpsT += dt;
+  if (fpsT >= 5) {
+    var fps = fpsN / fpsT;
+    fpsN = 0; fpsT = 0;
+    if (fps < 26 && state.settings.hiRes && state.playSec > 15 && now - autoDropped > 20000) {
+      autoDropped = now;
+      state.settings.hiRes = false;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+      toast('已自动降低画质，让航行更流畅');
+    }
+  }
   updateFX(state.phase === 'pause' ? 0 : dt);
   renderer.render(scene, camera);
 }
@@ -759,6 +775,11 @@ function boot() {
   $('logclose').onclick = closeLog;
   $('logWrap').addEventListener('click', function (e) { if (e.target === this) closeLog(); });
   $('btnMute').onclick = function () { setMute(!state.mute); renderLog(); };
+  $('btnMusic').onclick = function () {
+    state.settings.music = state.settings.music === false;
+    renderLog();
+    save();
+  };
   $('btnHiRes').onclick = function () {
     state.settings.hiRes = !state.settings.hiRes;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.settings.hiRes ? 2 : 1.25));
