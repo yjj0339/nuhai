@@ -175,6 +175,17 @@ function loadSave() {
 function clearSave() { try { localStorage.removeItem('nuhai_save'); } catch (e) { } }
 
 var AC = null, masterG = null, ambG = null, ambSrc = null, ambFilter = null;
+var rainG = null, rainSrc = null, rainFilter = null;
+function makeNoiseSrc() {
+  var len = AC.sampleRate * 2;
+  var buf = AC.createBuffer(1, len, AC.sampleRate);
+  var ch = buf.getChannelData(0);
+  var last = 0;
+  for (var i = 0; i < len; i++) { var wn = Math.random() * 2 - 1; last = (last + 0.02 * wn) / 1.02; ch[i] = last * 3.2; }
+  var src = AC.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  return src;
+}
 function initAudio() {
   if (AC) return;
   try {
@@ -182,17 +193,16 @@ function initAudio() {
     masterG = AC.createGain();
     masterG.gain.value = state.mute ? 0 : 0.8;
     masterG.connect(AC.destination);
-    var len = AC.sampleRate * 2;
-    var buf = AC.createBuffer(1, len, AC.sampleRate);
-    var ch = buf.getChannelData(0);
-    var last = 0;
-    for (var i = 0; i < len; i++) { var wn = Math.random() * 2 - 1; last = (last + 0.02 * wn) / 1.02; ch[i] = last * 3.2; }
-    ambSrc = AC.createBufferSource();
-    ambSrc.buffer = buf; ambSrc.loop = true;
+    ambSrc = makeNoiseSrc();
     ambFilter = AC.createBiquadFilter(); ambFilter.type = 'lowpass'; ambFilter.frequency.value = 420;
     ambG = AC.createGain(); ambG.gain.value = 0.05;
     ambSrc.connect(ambFilter); ambFilter.connect(ambG); ambG.connect(masterG);
     ambSrc.start();
+    rainSrc = makeNoiseSrc();
+    rainFilter = AC.createBiquadFilter(); rainFilter.type = 'highpass'; rainFilter.frequency.value = 1800;
+    rainG = AC.createGain(); rainG.gain.value = 0;
+    rainSrc.connect(rainFilter); rainFilter.connect(rainG); rainG.connect(masterG);
+    rainSrc.start();
   } catch (e) { AC = null; }
 }
 function setMute(m) {
@@ -234,6 +244,11 @@ function sfxPickup(kind) {
   else blip(440 + Math.random() * 120, 0.16, 'sine', 0.16, 620);
 }
 function sfxUp() { blip(392, 0.16, 'triangle', 0.18); setTimeout(function () { blip(523, 0.16, 'triangle', 0.18); }, 120); setTimeout(function () { blip(659, 0.3, 'triangle', 0.18); }, 240); }
+function sfxQuest() {
+  var seq = [523.25, 659.25, 783.99, 1046.5];
+  for (var i = 0; i < seq.length; i++) (function (f, d) { setTimeout(function () { sfxPluck(f, i === 3); }, d); })(seq[i], i * 130);
+}
+function sfxGull() { blip(1180 + Math.random() * 300, 0.14, 'sawtooth', 0.045, 1600); setTimeout(function () { blip(1000 + Math.random() * 200, 0.1, 'sawtooth', 0.035, 700); }, 150); }
 function sfxThunder() {
   if (!AC || state.mute) return;
   try {
