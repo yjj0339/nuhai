@@ -132,6 +132,14 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
 .achrew{margin-left:auto;font-size:11px;font-weight:800;color:#a8781f;white-space:nowrap}
 #setRows{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
 .ui-rud{background:linear-gradient(150deg,#e8eef4,#c9d8e6);color:#43647c}
+.ui-look{background:linear-gradient(150deg,#e2f0ec,#c2dfd4);color:#3a7a68}
+
+#burstBtn{position:absolute;right:16px;bottom:236px;width:64px;height:64px;border-radius:50%;pointer-events:auto;cursor:pointer;border:1.2px solid rgba(255,255,255,.9);font-family:inherit;font-weight:900;font-size:12.5px;color:var(--txt);letter-spacing:2px;overflow:hidden;padding:0;box-shadow:0 6px 18px rgba(23,74,110,.2),inset 0 1.5px 0 rgba(255,255,255,.95);background:linear-gradient(155deg,rgba(255,255,255,.85),rgba(255,255,255,.55));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:transform .13s}
+#burstBtn:hover{transform:scale(1.06)}
+#burstBtn:active{transform:scale(.94)}
+#burstBtn.ready{border-color:rgba(120,200,240,.95);box-shadow:0 6px 20px rgba(47,155,214,.35),inset 0 1.5px 0 #fff}
+#burstBtn span{position:relative;z-index:2}
+#burstCd{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(180deg,rgba(103,199,242,.4),rgba(47,155,214,.5));z-index:1;transition:height .3s linear}
 
 #menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
 #menu.off{display:none}
@@ -221,6 +229,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
  #wDesc{display:none}
  #logStats{grid-template-columns:repeat(2,1fr)}
  #btns .gbtn{padding:9px 11px;font-size:12px}
+ #burstBtn{right:12px;bottom:196px;width:56px;height:56px;font-size:11px}
 }
 </style>
 </head>
@@ -269,6 +278,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
     <canvas id="mini" width="344" height="344"></canvas>
     <div id="minilbl">海图探索 <b id="expl">0%</b></div>
   </div>
+  <button id="burstBtn" class="glass ready"><div id="burstCd"></div><span>冲刺</span></button>
   <div id="btns">
     <button class="gbtn blue" id="btnUpgrade">船坞升级</button>
     <button class="gbtn" id="btnLog">航行日志</button>
@@ -352,6 +362,9 @@ var state = {
   dist: 0,
   quest: 0,
   luck: 0,
+  burst: 0,
+  burstCd: 0,
+  caches: {},
   ach: {},
   islandDock: {},
   settings: { hiRes: true },
@@ -396,6 +409,12 @@ var UPG = {
     eff: function (l) { return '转向灵敏度 +' + Math.round((l - 1) * 18) + '%'; },
     costG: [30, 80, 150],
     costW: [6, 12, 24]
+  },
+  lookout: {
+    name: '瞭望台', icon: 'ui-look', max: 3, svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 20L14 10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M12.5 4.5l7 7-3 3-7-7 3-3z" fill="currentColor" opacity=".85"/><path d="M17.5 3l3.5 3.5-1.8 1.8-3.5-3.5L17.5 3z" fill="currentColor" opacity=".55"/></svg>',
+    eff: function (l) { return '发现岛屿距离 +' + Math.round((l - 1) * 40) + '%'; },
+    costG: [40, 90, 160],
+    costW: [6, 14, 26]
   }
 };
 
@@ -435,16 +454,18 @@ var WDEF = {
   sun: { name: '晴朗', desc: '风平浪静，适合航行', amp: 0.55, fogFar: 760, sunI: 1.0, sky: ['#7ec8ee', '#eaf7fd'], sea: ['#37a7d8', '#8fd8ef'], w: 0.62 },
   breeze: { name: '起风', desc: '浪渐增大，航速提升', amp: 1.0, fogFar: 640, sunI: 0.92, sky: ['#8fcbe8', '#eef6f8'], sea: ['#2f9ccc', '#84cfe8'], w: 0.24 },
   fog: { name: '浓雾', desc: '视野受限，小心礁石', amp: 0.7, fogFar: 0, sunI: 0.75, sky: ['#b8d2de', '#eef3f5'], sea: ['#4f9fbf', '#93c4d4'], w: 0.14 },
+  drizzle: { name: '细雨', desc: '蒙蒙细雨，淡水自生', amp: 0.8, fogFar: 560, sunI: 0.85, sky: ['#9db8c8', '#dfe9ee'], sea: ['#3395bd', '#7fc3da'], w: 0.35 },
   storm: { name: '雷暴', desc: '巨浪拍船！打捞有加成', amp: 2.1, fogFar: 420, sunI: 0.55, sky: ['#5f7f9a', '#a8bfd0'], sea: ['#2a7ba6', '#6fb0c9'], w: 0 }
 };
 
-var WSEQ = { sun: ['breeze', 'fog'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
-var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], storm: [30, 46] };
+var WSEQ = { sun: ['breeze', 'fog', 'drizzle'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze', 'drizzle'], drizzle: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
+var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], drizzle: [40, 70], storm: [30, 46] };
 
 var WSVG = {
   sun: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.6" fill="#ffd75e"/><g stroke="#f5b93c" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></g></svg>',
   breeze: '<svg viewBox="0 0 24 24" fill="none"><path d="M7 9a3.4 3.4 0 0 1 0-6.8c1.6 0 2.6 1 3 2.2" stroke="#5b8fb5" stroke-width="2" stroke-linecap="round"/><path d="M7 9h9.5a3 3 0 1 1 0 6H8" stroke="#5b8fb5" stroke-width="2" stroke-linecap="round"/><path d="M5 15h6.5" stroke="#8fc3e5" stroke-width="2" stroke-linecap="round"/></svg>',
   fog: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 8c2.5-2.2 5.5-2.2 8 0s5.5 2.2 8 0" stroke="#7fa0b8" stroke-width="2.2" stroke-linecap="round"/><path d="M4 13c2.5-2.2 5.5-2.2 8 0s5.5 2.2 8 0" stroke="#9db9cc" stroke-width="2.2" stroke-linecap="round"/><path d="M6 18c2-1.6 4.4-1.6 6.4 0s4 1.6 5.6 0" stroke="#b9d0de" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  drizzle: '<svg viewBox="0 0 24 24" fill="none"><path d="M6.5 12a4.2 4.2 0 0 1 .5-8.4 5.4 5.4 0 0 1 10.2 1.3A3.8 3.8 0 0 1 17.3 12H6.5z" fill="#7d9cb5"/><g stroke="#5fa8d6" stroke-width="2" stroke-linecap="round"><path d="M8 15.5l-1 2.6M12.5 15.5l-1 2.6M17 15.5l-1 2.6"/></g></svg>',
   storm: '<svg viewBox="0 0 24 24" fill="none"><path d="M6.5 14a4 4 0 0 1 .5-8 5.2 5.2 0 0 1 9.8 1.2A3.6 3.6 0 0 1 17 14H6.5z" fill="#5c7d99"/><path d="M12.5 14l-3 4.4h2.6l-1.6 3.8 4.7-5.3h-2.5l1.8-2.9h-2z" fill="#ffd75e"/></svg>'
 };
 
@@ -458,12 +479,13 @@ function turnMult() { return 1 + (state.lv.rudder - 1) * 0.18; }
 function save() {
   try {
     var d = {
-      v: 3, time: state.time, day: state.day, dayT: state.dayT,
+      v: 4, time: state.time, day: state.day, dayT: state.dayT,
       boat: state.boat, res: state.res, stats: state.stats, lv: state.lv,
       weather: { cur: state.weather.cur, t: state.weather.t },
       explored: state.explored, islandsFound: state.islandsFound,
       cnt: state.cnt, dist: state.dist, quest: state.quest, luck: state.luck,
-      ach: state.ach, islandDock: state.islandDock, settings: state.settings,
+      ach: state.ach, islandDock: state.islandDock, caches: state.caches,
+      settings: state.settings,
       playSec: state.playSec, mute: state.mute
     };
     localStorage.setItem('nuhai_save', JSON.stringify(d));
@@ -474,7 +496,7 @@ function loadSave() {
     var s = localStorage.getItem('nuhai_save');
     if (!s) return null;
     var d = JSON.parse(s);
-    if (!d || (d.v !== 3 && d.v !== 2 && d.v !== 1)) return null;
+    if (!d || (d.v !== 4 && d.v !== 3 && d.v !== 2 && d.v !== 1)) return null;
     return d;
   } catch (e) { return null; }
 }
@@ -560,6 +582,23 @@ function sfxWin() {
   for (var i = 0; i < seq.length; i++) (function (f, d) { setTimeout(function () { blip(f, 0.35, 'triangle', 0.2); }, d); })(seq[i], i * 180);
 }
 function sfxDolphin() { blip(980, 0.12, 'sine', 0.14, 1400); setTimeout(function () { blip(1180, 0.1, 'sine', 0.12, 1500); }, 110); }
+function sfxBurst() {
+  if (!AC || state.mute) return;
+  try {
+    var dur = 0.7, len = Math.floor(AC.sampleRate * dur);
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var ch = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) {
+      var t = i / len;
+      ch[i] = (Math.random() * 2 - 1) * Math.sin(t * Math.PI) * 0.5;
+    }
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.8;
+    var g = AC.createGain(); g.gain.value = 0.3;
+    src.connect(f); f.connect(g); g.connect(masterG); src.start();
+    blip(340, 0.4, 'sine', 0.1, 620);
+  } catch (e) { }
+}
 
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 function lerp(a, b, t) { return a + (b - a) * t; }
@@ -686,6 +725,7 @@ var MAT = {
   mast: new THREE.MeshPhongMaterial({ color: 0x9a6a38, flatShading: true }),
   rope: new THREE.LineBasicMaterial({ color: 0x6e4c26, transparent: true, opacity: 0.85 }),
   sail: new THREE.MeshLambertMaterial({ color: 0xfdfdf8, side: THREE.DoubleSide }),
+  sailGold: new THREE.MeshLambertMaterial({ color: 0xfbf0d0, side: THREE.DoubleSide }),
   sailStripe: new THREE.MeshLambertMaterial({ color: 0xf2b56a, side: THREE.DoubleSide }),
   flag: new THREE.MeshLambertMaterial({ color: 0xef6f3c, side: THREE.DoubleSide }),
   rock: new THREE.MeshPhongMaterial({ color: 0x5e7d8e, flatShading: true }),
@@ -836,6 +876,16 @@ var boat = new THREE.Group();
   stripe.position.set(0, 4.35, 0.36);
   boat.add(stripe);
   boat.userData.stripe = stripe;
+  var stripe2 = new THREE.Mesh(new THREE.PlaneGeometry(2.95, 0.42, 12, 1), MAT.sailStripe);
+  stripe2.position.set(0, 2.62, 0.36);
+  stripe2.visible = false;
+  boat.add(stripe2);
+  boat.userData.stripe2 = stripe2;
+  var goldEdge = new THREE.Mesh(new THREE.PlaneGeometry(3.05, 0.16, 12, 1), MAT.goldM);
+  goldEdge.position.set(0, 5.22, 0.32);
+  goldEdge.visible = false;
+  boat.add(goldEdge);
+  boat.userData.goldEdge = goldEdge;
 
   var foreMast = cyl(0.06, 0.09, 3.6, MAT.mast, 8);
   foreMast.position.set(0, 2.4, 2.55); boat.add(foreMast);
@@ -1045,6 +1095,80 @@ function makeIsland(i, ix, iz, r, rocky) {
     var ix = Math.cos(ang) * dist, iz = Math.sin(ang) * dist;
     var r = rand(14, 22);
     islands.push(makeIsland(i, ix, iz, r, i % 3 === 2));
+  }
+})();
+
+var whirlpools = [];
+function makeWhirlpool(idx) {
+  var g = new THREE.Group();
+  var core = new THREE.Mesh(new THREE.CircleGeometry(2.6, 22), new THREE.MeshBasicMaterial({ color: 0x1d4a66, transparent: true, opacity: 0.75, depthWrite: false }));
+  core.rotation.x = -Math.PI / 2;
+  core.position.y = 0.06;
+  g.add(core);
+  var rings = [];
+  var cols = [0x2a6a8e, 0x3a86ac, 0x5aa8cc];
+  for (var i = 0; i < 3; i++) {
+    var seg = new THREE.Mesh(
+      new THREE.RingGeometry(3 + i * 2.6, 4.6 + i * 2.6, 26, 1, idx * 2 + i * 1.4, Math.PI * 1.45),
+      new THREE.MeshBasicMaterial({ color: cols[i], transparent: true, opacity: 0.62 - i * 0.12, depthWrite: false, side: THREE.DoubleSide })
+    );
+    seg.rotation.x = -Math.PI / 2;
+    seg.position.y = 0.12 + i * 0.06;
+    g.add(seg);
+    rings.push(seg);
+  }
+  var foamPts = [];
+  for (var f = 0; f < 8; f++) {
+    var fp = makeGlow(1.1, 0xd8f0fa);
+    fp.material.opacity = 0.5;
+    g.add(fp);
+    foamPts.push(fp);
+  }
+  g.userData = { rings: rings, foamPts: foamPts, ph: idx * 2.1, idx: idx };
+  scene.add(g);
+  whirlpools.push(g);
+  return g;
+}
+function placeWhirlpools(day) {
+  for (var i = 0; i < 3; i++) {
+    if (!whirlpools[i]) makeWhirlpool(i);
+    var w = whirlpools[i];
+    var ang = hashSeed(day * 17.3 + i * 7.7) * Math.PI * 2;
+    var dist = 170 + hashSeed(day * 5.1 + i * 13.9) * 520;
+    w.position.set(Math.cos(ang) * dist, 0, Math.sin(ang) * dist);
+    w.userData.driftA = rand(0, 6.28);
+    w.userData.baseX = w.position.x;
+    w.userData.baseZ = w.position.z;
+  }
+}
+(function initWhirlpools() { for (var i = 0; i < 3; i++) makeWhirlpool(i); })();
+
+var islandCaches = [];
+(function buildIslandCaches() {
+  for (var i = 0; i < islands.length; i++) {
+    var u = islands[i].userData;
+    var ang = hashSeed(i * 31.7 + 3) * Math.PI * 2;
+    var cx = u.x + Math.cos(ang) * (u.r + 5.5);
+    var cz = u.z + Math.sin(ang) * (u.r + 5.5);
+    var g = new THREE.Group();
+    var boxM = box(0.9, 0.5, 0.6, MAT.chest);
+    boxM.position.y = 0.25; g.add(boxM);
+    var lidM = box(0.94, 0.18, 0.64, MAT.ironBand);
+    lidM.position.y = 0.56; g.add(lidM);
+    var lockM = box(0.14, 0.18, 0.08, MAT.goldM);
+    lockM.position.set(0, 0.42, 0.32); g.add(lockM);
+    var gl = makeGlow(2.2, 0xffd75e);
+    gl.position.y = 0.7;
+    gl.material.opacity = 0.6;
+    g.add(gl);
+    var ring = new THREE.Mesh(new THREE.RingGeometry(1.3, 1.6, 22), MAT.ringGold);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.08;
+    g.add(ring);
+    g.position.set(cx, 0, cz);
+    g.userData = { islId: u.id, x: cx, z: cz, taken: false, gl: gl, ring: ring, ph: rand(0, 6.28), hold: 0 };
+    scene.add(g);
+    islandCaches.push(g);
   }
 })();
 
@@ -1552,7 +1676,7 @@ function updateWeather(dt) {
   visW.seaDeep.lerp(new THREE.Color(def.sea[0]), dt * 0.5);
   visW.seaShal.lerp(new THREE.Color(def.sea[1]), dt * 0.5);
   visW.fogC.copy(visW.skyBot);
-  var rainT = w.cur === 'storm' ? 0.5 : 0;
+  var rainT = w.cur === 'storm' ? 0.5 : w.cur === 'drizzle' ? 0.22 : 0;
   visW.rain = lerp(visW.rain, rainT, dt * 0.8);
   visW.wind = lerp(visW.wind, def.w, dt * 0.4);
 
@@ -1646,14 +1770,27 @@ function updateDayNight(dt) {
   state.nightF = night;
 }
 
+function tryBurst() {
+  if (state.phase !== 'play') return;
+  if (state.burstCd > 0 || state.burst > 0) return;
+  state.burst = 2.5;
+  state.burstCd = 25;
+  sfxBurst();
+  toast('乘风突进！');
+}
+
 function updateBoat(dt) {
   var b = state.boat;
+  if (keys.Space) tryBurst();
+  state.burst = Math.max(0, state.burst - dt);
+  state.burstCd = Math.max(0, state.burstCd - dt);
   var up = (keys.KeyW || keys.ArrowUp || touch.sailIn > 0.15) ? 1 : 0;
   var dn = (keys.KeyS || keys.ArrowDown || touch.sailIn < -0.15) ? 1 : 0;
   var lf = (keys.KeyA || keys.ArrowLeft || touch.steer < -0.1) ? 1 : 0;
   var rt = (keys.KeyD || keys.ArrowRight || touch.steer > 0.1) ? 1 : 0;
   b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
   var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
+  if (state.burst > 0) maxS *= 1.55;
   var target = b.sail * maxS;
   var oldX = b.x, oldZ = b.z;
   b.speed = lerp(b.speed, target, dt * (target > b.speed ? 0.32 : 0.5));
@@ -1690,7 +1827,7 @@ function updateBoat(dt) {
         toast('撞上了 ' + u.name + ' 的浅滩！');
       }
       b.speed *= 0.4;
-    } else if (!u.found && dd < u.r + 75) {
+    } else if (!u.found && dd < (u.r + 75) * (1 + (state.lv.lookout - 1) * 0.4)) {
       u.found = true;
       state.islandsFound[u.id] = 1;
       state.res.gold += 15;
@@ -1758,6 +1895,16 @@ function updateBoat(dt) {
   boat.userData.sail.scale.set(sailW, sailB * 0.9 + 0.1, sailB);
   boat.userData.stripe.scale.set(sailW, 1, sailB);
   boat.userData.foreSail.scale.set(1, 1, sailB);
+  var slv = state.lv.sail;
+  boat.userData.stripe2.visible = slv >= 3;
+  boat.userData.stripe2.scale.set(sailW, 1, sailB);
+  boat.userData.goldEdge.visible = slv >= 4;
+  boat.userData.goldEdge.scale.set(sailW, 1, sailB);
+  if (boat.userData.sailTier !== slv) {
+    boat.userData.sailTier = slv;
+    boat.userData.sail.material = slv >= 5 ? MAT.sailGold : MAT.sail;
+    boat.userData.stripe.material = slv >= 5 ? MAT.sailGold : MAT.sailStripe;
+  }
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
   boat.userData.wheel.rotation.z -= rud * dt * 4 * spdF;
@@ -1765,6 +1912,9 @@ function updateBoat(dt) {
 
   if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 26) spawnFoam(
     b.x - fx * 2.8 + rand(-0.9, 0.9), b.z - fz * 2.8 + rand(-0.9, 0.9), b.speed
+  );
+  if (state.burst > 0 && Math.random() < dt * 40) spawnFoam(
+    b.x + fx * 2.2 + rand(-1.3, 1.3), b.z + fz * 2.2 + rand(-1.3, 1.3), b.speed * 1.4
   );
 
   var bx = b.x - fx * 2.6, bz = b.z - fz * 2.6;
@@ -1953,8 +2103,9 @@ function collectFloater(m) {
 
 function updateSurvival(dt) {
   var raining = state.weather.cur === 'storm';
+  var drizzling = state.weather.cur === 'drizzle';
   state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1);
-  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : 1);
+  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1);
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
   if (state.luck > 0) state.luck -= dt;
   if (state.stats.hunger < 62 && state.res.food >= 1 && eatT <= 0) {
@@ -2068,7 +2219,82 @@ function explorePct() {
   return Math.min(100, Math.round(n / total * 100));
 }
 
+var whirlMsgT = 0;
+function updateWhirlpools(dt) {
+  whirlMsgT = Math.max(0, whirlMsgT - dt);
+  var b = state.boat;
+  for (var i = 0; i < whirlpools.length; i++) {
+    var w = whirlpools[i];
+    var u = w.userData;
+    u.driftA += dt * 0.12;
+    w.position.x = u.baseX + Math.cos(u.driftA) * 6;
+    w.position.z = u.baseZ + Math.sin(u.driftA * 0.8) * 6;
+    for (var r = 0; r < u.rings.length; r++) {
+      u.rings[r].rotation.z += dt * (1.4 - r * 0.35) * (r % 2 ? -1 : 1);
+    }
+    for (var f = 0; f < u.foamPts.length; f++) {
+      var fa = state.time * 1.6 + f * 0.785;
+      var fr = 4.5 + (f % 3) * 2.2;
+      u.foamPts[f].position.set(Math.cos(fa) * fr, 0.28, Math.sin(fa) * fr);
+      u.foamPts[f].material.opacity = 0.28 + Math.sin(fa * 2) * 0.15;
+    }
+    var d = Math.hypot(b.x - w.position.x, b.z - w.position.z);
+    if (d < 15) {
+      var pullF = (1 - d / 15) * 3.4 * dt;
+      b.x -= (b.x - w.position.x) / Math.max(d, 0.5) * pullF;
+      b.z -= (b.z - w.position.z) / Math.max(d, 0.5) * pullF;
+      b.heading += dt * 1.6 * (1 - d / 15);
+      if (d < 5.5) {
+        state.stats.hull -= 6.5 * dt;
+        if (whirlMsgT <= 0) {
+          whirlMsgT = 4;
+          sfxCrash();
+          toast('船被卷进漩涡了！全力驶离！');
+        }
+      } else if (whirlMsgT <= 0 && d < 12) {
+        whirlMsgT = 6;
+        toast('漩涡在吸引船身，快划出去！');
+      }
+    }
+  }
+}
+
+function updateCaches(dt) {
+  var b = state.boat;
+  for (var i = 0; i < islandCaches.length; i++) {
+    var c = islandCaches[i];
+    if (c.userData.taken) continue;
+    c.position.y = waveH(c.userData.x, c.userData.z, state.time, visW.amp) + 0.05 + Math.sin(state.time * 1.3 + c.userData.ph) * 0.06;
+    var s = 1 + Math.sin(state.time * 2.4 + c.userData.ph) * 0.1;
+    c.userData.ring.scale.set(s, s, 1);
+    c.userData.gl.material.opacity = (isNight() ? 0.8 : 0.45) * (0.8 + Math.sin(state.time * 3 + c.userData.ph) * 0.2);
+    var d = Math.hypot(b.x - c.userData.x, b.z - c.userData.z);
+    if (d < 4.5 && b.speed < 1.5) {
+      c.userData.hold += dt;
+      if (c.userData.hold > 1.2) {
+        c.userData.taken = true;
+        c.visible = false;
+        state.caches[c.userData.islId] = 1;
+        var far = ringDist(c.userData.x, c.userData.z) > 420 ? 1.5 : 1;
+        var gg = Math.round(rand(35, 70) * far);
+        state.res.gold += gg;
+        var gw = Math.min(Math.round(rand(10, 20) * far), holdCap(state.lv.hold)[0] - Math.floor(state.res.wood));
+        if (gw > 0) state.res.wood += gw;
+        toast('打开岛屿宝藏！金币 +' + gg + (gw > 0 ? ' 木材 +' + gw : ''), 'gold');
+        sfxPickup('chest');
+        buzz(25);
+        updateHUD();
+        checkAch();
+      }
+    } else {
+      c.userData.hold = 0;
+    }
+  }
+}
+
 function updateEvents(dt) {
+  updateWhirlpools(dt);
+  updateCaches(dt);
   dolphinT -= dt;
   if (dolphinT <= 0 && dolphinOn <= 0) {
     dolphinT = rand(130, 220);
@@ -2236,6 +2462,7 @@ function hidePrompt() {
 var WARN_TXT = {
   breeze: '风渐起 · 浪将增大',
   fog: '浓雾将至 · 减速慢行',
+  drizzle: '细雨将至 · 淡水自生',
   storm: '雷暴逼近 · 检查木材储备！',
   sun: '天气即将放晴'
 };
@@ -2279,6 +2506,9 @@ function updateHUD() {
   $('hudClock').textContent = fmtClock(state.dayT);
   $('expl').textContent = explorePct() + '%';
   $('vignette').style.opacity = state.phase === 'play' ? clamp((0.32 - state.stats.hull / maxHull()) * 3.2, 0, 0.62).toFixed(2) : 0;
+  var cdR = 1 - clamp(state.burstCd / 25, 0, 1);
+  $('burstCd').style.height = (cdR * 100).toFixed(0) + '%';
+  $('burstBtn').classList.toggle('ready', state.burstCd <= 0);
   updateWeatherTime();
 }
 
@@ -2310,11 +2540,27 @@ function updateBuffHUD() {
     d.innerHTML = '<div class="bdot"></div>海豚好运 · 打捞+25% · ' + Math.ceil(state.luck) + 's';
     row.appendChild(d);
   }
-  if (state.weather.cur === 'storm') {
+  if (state.burst > 0) {
+    var d3 = document.createElement('div');
+    d3.className = 'buff glass';
+    d3.innerHTML = '<div class="bdot" style="background:#67c7f2"></div>乘风突进 · 航速大增';
+    row.appendChild(d3);
+  }
+  var nearWhirl = false;
+  for (var wi = 0; wi < whirlpools.length; wi++) {
+    if (Math.hypot(state.boat.x - whirlpools[wi].position.x, state.boat.z - whirlpools[wi].position.z) < 40) { nearWhirl = true; break; }
+  }
+  if (nearWhirl) {
     var d2 = document.createElement('div');
     d2.className = 'buff glass';
-    d2.innerHTML = '<div class="bdot" style="background:#f2a63c"></div>雷暴 · 打捞+50% · 注意船体';
+    d2.innerHTML = '<div class="bdot" style="background:#8a6ac8"></div>漩涡引力 · 全速驶离！';
     row.appendChild(d2);
+  }
+  if (state.weather.cur === 'storm') {
+    var d4 = document.createElement('div');
+    d4.className = 'buff glass';
+    d4.innerHTML = '<div class="bdot" style="background:#f2a63c"></div>雷暴 · 打捞+50% · 注意船体';
+    row.appendChild(d4);
   }
 }
 
@@ -2349,6 +2595,7 @@ function renderTradeCard() {
 
 var mini = $('mini'), mctx = mini.getContext('2d');
 var FKC = { wood: '#a9743f', food: '#e0704a', water: '#3e9fd6', gold: '#e0a52e', fish: '#4dc06a', glow: '#4dc0a8', chest: '#e0a52e', bottle: '#5fae72' };
+function islandsFoundById(id) { return !!state.islandsFound[id]; }
 function drawMini() {
   var W = mini.width, H = mini.height;
   var sc = W / ((GRID_R * 2 + 2) * CELL);
@@ -2391,6 +2638,34 @@ function drawMini() {
     mctx.fill();
   }
   mctx.globalAlpha = 1;
+  for (var wp2 = 0; wp2 < whirlpools.length; wp2++) {
+    var wx = cx + whirlpools[wp2].position.x * sc, wz = cy + whirlpools[wp2].position.z * sc;
+    if (wx < 5 || wx > W - 5 || wz < 5 || wz > H - 5) continue;
+    mctx.strokeStyle = '#8a6ac8';
+    mctx.lineWidth = 2;
+    mctx.beginPath();
+    mctx.arc(wx, wz, 4.5, 0, 4.8);
+    mctx.stroke();
+    mctx.fillStyle = '#8a6ac8';
+    mctx.beginPath();
+    mctx.arc(wx, wz, 2, 0, 6.29);
+    mctx.fill();
+  }
+  for (var ic2 = 0; ic2 < islandCaches.length; ic2++) {
+    var cc = islandCaches[ic2];
+    if (cc.userData.taken || !islandsFoundById(cc.userData.islId)) continue;
+    var cx2 = cx + cc.userData.x * sc, cz2 = cy + cc.userData.z * sc;
+    if (cx2 < 5 || cx2 > W - 5 || cz2 < 5 || cz2 > H - 5) continue;
+    mctx.save();
+    mctx.translate(cx2, cz2);
+    mctx.rotate(Math.PI / 4);
+    mctx.fillStyle = '#ffd75e';
+    mctx.fillRect(-3.2, -3.2, 6.4, 6.4);
+    mctx.strokeStyle = '#a8781f';
+    mctx.lineWidth = 1.4;
+    mctx.strokeRect(-3.2, -3.2, 6.4, 6.4);
+    mctx.restore();
+  }
   if (whale) {
     mctx.fillStyle = '#4a6a8a';
     mctx.beginPath();
@@ -2433,7 +2708,7 @@ function lvDots(cur, max) {
 }
 function renderUpList() {
   var html = '';
-  var order = ['sail', 'hull', 'hold', 'lamp', 'net', 'rudder'];
+  var order = ['sail', 'hull', 'hold', 'lamp', 'net', 'rudder', 'lookout'];
   for (var i = 0; i < order.length; i++) {
     var k = order[i];
     var u = UPG[k];
@@ -2744,6 +3019,14 @@ function resetWorld() {
   for (var wp = 0; wp < WAKE_N; wp++) wakePts.push({ x: state.boat.x, z: state.boat.z, h: 0 });
   boat.userData.cargoN = -1;
   updateCargoVisual();
+  placeWhirlpools(state.day);
+  for (var ci = 0; ci < islandCaches.length; ci++) {
+    islandCaches[ci].userData.taken = false;
+    islandCaches[ci].userData.hold = 0;
+    islandCaches[ci].visible = true;
+  }
+  state.burst = 0;
+  state.burstCd = 0;
   hidePrompt();
 }
 
@@ -2755,12 +3038,13 @@ function newGame() {
     boat: { x: 0, z: 0, heading: rand(0, 6.28), speed: 0, sail: 0 },
     res: { wood: 10, food: 6, water: 6, gold: 0 },
     stats: { hunger: 100, thirst: 100, hull: 100 },
-    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1 },
+    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: 'sun', prev: 'sun', next: pickWeatherNext('sun'), t: 55, warnT: 0, blend: 0 },
     explored: {}, islandsFound: {},
     cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
     dist: 0, quest: 0, luck: 0,
-    ach: {}, islandDock: {}, settings: keepSet,
+    burst: 0, burstCd: 0,
+    ach: {}, islandDock: {}, caches: {}, settings: keepSet,
     mute: keepMute, playSec: 0, hintShown: {}
   };
   resetWorld();
@@ -2788,12 +3072,12 @@ function loadGame(d) {
   state = {
     phase: 'play', time: keepTime, day: d.day, dayT: d.dayT, nightF: 0,
     boat: d.boat, res: d.res, stats: d.stats,
-    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1 },
+    lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: d.weather.cur, prev: d.weather.cur, next: pickWeatherNext(d.weather.cur), t: d.weather.t, warnT: 0, blend: 0 },
     explored: d.explored, islandsFound: d.islandsFound,
     cnt: d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
     dist: d.dist || 0, quest: d.quest || 0, luck: d.luck || 0,
-    ach: d.ach || {}, islandDock: d.islandDock || {}, settings: d.settings || keepSet,
+    ach: d.ach || {}, islandDock: d.islandDock || {}, caches: d.caches || {}, settings: d.settings || keepSet,
     mute: d.mute !== undefined ? d.mute : keepMute,
     playSec: d.playSec || 0, hintShown: { ate: 1 }
   };
@@ -2809,6 +3093,12 @@ function loadGame(d) {
   visW.wind = def.w;
   resetWorld();
   for (var i = 0; i < islands.length; i++) islands[i].userData.found = !!state.islandsFound[islands[i].userData.id];
+  for (var ci = 0; ci < islandCaches.length; ci++) {
+    if (state.caches[islandCaches[ci].userData.islId]) {
+      islandCaches[ci].userData.taken = true;
+      islandCaches[ci].visible = false;
+    }
+  }
   boat.userData.camYaw = state.boat.heading + Math.PI;
   updateWeatherHUD();
   updateHUD();
@@ -2876,6 +3166,7 @@ function boot() {
     }
   };
   $('btnPause').onclick = togglePause;
+  $('burstBtn').onclick = tryBurst;
   $('btnRestart').onclick = function () {
     if (overMode === 'pause') { togglePause(); return; }
     clearSave();
