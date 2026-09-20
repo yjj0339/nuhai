@@ -211,14 +211,16 @@ function updateBoat(dt) {
   var rt = (keys.KeyD || keys.ArrowRight || touch.steer > 0.1) ? 1 : 0;
   b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
   var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
+  if (state.windfall > 0) maxS *= 1.15;
   if (state.burst > 0) maxS *= 1.55;
   var target = b.sail * maxS;
   var oldX = b.x, oldZ = b.z;
   b.speed = lerp(b.speed, target, dt * (target > b.speed ? 0.32 : 0.5));
   var rud = rt - lf;
   if (touch.steer !== 0) rud = touch.steer;
+  b.rud = b.rud === undefined ? 0 : lerp(b.rud, rud, Math.min(1, dt * 7));
   var spdF = 0.35 + (b.speed / Math.max(1, boatSpeedMax())) * 0.7;
-  b.heading -= rud * dt * 1.15 * spdF * turnMult();
+  b.heading -= b.rud * dt * 1.15 * spdF * turnMult();
   var fx = Math.sin(b.heading), fz = Math.cos(b.heading);
   b.x += fx * b.speed * dt;
   b.z += fz * b.speed * dt;
@@ -251,8 +253,13 @@ function updateBoat(dt) {
     } else if (!u.found && dd < (u.r + 75) * (1 + (state.lv.lookout - 1) * 0.4)) {
       u.found = true;
       state.islandsFound[u.id] = 1;
-      state.res.gold += 15;
-      toast('发现新岛屿：' + u.name + '，金币 +15', 'gold');
+      var ig = u.lighthouse ? 30 : 15;
+      state.res.gold += ig;
+      if (u.lighthouse) {
+        toast('发现 ' + u.name + '！灯塔守望者赠予金币 +' + ig, 'gold');
+      } else {
+        toast('发现新岛屿：' + u.name + '，金币 +' + ig, 'gold');
+      }
       blip(660, 0.3, 'triangle', 0.2, 990);
       checkQuests();
       checkAch();
@@ -328,7 +335,7 @@ function updateBoat(dt) {
   }
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
-  boat.userData.wheel.rotation.z -= rud * dt * 4 * spdF;
+  boat.userData.wheel.rotation.z -= b.rud * dt * 4 * spdF;
   updateCargoVisual();
 
   if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 26) spawnFoam(
@@ -390,6 +397,13 @@ function floaterKindFor(d, storm) {
 
 function updateFloaters(dt) {
   spawnT -= dt;
+  if (state.letterDay !== state.day) {
+    state.letterDay = state.day;
+    var la = rand(0, 6.28);
+    var ld = rand(35, 60);
+    spawnFloater('letter', state.boat.x + Math.cos(la) * ld, state.boat.z + Math.sin(la) * ld);
+    toast('一封金色的信随波漂来…', 'gold');
+  }
   if (spawnT <= 0 && floaters.length < 42) {
     spawnT = state.weather.cur === 'storm' ? 1.4 : (state.luck > 0 ? 1.9 : 2.3);
     var ang = rand(0, Math.PI * 2);
@@ -492,6 +506,15 @@ function collectFloater(m) {
     var gg2 = Math.round(rand(14, 24) * mult);
     state.res.gold += gg2; gained = true;
     toast('捞起一枚发光浮标，金币 +' + gg2, 'gold');
+  } else if (k === 'letter') {
+    var lg = Math.round(rand(40, 80) * far);
+    state.res.gold += lg;
+    state.windfall = 60;
+    state.cnt.letters++;
+    gained = true;
+    toast('顺风信件！金币 +' + lg + '，60 秒顺风加速', 'gold');
+    sfxWin();
+    buzz(25);
   } else if (k === 'bottle') {
     var msg = pick(BOTTLE_MSGS);
     if (msg.indexOf('木材') >= 0) { var aw = Math.min(15, cap[0] - Math.floor(state.res.wood)); state.res.wood += aw; }
@@ -529,6 +552,7 @@ function updateSurvival(dt) {
   state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1);
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
   if (state.luck > 0) state.luck -= dt;
+  if (state.windfall > 0) state.windfall -= dt;
   if (state.stats.hunger < 62 && state.res.food >= 1 && eatT <= 0) {
     state.res.food -= 1; state.stats.hunger = Math.min(100, state.stats.hunger + 16); eatT = 3.0;
     if (!state.hintShown.ate) { state.hintShown.ate = 1; toast('自动进食：饱食不足时消耗食物'); }
@@ -570,7 +594,7 @@ function questProgress() {
   else if (q.id === 'fish2') cur = Math.min(state.cnt.fish, q.target);
   else if (q.id === 'storm1') cur = Math.min(state.cnt.storms, 1);
   else if (q.id === 'net2') cur = state.lv.net;
-  else if (q.id === 'exp25') cur = Math.min(explorePct(), q.target);
+  else if (q.id === 'exp20') cur = Math.min(explorePct(), q.target);
   return { cur: cur, max: q.target };
 }
 function checkQuests() {
@@ -614,7 +638,7 @@ function updateExplore(dt) {
   expT = 0.5;
   var gx = Math.round(state.boat.x / CELL), gz = Math.round(state.boat.z / CELL);
   var added = 0;
-  for (var dx = -1; dx <= 1; dx++) for (var dz = -1; dz <= 1; dz++) {
+  for (var dx = -2; dx <= 2; dx++) for (var dz = -2; dz <= 2; dz++) {
     var kx = gx + dx, kz = gz + dz;
     if (Math.abs(kx) > GRID_R || Math.abs(kz) > GRID_R) continue;
     var key = kx + ',' + kz;
@@ -622,7 +646,7 @@ function updateExplore(dt) {
   }
   if (added > 0) {
     var pct = explorePct();
-    var marks = [[50, 80], [75, 120], [100, 220]];
+    var marks = [[30, 60], [60, 100], [90, 200]];
     for (var i = 0; i < marks.length; i++) {
       if (pct >= marks[i][0] && !state.hintShown['ex' + marks[i][0]]) {
         state.hintShown['ex' + marks[i][0]] = 1;
@@ -661,6 +685,7 @@ function updateWhirlpools(dt) {
     }
     var d = Math.hypot(b.x - w.position.x, b.z - w.position.z);
     if (d < 15) {
+      u.wasIn = true;
       var pullF = (1 - d / 15) * 3.4 * dt;
       b.x -= (b.x - w.position.x) / Math.max(d, 0.5) * pullF;
       b.z -= (b.z - w.position.z) / Math.max(d, 0.5) * pullF;
@@ -676,6 +701,11 @@ function updateWhirlpools(dt) {
         whirlMsgT = 6;
         toast('漩涡在吸引船身，快划出去！');
       }
+    } else if (u.wasIn && d >= 15) {
+      u.wasIn = false;
+      state.cnt.whirlEsc++;
+      toast('成功逃出漩涡引力！', 'gold');
+      checkAch();
     }
   }
 }
