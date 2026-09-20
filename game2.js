@@ -569,6 +569,41 @@ var islandCaches = [];
   }
 })();
 
+var SPARK_N = 14;
+var sparkPool = [];
+(function buildSparks() {
+  for (var i = 0; i < SPARK_N; i++) {
+    var s = makeGlow(2, 0xffe9a8);
+    s.visible = false;
+    scene.add(s);
+    sparkPool.push({ spr: s, t: 0, base: 2 });
+  }
+})();
+function sparkle(x, y, z, big) {
+  for (var i = 0; i < SPARK_N; i++) {
+    var s = sparkPool[i];
+    if (s.t <= 0) {
+      s.t = 1;
+      s.base = big ? 3.4 : 2;
+      s.spr.visible = true;
+      s.spr.position.set(x, y + 0.8, z);
+      s.spr.material.opacity = 0.9;
+      s.spr.scale.setScalar(s.base);
+      return;
+    }
+  }
+}
+
+(function buildEdgeMist() {
+  for (var i = 0; i < 40; i++) {
+    var a = (i / 40) * Math.PI * 2 + rand(-0.05, 0.05);
+    var m = makeGlow(rand(70, 120), 0xffffff);
+    m.material.opacity = rand(0.22, 0.4);
+    m.position.set(Math.cos(a) * (WORLD_R + 30), rand(4, 26), Math.sin(a) * (WORLD_R + 30));
+    scene.add(m);
+  }
+})();
+
 var rocks = [];
 (function buildRocks() {
   for (var i = 0; i < 34; i++) {
