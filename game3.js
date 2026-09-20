@@ -493,6 +493,7 @@ function catchFish(m) {
     toast('鱼获满满，但货舱装不下了');
   }
   sfxPickup('fish');
+  sparkle(m.position.x, m.position.y + 0.5, m.position.z, false);
   removeFloater(m);
   checkQuests();
   checkAch();
@@ -560,6 +561,7 @@ function collectFloater(m) {
   if (gained) {
     sfxPickup(k);
     buzz(12);
+    sparkle(m.position.x, m.position.y + 0.6, m.position.z, k === 'chest' || k === 'letter');
     if (fullHintCD <= 0 && (k === 'wood' && cap[0] - Math.floor(state.res.wood) <= 0 || k === 'food' && cap[1] - Math.floor(state.res.food) <= 0 || k === 'water' && cap[2] - Math.floor(state.res.water) <= 0)) {
       toast('货舱满了，去船坞升级货舱'); fullHintCD = 10;
     }
@@ -574,8 +576,9 @@ function collectFloater(m) {
 function updateSurvival(dt) {
   var raining = state.weather.cur === 'storm';
   var drizzling = state.weather.cur === 'drizzle';
-  state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1);
-  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1);
+  var ramp = Math.min(1.5, 1 + Math.max(0, state.day - 4) * 0.04);
+  state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1) * ramp;
+  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1) * ramp;
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
   if (state.luck > 0) state.luck -= dt;
   if (state.windfall > 0) state.windfall -= dt;
@@ -768,6 +771,7 @@ function updateCaches(dt) {
         toast('打开岛屿宝藏！金币 +' + gg + (gw > 0 ? ' 木材 +' + gw : ''), 'gold');
         sfxPickup('chest');
         buzz(25);
+        sparkle(c.userData.x, waveH(c.userData.x, c.userData.z, state.time, visW.amp), c.userData.z, true);
         updateHUD();
         checkAch();
       }
