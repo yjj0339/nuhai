@@ -141,6 +141,9 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
 #burstBtn span{position:relative;z-index:2}
 #burstCd{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(180deg,rgba(103,199,242,.4),rgba(47,155,214,.5));z-index:1;transition:height .3s linear}
 
+#joyBase{position:fixed;width:92px;height:92px;border-radius:50%;border:2px solid rgba(255,255,255,.75);background:rgba(255,255,255,.18);backdrop-filter:blur(6px);z-index:4;pointer-events:none;display:none;transform:translate(-50%,-50%)}
+#joyKnob{position:absolute;left:50%;top:50%;width:38px;height:38px;border-radius:50%;background:linear-gradient(150deg,rgba(255,255,255,.95),rgba(160,215,245,.8));box-shadow:0 3px 10px rgba(23,74,110,.3),inset 0 1.5px 0 #fff;transform:translate(-50%,-50%)}
+
 #menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
 #menu.off{display:none}
 #menubox{pointer-events:auto;width:min(452px,92vw);padding:40px 40px 32px;text-align:center;border-radius:30px}
@@ -235,6 +238,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
 </head>
 <body>
 <canvas id="c3d"></canvas>
+<div id="joyBase"><div id="joyKnob"></div></div>
 <div id="vignette"></div>
 <div id="loadnote">
   <div id="loadwave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -324,6 +328,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
     <div class="lsect">设 置</div>
     <div id="setRows">
       <button class="gbtn" id="btnMute">音效：开</button>
+      <button class="gbtn" id="btnMusic">音乐：开</button>
       <button class="gbtn" id="btnHiRes">高清画质：开</button>
       <button class="gbtn" id="btnReset">重新开始</button>
     </div>
