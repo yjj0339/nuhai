@@ -97,7 +97,7 @@ function updateWeather(dt) {
   visW.seaDeep.lerp(new THREE.Color(def.sea[0]), dt * 0.5);
   visW.seaShal.lerp(new THREE.Color(def.sea[1]), dt * 0.5);
   visW.fogC.copy(visW.skyBot);
-  var rainT = w.cur === 'storm' ? 0.5 : 0;
+  var rainT = w.cur === 'storm' ? 0.5 : w.cur === 'drizzle' ? 0.22 : 0;
   visW.rain = lerp(visW.rain, rainT, dt * 0.8);
   visW.wind = lerp(visW.wind, def.w, dt * 0.4);
 
@@ -191,14 +191,27 @@ function updateDayNight(dt) {
   state.nightF = night;
 }
 
+function tryBurst() {
+  if (state.phase !== 'play') return;
+  if (state.burstCd > 0 || state.burst > 0) return;
+  state.burst = 2.5;
+  state.burstCd = 25;
+  sfxBurst();
+  toast('乘风突进！');
+}
+
 function updateBoat(dt) {
   var b = state.boat;
+  if (keys.Space) tryBurst();
+  state.burst = Math.max(0, state.burst - dt);
+  state.burstCd = Math.max(0, state.burstCd - dt);
   var up = (keys.KeyW || keys.ArrowUp || touch.sailIn > 0.15) ? 1 : 0;
   var dn = (keys.KeyS || keys.ArrowDown || touch.sailIn < -0.15) ? 1 : 0;
   var lf = (keys.KeyA || keys.ArrowLeft || touch.steer < -0.1) ? 1 : 0;
   var rt = (keys.KeyD || keys.ArrowRight || touch.steer > 0.1) ? 1 : 0;
   b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
   var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
+  if (state.burst > 0) maxS *= 1.55;
   var target = b.sail * maxS;
   var oldX = b.x, oldZ = b.z;
   b.speed = lerp(b.speed, target, dt * (target > b.speed ? 0.32 : 0.5));
@@ -235,7 +248,7 @@ function updateBoat(dt) {
         toast('撞上了 ' + u.name + ' 的浅滩！');
       }
       b.speed *= 0.4;
-    } else if (!u.found && dd < u.r + 75) {
+    } else if (!u.found && dd < (u.r + 75) * (1 + (state.lv.lookout - 1) * 0.4)) {
       u.found = true;
       state.islandsFound[u.id] = 1;
       state.res.gold += 15;
@@ -303,6 +316,16 @@ function updateBoat(dt) {
   boat.userData.sail.scale.set(sailW, sailB * 0.9 + 0.1, sailB);
   boat.userData.stripe.scale.set(sailW, 1, sailB);
   boat.userData.foreSail.scale.set(1, 1, sailB);
+  var slv = state.lv.sail;
+  boat.userData.stripe2.visible = slv >= 3;
+  boat.userData.stripe2.scale.set(sailW, 1, sailB);
+  boat.userData.goldEdge.visible = slv >= 4;
+  boat.userData.goldEdge.scale.set(sailW, 1, sailB);
+  if (boat.userData.sailTier !== slv) {
+    boat.userData.sailTier = slv;
+    boat.userData.sail.material = slv >= 5 ? MAT.sailGold : MAT.sail;
+    boat.userData.stripe.material = slv >= 5 ? MAT.sailGold : MAT.sailStripe;
+  }
   boat.userData.flag.rotation.y = Math.sin(state.time * 6) * 0.35;
   boat.userData.flag.scale.x = 0.5 + b.sail * 0.5;
   boat.userData.wheel.rotation.z -= rud * dt * 4 * spdF;
@@ -310,6 +333,9 @@ function updateBoat(dt) {
 
   if (b.speed > boatSpeedMax() * 0.3 && Math.random() < dt * 26) spawnFoam(
     b.x - fx * 2.8 + rand(-0.9, 0.9), b.z - fz * 2.8 + rand(-0.9, 0.9), b.speed
+  );
+  if (state.burst > 0 && Math.random() < dt * 40) spawnFoam(
+    b.x + fx * 2.2 + rand(-1.3, 1.3), b.z + fz * 2.2 + rand(-1.3, 1.3), b.speed * 1.4
   );
 
   var bx = b.x - fx * 2.6, bz = b.z - fz * 2.6;
@@ -498,8 +524,9 @@ function collectFloater(m) {
 
 function updateSurvival(dt) {
   var raining = state.weather.cur === 'storm';
+  var drizzling = state.weather.cur === 'drizzle';
   state.stats.hunger -= 0.30 * dt * (raining ? 1.15 : 1);
-  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : 1);
+  state.stats.thirst -= 0.42 * dt * (raining ? 0.4 : drizzling ? -1.9 : 1);
   eatT -= dt; drinkT -= dt; fixT -= dt; fullHintCD = Math.max(0, fullHintCD - dt);
   if (state.luck > 0) state.luck -= dt;
   if (state.stats.hunger < 62 && state.res.food >= 1 && eatT <= 0) {
@@ -613,7 +640,82 @@ function explorePct() {
   return Math.min(100, Math.round(n / total * 100));
 }
 
+var whirlMsgT = 0;
+function updateWhirlpools(dt) {
+  whirlMsgT = Math.max(0, whirlMsgT - dt);
+  var b = state.boat;
+  for (var i = 0; i < whirlpools.length; i++) {
+    var w = whirlpools[i];
+    var u = w.userData;
+    u.driftA += dt * 0.12;
+    w.position.x = u.baseX + Math.cos(u.driftA) * 6;
+    w.position.z = u.baseZ + Math.sin(u.driftA * 0.8) * 6;
+    for (var r = 0; r < u.rings.length; r++) {
+      u.rings[r].rotation.z += dt * (1.4 - r * 0.35) * (r % 2 ? -1 : 1);
+    }
+    for (var f = 0; f < u.foamPts.length; f++) {
+      var fa = state.time * 1.6 + f * 0.785;
+      var fr = 4.5 + (f % 3) * 2.2;
+      u.foamPts[f].position.set(Math.cos(fa) * fr, 0.28, Math.sin(fa) * fr);
+      u.foamPts[f].material.opacity = 0.28 + Math.sin(fa * 2) * 0.15;
+    }
+    var d = Math.hypot(b.x - w.position.x, b.z - w.position.z);
+    if (d < 15) {
+      var pullF = (1 - d / 15) * 3.4 * dt;
+      b.x -= (b.x - w.position.x) / Math.max(d, 0.5) * pullF;
+      b.z -= (b.z - w.position.z) / Math.max(d, 0.5) * pullF;
+      b.heading += dt * 1.6 * (1 - d / 15);
+      if (d < 5.5) {
+        state.stats.hull -= 6.5 * dt;
+        if (whirlMsgT <= 0) {
+          whirlMsgT = 4;
+          sfxCrash();
+          toast('船被卷进漩涡了！全力驶离！');
+        }
+      } else if (whirlMsgT <= 0 && d < 12) {
+        whirlMsgT = 6;
+        toast('漩涡在吸引船身，快划出去！');
+      }
+    }
+  }
+}
+
+function updateCaches(dt) {
+  var b = state.boat;
+  for (var i = 0; i < islandCaches.length; i++) {
+    var c = islandCaches[i];
+    if (c.userData.taken) continue;
+    c.position.y = waveH(c.userData.x, c.userData.z, state.time, visW.amp) + 0.05 + Math.sin(state.time * 1.3 + c.userData.ph) * 0.06;
+    var s = 1 + Math.sin(state.time * 2.4 + c.userData.ph) * 0.1;
+    c.userData.ring.scale.set(s, s, 1);
+    c.userData.gl.material.opacity = (isNight() ? 0.8 : 0.45) * (0.8 + Math.sin(state.time * 3 + c.userData.ph) * 0.2);
+    var d = Math.hypot(b.x - c.userData.x, b.z - c.userData.z);
+    if (d < 4.5 && b.speed < 1.5) {
+      c.userData.hold += dt;
+      if (c.userData.hold > 1.2) {
+        c.userData.taken = true;
+        c.visible = false;
+        state.caches[c.userData.islId] = 1;
+        var far = ringDist(c.userData.x, c.userData.z) > 420 ? 1.5 : 1;
+        var gg = Math.round(rand(35, 70) * far);
+        state.res.gold += gg;
+        var gw = Math.min(Math.round(rand(10, 20) * far), holdCap(state.lv.hold)[0] - Math.floor(state.res.wood));
+        if (gw > 0) state.res.wood += gw;
+        toast('打开岛屿宝藏！金币 +' + gg + (gw > 0 ? ' 木材 +' + gw : ''), 'gold');
+        sfxPickup('chest');
+        buzz(25);
+        updateHUD();
+        checkAch();
+      }
+    } else {
+      c.userData.hold = 0;
+    }
+  }
+}
+
 function updateEvents(dt) {
+  updateWhirlpools(dt);
+  updateCaches(dt);
   dolphinT -= dt;
   if (dolphinT <= 0 && dolphinOn <= 0) {
     dolphinT = rand(130, 220);
