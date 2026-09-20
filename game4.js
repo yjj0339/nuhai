@@ -99,7 +99,7 @@ function updateQuestHUD() {
   if (state.quest >= QUESTS.length) {
     $('qtag').textContent = '最终目标';
     $('questname').textContent = '建造远洋巨轮';
-    $('questdesc').textContent = '船帆3级 + 船体3级 + 木材120 + 金币150，在船坞点「建造」通关';
+    $('questdesc').textContent = '船帆3级 + 船体3级 + 木材' + BUILD_NEED.wood + ' + 金币' + BUILD_NEED.gold + '，在船坞点「建造」通关';
     var ready = canBuild();
     $('questfill').style.width = ready ? '100%' : '62%';
     $('questval').textContent = ready ? '条件已齐，去船坞建造！' : '攒够物资就出海回家';
@@ -815,7 +815,7 @@ function boot() {
     state.settings = saved.settings;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.settings.hiRes ? 2 : 1.25));
   }
-  if (saved && (saved.v === 3 || saved.v === 2)) $('btnResume').classList.add('on');
+  if (saved) $('btnResume').classList.add('on');
   $('btnStart').onclick = function () { initAudio(); newGame(); };
   $('btnResume').onclick = function () { initAudio(); var d = loadSave(); if (d) loadGame(d); else newGame(); };
   $('btnHelp').onclick = function () {
