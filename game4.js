@@ -479,10 +479,13 @@ function updateCamera(dt) {
 }
 
 function updateFX(dt) {
+  var nf = state.nightF || 0;
+  _cSea1.copy(visW.seaDeep).lerp(_cNightSea, nf * 0.45);
+  _cSea2.copy(visW.seaShal).lerp(_cNightSea, nf * 0.35);
   seaMat.uniforms.uTime.value = state.time;
   seaMat.uniforms.uAmp.value = visW.amp;
-  seaMat.uniforms.cDeep.value.copy(visW.seaDeep);
-  seaMat.uniforms.cShallow.value.copy(visW.seaShal);
+  seaMat.uniforms.cDeep.value.copy(_cSea1);
+  seaMat.uniforms.cShallow.value.copy(_cSea2);
   seaMat.uniforms.cFog.value.copy(scene.fog.color);
   seaMat.uniforms.uFogFar.value = scene.fog.far;
   seaMesh.position.x = camera.position.x;
@@ -530,6 +533,39 @@ function updateFX(dt) {
       sk.spr.material.opacity = Math.max(0, sk.t) * 0.85;
       sk.spr.position.y += dt * 1.6;
       if (sk.t <= 0) sk.spr.visible = false;
+    }
+  }
+
+  if (nf > 0.5 && !starState.on && Math.random() < dt * 0.03) launchStar();
+  if (starState.on) {
+    starState.t -= dt;
+    starState.x += starState.vx * dt;
+    starState.y += starState.vy * dt;
+    starState.z += starState.vz * dt;
+    shootingStar.position.set(starState.x, starState.y, starState.z);
+    for (var st2 = 0; st2 < starTrail.length; st2++) {
+      var tr = starTrail[st2];
+      tr.visible = true;
+      tr.position.set(starState.x - starState.vx * (st2 + 1) * 0.035, starState.y - starState.vy * (st2 + 1) * 0.035, starState.z - starState.vz * (st2 + 1) * 0.035);
+      tr.material.opacity = 0.6 - st2 * 0.12;
+    }
+    if (starState.t <= 0) {
+      starState.on = false;
+      shootingStar.visible = false;
+      for (var st3 = 0; st3 < starTrail.length; st3++) starTrail[st3].visible = false;
+      if (state.phase === 'play') {
+        state.res.gold += 10;
+        toast('对流星许了个愿：金币 +10', 'gold');
+        updateHUD();
+      }
+    }
+  }
+  for (var il2 = 0; il2 < islands.length; il2++) {
+    var tag = islands[il2].userData.tag;
+    if (tag && tag.userData.life > 0) {
+      tag.userData.life -= dt;
+      tag.material.opacity = Math.min(1, tag.userData.life / 1.2);
+      if (tag.userData.life <= 0) tag.visible = false;
     }
   }
 
@@ -581,6 +617,7 @@ function updateFX(dt) {
   boat.userData.lampGlow.scale.setScalar(0.9 + state.lv.lamp * 0.3);
 }
 
+var gullT = 6;
 function step(dt) {
   state.time += dt;
   state.playSec += dt;
@@ -596,6 +633,11 @@ function step(dt) {
   if (musicT <= 0) {
     musicT = rand(2.4, 4.6);
     if (!state.mute && state.settings.music !== false && AC && state.weather.cur !== 'storm') sfxPluck(pick(MNOTES), Math.random() < 0.35);
+  }
+  gullT -= dt;
+  if (gullT <= 0) {
+    gullT = rand(7, 16);
+    if (!state.mute && AC && state.weather.cur !== 'storm' && state.weather.cur !== 'fog') sfxGull();
   }
   hudT -= dt;
   if (hudT <= 0) {
