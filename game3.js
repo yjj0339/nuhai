@@ -467,9 +467,11 @@ function updateFloaters(dt) {
   for (var i = 0; i < floaters.length; i++) {
     var m = floaters[i];
     var u = m.userData;
-    m.position.x += Math.cos(u.drift) * 0.25 * dt;
-    m.position.z += Math.sin(u.drift) * 0.25 * dt;
-    u.drift += Math.sin(state.time * 0.4 + u.ph) * 0.15 * dt;
+    if (u.kind !== 'fish') {
+      m.position.x += Math.cos(u.drift) * 0.25 * dt;
+      m.position.z += Math.sin(u.drift) * 0.25 * dt;
+      u.drift += Math.sin(state.time * 0.4 + u.ph) * 0.15 * dt;
+    }
     var baseY = u.kind === 'fish' ? -0.75 : 0.12;
     m.position.y = waveH(m.position.x, m.position.z, state.time, visW.amp) + baseY + Math.sin(state.time * 1.4 + u.ph) * 0.06;
     if (u.kind !== 'fish') m.rotation.y += dt * 0.25;
@@ -485,12 +487,12 @@ function updateFloaters(dt) {
       }
       u.ripple.scale.setScalar(1 + Math.sin(state.time * 3 + u.ph) * 0.18);
       var bd = Math.hypot(m.position.x - b.x, m.position.z - b.z);
-      if (bd < 6) {
-        if (b.speed < 1.2) {
+      if (bd < 7) {
+        if (b.speed < 1.4) {
           u.hold += dt;
           if (u.hold > 2.2) { catchFish(m); continue; }
-        } else u.hold = Math.max(0, u.hold - dt * 2);
-      } else u.hold = 0;
+        } else u.hold = Math.max(0, u.hold - dt * 0.5);
+      } else u.hold = Math.max(0, u.hold - dt * 0.5);
     } else if (u.kind === 'glow' || u.kind === 'chest' || u.kind === 'bottle') {
       if (u.glow) u.glow.material.opacity = (isNight() ? 0.85 : 0.35) * (0.75 + Math.sin(state.time * 3 + u.ph) * 0.25);
     }
@@ -866,6 +868,18 @@ function updateEvents(dt) {
     whale.rotation.z = Math.sin(state.time * 0.8) * 0.04;
     var ph = (whale.userData.life % 6);
     whale.userData.spout.material.opacity = ph > 4.6 ? (6 - ph) * 0.7 : 0;
+    var wd = Math.hypot(state.boat.x - whale.position.x, state.boat.z - whale.position.z);
+    if (wd < 70) {
+      whale.userData.watch = (whale.userData.watch || 0) + dt;
+      if (whale.userData.watch > 10 && !whale.userData.watched) {
+        whale.userData.watched = true;
+        state.res.gold += 20;
+        toast('静静看完了鲸鱼游弋，心情舒畅（金币 +20）', 'gold');
+        sparkle(state.boat.x + rand(-2, 2), 0.5, state.boat.z + rand(-2, 2), true);
+        sfxPickup('gold');
+        updateHUD();
+      }
+    }
     if (whale.userData.life <= 0) { scene.remove(whale); whale = null; }
   }
 }
