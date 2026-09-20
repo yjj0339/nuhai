@@ -241,6 +241,8 @@ function updateBoat(dt) {
   var rt = (keys.KeyD || keys.ArrowRight || touch.steer > 0.1) ? 1 : 0;
   b.sail = clamp(b.sail + (up - dn) * dt * 0.75, 0, 1);
   var maxS = boatSpeedMax() * (state.weather.cur === 'breeze' ? 1.1 : state.weather.cur === 'storm' ? 0.82 : 1);
+  state.tail = Math.sin(b.heading + windAng);
+  maxS *= 1 + 0.16 * state.tail;
   if (state.windfall > 0) maxS *= 1.15;
   if (state.burst > 0) maxS *= 1.55;
   var target = b.sail * maxS;
@@ -647,6 +649,10 @@ function questProgress() {
   else if (q.id === 'storm1') cur = Math.min(state.cnt.storms, 1);
   else if (q.id === 'net2') cur = state.lv.net;
   else if (q.id === 'exp20') cur = Math.min(explorePct(), q.target);
+  else if (q.id === 'cache1') cur = Math.min(state.cnt.cacheOpen, 1);
+  else if (q.id === 'whirlEsc1') cur = Math.min(state.cnt.whirlEsc, 1);
+  else if (q.id === 'trade1') cur = Math.min(state.cnt.trade, 1);
+  else if (q.id === 'watch1') cur = Math.min(state.cnt.watch, 1);
   return { cur: cur, max: q.target };
 }
 function checkQuests() {
@@ -873,6 +879,7 @@ function updateEvents(dt) {
       whale.userData.watch = (whale.userData.watch || 0) + dt;
       if (whale.userData.watch > 10 && !whale.userData.watched) {
         whale.userData.watched = true;
+        state.cnt.watch++;
         state.res.gold += 20;
         toast('静静看完了鲸鱼游弋，心情舒畅（金币 +20）', 'gold');
         sparkle(state.boat.x + rand(-2, 2), 0.5, state.boat.z + rand(-2, 2), true);
