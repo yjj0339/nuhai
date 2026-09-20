@@ -17,7 +17,7 @@ var state = {
   weather: { cur: 'sun', prev: 'sun', next: 'breeze', t: 60, warnT: 0, blend: 0 },
   explored: {},
   islandsFound: {},
-  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0, cacheOpen: 0, whirlEsc: 0, letters: 0 },
+  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0, cacheOpen: 0, whirlEsc: 0, letters: 0, watch: 0 },
   dist: 0,
   quest: 0,
   luck: 0,
@@ -90,7 +90,11 @@ var QUESTS = [
   { id: 'fish2', name: '满载而归', desc: '在鱼群上停船撒网捕鱼 2 次', target: 2, rg: 25 },
   { id: 'storm1', name: '风暴挑战者', desc: '完整挺过一场雷暴天气', target: 1, rg: 40 },
   { id: 'net2', name: '大网撒开', desc: '把渔网升到 2 级', target: 2, rg: 0, rw: 25 },
-  { id: 'exp20', name: '绘制海图', desc: '海图探索达到 20%', target: 20, rg: 60 }
+  { id: 'exp20', name: '绘制海图', desc: '海图探索达到 20%', target: 20, rg: 60 },
+  { id: 'cache1', name: '岛屿寻宝', desc: '打开 1 座岛屿宝藏', target: 1, rg: 30 },
+  { id: 'whirlEsc1', name: '漩口脱险', desc: '逃出 1 次漩涡引力', target: 1, rw: 20 },
+  { id: 'trade1', name: '公平交易', desc: '与漂流商筏交易 1 次', target: 1, rg: 25 },
+  { id: 'watch1', name: '观鲸之旅', desc: '近距离观赏鲸鱼 10 秒', target: 1, rg: 30 }
 ];
 
 var ACHS = [
