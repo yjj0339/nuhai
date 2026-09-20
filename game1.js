@@ -17,10 +17,13 @@ var state = {
   weather: { cur: 'sun', prev: 'sun', next: 'breeze', t: 60, warnT: 0, blend: 0 },
   explored: {},
   islandsFound: {},
-  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+  cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0, cacheOpen: 0, whirlEsc: 0, letters: 0 },
   dist: 0,
   quest: 0,
   luck: 0,
+  windfall: 0,
+  letterDay: 0,
+  freeplay: 0,
   burst: 0,
   burstCd: 0,
   caches: {},
@@ -87,7 +90,7 @@ var QUESTS = [
   { id: 'fish2', name: '满载而归', desc: '在鱼群上停船撒网捕鱼 2 次', target: 2, rg: 25 },
   { id: 'storm1', name: '风暴挑战者', desc: '完整挺过一场雷暴天气', target: 1, rg: 40 },
   { id: 'net2', name: '大网撒开', desc: '把渔网升到 2 级', target: 2, rg: 0, rw: 25 },
-  { id: 'exp25', name: '绘制海图', desc: '海图探索达到 25%', target: 25, rg: 60 }
+  { id: 'exp20', name: '绘制海图', desc: '海图探索达到 20%', target: 20, rg: 60 }
 ];
 
 var ACHS = [
@@ -100,7 +103,11 @@ var ACHS = [
   { id: 'maxsail', name: '满帆疾驰', desc: '船帆升到满级', rew: 60, t: function () { return state.lv.sail >= 5; } },
   { id: 'rich', name: '小有积蓄', desc: '同时持有 300 金币', rew: 20, t: function () { return state.res.gold >= 300; } },
   { id: 'bottle3', name: '漂流瓶笔友', desc: '捡到 3 个漂流瓶', rew: 40, t: function () { return state.cnt.bottles >= 3; } },
-  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; } }
+  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; } },
+  { id: 'whirl1', name: '漩口余生', desc: '第一次逃出漩涡引力', rew: 30, t: function () { return state.cnt.whirlEsc >= 1; } },
+  { id: 'cache3', name: '藏宝图大师', desc: '打开 3 座岛屿宝藏', rew: 50, t: function () { return state.cnt.cacheOpen >= 3; } },
+  { id: 'rich2', name: '海上富商', desc: '同时持有 800 金币', rew: 60, t: function () { return state.res.gold >= 800; } },
+  { id: 'ready', name: '巨轮在望', desc: '船帆与船体都升到 3 级', rew: 50, t: function () { return state.lv.sail >= 3 && state.lv.hull >= 3; } }
 ];
 
 var TRADES = [
