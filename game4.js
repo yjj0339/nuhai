@@ -123,6 +123,12 @@ function updateBuffHUD() {
     d.innerHTML = '<div class="bdot"></div>海豚好运 · 打捞+25% · ' + Math.ceil(state.luck) + 's';
     row.appendChild(d);
   }
+  if (state.windfall > 0) {
+    var d5 = document.createElement('div');
+    d5.className = 'buff glass';
+    d5.innerHTML = '<div class="bdot" style="background:#ffd75e"></div>顺风 · 航速+15% · ' + Math.ceil(state.windfall) + 's';
+    row.appendChild(d5);
+  }
   if (state.burst > 0) {
     var d3 = document.createElement('div');
     d3.className = 'buff glass';
@@ -177,7 +183,7 @@ function renderTradeCard() {
 }
 
 var mini = $('mini'), mctx = mini.getContext('2d');
-var FKC = { wood: '#a9743f', food: '#e0704a', water: '#3e9fd6', gold: '#e0a52e', fish: '#4dc06a', glow: '#4dc0a8', chest: '#e0a52e', bottle: '#5fae72' };
+var FKC = { wood: '#a9743f', food: '#e0704a', water: '#3e9fd6', gold: '#e0a52e', fish: '#4dc06a', glow: '#4dc0a8', chest: '#e0a52e', bottle: '#5fae72', letter: '#ffd75e' };
 function islandsFoundById(id) { return !!state.islandsFound[id]; }
 function drawMini() {
   var W = mini.width, H = mini.height;
@@ -309,11 +315,12 @@ function renderUpList() {
       ' data-up="' + k + '">金币' + costG + '<br>木材' + costW + '</button>';
     html += '</div>';
   }
-  var ok = canBuild();
+  var ok = canBuild() && !state.freeplay;
+  var buildLabel = state.freeplay ? '已 建 成' : (ok ? '建 造' : '未达成');
   html += '<div class="upitem' + (ok ? ' armed' : '') + '" id="builditem"><div class="upicon ui-lamp"><svg viewBox="0 0 24 24" fill="none"><path d="M4 14l1.6-7A2.4 2.4 0 0 1 8 5h8a2.4 2.4 0 0 1 2.4 2L20 14" stroke="#a8781f" stroke-width="2" stroke-linejoin="round"/><path d="M4 14h16v3.4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V14z" fill="#a8781f" opacity=".85"/><path d="M9 19.6V21M15 19.6V21" stroke="#a8781f" stroke-width="2" stroke-linecap="round"/><path d="M12 3.2c2.8 1.8 2.8 5 0 6.8-2.8-1.8-2.8-5 0-6.8z" fill="#2f9bd6"/></svg></div>' +
-    '<div class="upmain"><div class="upname">建造远洋巨轮 · 通关</div>' +
-    '<div class="updesc">需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + Math.floor(state.res.wood) + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold + '</div></div>' +
-    '<button class="upbtn upok" id="btnBuild"' + (ok ? '' : ' disabled') + '>' + (ok ? '建 造' : '未达成') + '</button></div>';
+    '<div class="upmain"><div class="upname">' + (state.freeplay ? '远洋巨轮 · 已建成' : '建造远洋巨轮 · 通关') + '</div>' +
+    '<div class="updesc">' + (state.freeplay ? '巨轮已建成，享受自由航行吧' : '需要：船帆3级(' + state.lv.sail + ') · 船体3级(' + state.lv.hull + ') · 木材' + Math.floor(state.res.wood) + '/' + BUILD_NEED.wood + ' · 金币' + state.res.gold + '/' + BUILD_NEED.gold) + '</div></div>' +
+    '<button class="upbtn upok" id="btnBuild"' + (ok ? '' : ' disabled') + '>' + buildLabel + '</button></div>';
   $('uplist').innerHTML = html;
   var btns = $('uplist').querySelectorAll('[data-up]');
   for (var b = 0; b < btns.length; b++) btns[b].onclick = function () { doUpgrade(this.getAttribute('data-up')); };
@@ -349,6 +356,10 @@ function renderLog() {
     ['挺过风暴', state.cnt.storms],
     ['发现岛屿', Object.keys(state.islandsFound).length],
     ['漂流瓶', state.cnt.bottles],
+    ['岛屿宝藏', state.cnt.cacheOpen || 0],
+    ['逃出漩涡', state.cnt.whirlEsc || 0],
+    ['顺风信件', state.cnt.letters || 0],
+    ['成就', Object.keys(state.ach).length + ' / ' + ACHS.length],
     ['探索度', explorePct() + '%']
   ];
   var h = '';
@@ -404,6 +415,7 @@ function gameOver(why) {
   overMode = 'lose';
   hidePrompt();
   hideTradeCard();
+  $('btnFree').style.display = 'none';
   var whyTxt = {
     hunger: '食物耗尽，你饿晕在甲板上，被路过的商船救起…',
     thirst: '淡水喝干了，商船把你送回了港口…',
@@ -423,7 +435,16 @@ function showOver(win) {
   renderOvStats();
   $('ovsub').innerHTML = '远洋巨轮建成！你带着满舱物资驶向地平线，结束漂流生涯。<br>发现 <b>' + Object.keys(state.islandsFound).length + '</b> 座岛屿 · 航行 <b>' + (state.dist / 1000).toFixed(1) + '</b> 公里 · 成就 <b>' + Object.keys(state.ach).length + '</b>/' + ACHS.length;
   $('btnRestart').textContent = '开 启 新 航 程';
+  $('btnFree').style.display = 'inline-block';
   $('over').classList.add('on');
+}
+function freeplay() {
+  state.freeplay = 1;
+  state.phase = 'play';
+  $('over').classList.remove('on');
+  $('btnFree').style.display = 'none';
+  toast('自由航行：这片海还有更多秘密等你发现', 'gold');
+  save();
 }
 
 function updateCamera(dt) {
@@ -519,6 +540,11 @@ function updateFX(dt) {
       var fs = 1 + Math.sin(state.time * 1.5 + il * 1.3) * 0.03;
       fm2.scale.set(fs, fs, 1);
       fm2.material.opacity = 0.35 + Math.sin(state.time * 1.5 + il * 1.3) * 0.15;
+    }
+    var beam = islands[il].userData.beam;
+    if (beam) {
+      beam.visible = (state.nightF || 0) > 0.22;
+      beam.rotation.y += dt * 0.55;
     }
   }
   for (var dp = 0; dp < dolphins.length; dp++) {
@@ -624,8 +650,8 @@ function newGame() {
     lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: 'sun', prev: 'sun', next: pickWeatherNext('sun'), t: 55, warnT: 0, blend: 0 },
     explored: {}, islandsFound: {},
-    cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
-    dist: 0, quest: 0, luck: 0,
+    cnt: { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0, cacheOpen: 0, whirlEsc: 0, letters: 0 },
+    dist: 0, quest: 0, luck: 0, windfall: 0, letterDay: 0, freeplay: 0,
     burst: 0, burstCd: 0,
     ach: {}, islandDock: {}, caches: {}, settings: keepSet,
     mute: keepMute, playSec: 0, hintShown: {}
@@ -658,8 +684,9 @@ function loadGame(d) {
     lv: { sail: 1, hull: 1, hold: 1, lamp: 1, net: 1, rudder: 1, lookout: 1 },
     weather: { cur: d.weather.cur, prev: d.weather.cur, next: pickWeatherNext(d.weather.cur), t: d.weather.t, warnT: 0, blend: 0 },
     explored: d.explored, islandsFound: d.islandsFound,
-    cnt: d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 },
+    cnt: Object.assign({ cacheOpen: 0, whirlEsc: 0, letters: 0 }, d.cnt || { pickup: 0, fish: 0, storms: 0, chests: 0, bottles: 0, trade: 0 }),
     dist: d.dist || 0, quest: d.quest || 0, luck: d.luck || 0,
+    windfall: 0, letterDay: d.day || 1, freeplay: d.freeplay || 0,
     ach: d.ach || {}, islandDock: d.islandDock || {}, caches: d.caches || {}, settings: d.settings || keepSet,
     mute: d.mute !== undefined ? d.mute : keepMute,
     playSec: d.playSec || 0, hintShown: { ate: 1 }
@@ -700,7 +727,8 @@ function loop(now) {
   requestAnimationFrame(loop);
   var dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
-  if (state.phase === 'play') step(dt * timeScale);
+  var ts = window.__ts || 1;
+  if (state.phase === 'play') { for (var k = 0; k < ts; k++) step(dt * timeScale); }
   else if (state.phase === 'menu') menuIdle(dt);
   updateFX(state.phase === 'pause' ? 0 : dt);
   renderer.render(scene, camera);
@@ -755,6 +783,7 @@ function boot() {
     clearSave();
     newGame();
   };
+  $('btnFree').onclick = freeplay;
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && state.phase === 'play') { save(); togglePause(); }
   });
