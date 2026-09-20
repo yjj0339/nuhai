@@ -397,7 +397,7 @@ function makePalm(seed) {
   }
   return g;
 }
-function makeIsland(i, ix, iz, r, rocky) {
+function makeIsland(i, ix, iz, r, rocky, lighthouse) {
   var g = new THREE.Group();
   var seed = i * 13.7 + 1;
   var base = sph(r, MAT.sand, 11, 7);
@@ -417,7 +417,35 @@ function makeIsland(i, ix, iz, r, rocky) {
   var hill = new THREE.Mesh(hillGeo, rocky ? MAT.rock : MAT.grass);
   hill.position.y = r * 0.1;
   g.add(hill);
-  if (!rocky) {
+  if (lighthouse) {
+    var tw = new THREE.Group();
+    var t1 = cyl(r * 0.11, r * 0.16, r * 0.42, MAT.white, 12);
+    t1.position.y = r * 0.21; tw.add(t1);
+    var band1 = cyl(r * 0.135, r * 0.145, r * 0.07, MAT.flag, 12);
+    band1.position.y = r * 0.24; tw.add(band1);
+    var band2 = cyl(r * 0.12, r * 0.125, r * 0.07, MAT.flag, 12);
+    band2.position.y = r * 0.37; tw.add(band2);
+    var room = cyl(r * 0.1, r * 0.1, r * 0.1, MAT.ironBand, 10);
+    room.position.y = r * 0.47; tw.add(room);
+    var lampD = sph(r * 0.075, MAT.goldM, 8, 6);
+    lampD.position.y = r * 0.53; tw.add(lampD);
+    var cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.11, r * 0.08, 10), MAT.flag);
+    cap.position.y = r * 0.6; tw.add(cap);
+    var pivot = new THREE.Group();
+    pivot.position.y = r * 0.53;
+    var beam = new THREE.Mesh(
+      new THREE.ConeGeometry(3.2, 42, 14, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xfff2b8, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })
+    );
+    beam.rotation.z = Math.PI / 2;
+    beam.position.x = 21;
+    pivot.add(beam);
+    tw.add(pivot);
+    tw.position.y = r * 0.28;
+    g.add(tw);
+    g.userData.beam = pivot;
+  }
+  if (!rocky && !lighthouse) {
     var hillTop = new THREE.Mesh(new THREE.ConeGeometry(r * 0.4, r * 0.42, 8, 2), MAT.grassDk);
     hillTop.position.y = r * 0.48;
     g.add(hillTop);
@@ -441,7 +469,7 @@ function makeIsland(i, ix, iz, r, rocky) {
       g.add(rock);
     }
   }
-  var shallow = new THREE.Mesh(new THREE.RingGeometry(r * 1.02, r * 1.85, 26), new THREE.MeshBasicMaterial({ color: 0xa8e4d8, transparent: true, opacity: 0.4, depthWrite: false }));
+  var shallow = new THREE.Mesh(new THREE.RingGeometry(r * 1.02, r * 1.7, 26), new THREE.MeshBasicMaterial({ color: 0xa8e4d8, transparent: true, opacity: 0.22, depthWrite: false }));
   shallow.rotation.x = -Math.PI / 2;
   shallow.position.y = -0.4;
   g.add(shallow);
@@ -449,7 +477,10 @@ function makeIsland(i, ix, iz, r, rocky) {
   foam.rotation.x = -Math.PI / 2;
   foam.position.y = 0.02;
   g.add(foam);
-  g.userData = { x: ix, z: iz, r: r + 3, name: ISLAND_NAMES[i % ISLAND_NAMES.length], id: 'is' + i, found: false, foam: foam };
+  g.userData.x = ix; g.userData.z = iz; g.userData.r = r + 3;
+  g.userData.name = lighthouse ? '长明灯塔' : ISLAND_NAMES[i % ISLAND_NAMES.length];
+  g.userData.lighthouse = !!lighthouse;
+  g.userData.id = 'is' + i; g.userData.found = false; g.userData.foam = foam;
   g.position.set(ix, 0, iz);
   scene.add(g);
   return g;
@@ -460,7 +491,7 @@ function makeIsland(i, ix, iz, r, rocky) {
     var dist = 210 + (i % 5) * 135 + rand(-40, 40);
     var ix = Math.cos(ang) * dist, iz = Math.sin(ang) * dist;
     var r = rand(14, 22);
-    islands.push(makeIsland(i, ix, iz, r, i % 3 === 2));
+    islands.push(makeIsland(i, ix, iz, r, i % 3 === 2, i === 4 || i === 9));
   }
 })();
 
@@ -740,6 +771,27 @@ function makeFishSchool() {
   g.add(ripple);
   return g;
 }
+function makeLetter() {
+  var g = new THREE.Group();
+  var scroll = cyl(0.22, 0.22, 0.9, MAT.white, 9);
+  scroll.rotation.z = Math.PI / 2;
+  scroll.position.y = 0.28;
+  g.add(scroll);
+  var seal = cyl(0.13, 0.13, 0.06, MAT.flag, 8);
+  seal.rotation.z = Math.PI / 2;
+  seal.position.set(0.1, 0.28, 0.16);
+  g.add(seal);
+  var band = cyl(0.235, 0.235, 0.1, MAT.goldM, 9);
+  band.rotation.z = Math.PI / 2;
+  band.position.y = 0.28;
+  g.add(band);
+  var gl = makeGlow(2.6, 0xffd75e);
+  gl.position.y = 0.5;
+  gl.material.opacity = 0.7;
+  gl.name = 'glow';
+  g.add(gl);
+  return g;
+}
 function buildFloater(kind) {
   var g;
   if (kind === 'wood') g = makeLogStack();
@@ -749,6 +801,7 @@ function buildFloater(kind) {
   else if (kind === 'chest') g = makeChest();
   else if (kind === 'bottle') g = makeBottle();
   else if (kind === 'glow') g = makeGlowBuoy();
+  else if (kind === 'letter') g = makeLetter();
   else g = makeFishSchool();
   var rm = kind === 'chest' || kind === 'glow' ? MAT.ringGold : kind === 'fish' ? MAT.ringFish : MAT.ring;
   var ring = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.85, 26), rm);
