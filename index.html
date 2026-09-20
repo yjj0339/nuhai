@@ -141,6 +141,9 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
 #burstBtn span{position:relative;z-index:2}
 #burstCd{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(180deg,rgba(103,199,242,.4),rgba(47,155,214,.5));z-index:1;transition:height .3s linear}
 
+#joyBase{position:fixed;width:92px;height:92px;border-radius:50%;border:2px solid rgba(255,255,255,.75);background:rgba(255,255,255,.18);backdrop-filter:blur(6px);z-index:4;pointer-events:none;display:none;transform:translate(-50%,-50%)}
+#joyKnob{position:absolute;left:50%;top:50%;width:38px;height:38px;border-radius:50%;background:linear-gradient(150deg,rgba(255,255,255,.95),rgba(160,215,245,.8));box-shadow:0 3px 10px rgba(23,74,110,.3),inset 0 1.5px 0 #fff;transform:translate(-50%,-50%)}
+
 #menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
 #menu.off{display:none}
 #menubox{pointer-events:auto;width:min(452px,92vw);padding:40px 40px 32px;text-align:center;border-radius:30px}
@@ -235,6 +238,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
 </head>
 <body>
 <canvas id="c3d"></canvas>
+<div id="joyBase"><div id="joyKnob"></div></div>
 <div id="vignette"></div>
 <div id="loadnote">
   <div id="loadwave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -324,6 +328,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sa
     <div class="lsect">设 置</div>
     <div id="setRows">
       <button class="gbtn" id="btnMute">音效：开</button>
+      <button class="gbtn" id="btnMusic">音乐：开</button>
       <button class="gbtn" id="btnHiRes">高清画质：开</button>
       <button class="gbtn" id="btnReset">重新开始</button>
     </div>
@@ -371,7 +376,7 @@ var state = {
   caches: {},
   ach: {},
   islandDock: {},
-  settings: { hiRes: true },
+  settings: { hiRes: true, music: true },
   mute: false,
   playSec: 0,
   hintShown: {}
@@ -438,18 +443,18 @@ var QUESTS = [
 var ACHS = [
   { id: 'catch1', name: '初试身手', desc: '打捞第一个漂浮物', rew: 10, t: function () { return state.cnt.pickup >= 1; } },
   { id: 'chest1', name: '寻宝猎人', desc: '打捞第一个漂流宝箱', rew: 30, t: function () { return state.cnt.chests >= 1; } },
-  { id: 'fish5', name: '开心的渔夫', desc: '捕鱼 5 次', rew: 30, t: function () { return state.cnt.fish >= 5; } },
-  { id: 'storm3', name: '风暴老手', desc: '完整挺过 3 场雷暴', rew: 50, t: function () { return state.cnt.storms >= 3; } },
-  { id: 'isl5', name: '群岛贵客', desc: '发现 5 座岛屿', rew: 50, t: function () { return Object.keys(state.islandsFound).length >= 5; } },
-  { id: 'dist10', name: '远航者', desc: '累计航行 10 公里', rew: 40, t: function () { return state.dist >= 10000; } },
-  { id: 'maxsail', name: '满帆疾驰', desc: '船帆升到满级', rew: 60, t: function () { return state.lv.sail >= 5; } },
+  { id: 'fish5', name: '开心的渔夫', desc: '捕鱼攒渔获', rew: 30, t: function () { return state.cnt.fish >= 5; }, p: function () { return [Math.min(state.cnt.fish, 5), 5]; } },
+  { id: 'storm3', name: '风暴老手', desc: '完整挺过雷暴', rew: 50, t: function () { return state.cnt.storms >= 3; }, p: function () { return [Math.min(state.cnt.storms, 3), 3]; } },
+  { id: 'isl5', name: '群岛贵客', desc: '发现岛屿', rew: 50, t: function () { return Object.keys(state.islandsFound).length >= 5; }, p: function () { return [Math.min(Object.keys(state.islandsFound).length, 5), 5]; } },
+  { id: 'dist10', name: '远航者', desc: '累计航行 10 公里', rew: 40, t: function () { return state.dist >= 10000; }, p: function () { return [Math.min(Math.round(state.dist / 100) / 10, 10), 10]; } },
+  { id: 'maxsail', name: '满帆疾驰', desc: '船帆升到满级', rew: 60, t: function () { return state.lv.sail >= 5; }, p: function () { return [Math.min(state.lv.sail, 5), 5]; } },
   { id: 'rich', name: '小有积蓄', desc: '同时持有 300 金币', rew: 20, t: function () { return state.res.gold >= 300; } },
-  { id: 'bottle3', name: '漂流瓶笔友', desc: '捡到 3 个漂流瓶', rew: 40, t: function () { return state.cnt.bottles >= 3; } },
-  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; } },
+  { id: 'bottle3', name: '漂流瓶笔友', desc: '捡到漂流瓶', rew: 40, t: function () { return state.cnt.bottles >= 3; }, p: function () { return [Math.min(state.cnt.bottles, 3), 3]; } },
+  { id: 'exp50', name: '大制图师', desc: '海图探索达到 50%', rew: 80, t: function () { return explorePct() >= 50; }, p: function () { return [Math.min(explorePct(), 50), 50]; } },
   { id: 'whirl1', name: '漩口余生', desc: '第一次逃出漩涡引力', rew: 30, t: function () { return state.cnt.whirlEsc >= 1; } },
-  { id: 'cache3', name: '藏宝图大师', desc: '打开 3 座岛屿宝藏', rew: 50, t: function () { return state.cnt.cacheOpen >= 3; } },
+  { id: 'cache3', name: '藏宝图大师', desc: '打开岛屿宝藏', rew: 50, t: function () { return state.cnt.cacheOpen >= 3; }, p: function () { return [Math.min(state.cnt.cacheOpen, 3), 3]; } },
   { id: 'rich2', name: '海上富商', desc: '同时持有 800 金币', rew: 60, t: function () { return state.res.gold >= 800; } },
-  { id: 'ready', name: '巨轮在望', desc: '船帆与船体都升到 3 级', rew: 50, t: function () { return state.lv.sail >= 3 && state.lv.hull >= 3; } }
+  { id: 'ready', name: '巨轮在望', desc: '船帆与船体都升到 3 级', rew: 50, t: function () { return state.lv.sail >= 3 && state.lv.hull >= 3; }, p: function () { return [Math.min(state.lv.sail, 3) + Math.min(state.lv.hull, 3), 6]; } }
 ];
 
 var TRADES = [
@@ -468,6 +473,12 @@ var WDEF = {
 
 var WSEQ = { sun: ['breeze', 'fog', 'drizzle'], breeze: ['sun', 'fog', 'storm'], fog: ['sun', 'breeze', 'drizzle'], drizzle: ['sun', 'breeze'], storm: ['breeze', 'sun'] };
 var WTIME = { sun: [70, 110], breeze: [50, 85], fog: [36, 58], drizzle: [40, 70], storm: [30, 46] };
+(function () {
+  for (var k in WDEF) {
+    WDEF[k].skyC = [new THREE.Color(WDEF[k].sky[0]), new THREE.Color(WDEF[k].sky[1])];
+    WDEF[k].seaC = [new THREE.Color(WDEF[k].sea[0]), new THREE.Color(WDEF[k].sea[1])];
+  }
+})();
 
 var WSVG = {
   sun: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.6" fill="#ffd75e"/><g stroke="#f5b93c" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></g></svg>',
@@ -1654,11 +1665,28 @@ canvas.addEventListener('wheel', function (e) {
 }, { passive: false });
 
 var touch = { joy: null, cam: null, steer: 0, sailIn: 0 };
+var joyBase = null, joyKnob = null;
+function joyShow(x, y) {
+  if (!joyBase) { joyBase = document.getElementById('joyBase'); joyKnob = document.getElementById('joyKnob'); }
+  joyBase.style.display = 'block';
+  joyBase.style.left = x + 'px';
+  joyBase.style.top = y + 'px';
+  joyKnob.style.transform = 'translate(-50%,-50%)';
+}
+function joyMove(x, y) {
+  if (!joyBase) return;
+  joyKnob.style.transform = 'translate(calc(-50% + ' + x + 'px), calc(-50% + ' + y + 'px))';
+}
+function joyHide() { if (joyBase) joyBase.style.display = 'none'; }
+
 canvas.addEventListener('touchstart', function (e) {
   e.preventDefault();
   for (var i = 0; i < e.changedTouches.length; i++) {
     var t = e.changedTouches[i];
-    if (t.clientX < window.innerWidth * 0.55 && !touch.joy) touch.joy = { id: t.identifier, x0: t.clientX, y0: t.clientY };
+    if (t.clientX < window.innerWidth * 0.55 && !touch.joy) {
+      touch.joy = { id: t.identifier, x0: t.clientX, y0: t.clientY };
+      joyShow(t.clientX, t.clientY);
+    }
     else if (!touch.cam) touch.cam = { id: t.identifier, x: t.clientX };
   }
 }, { passive: false });
@@ -1670,6 +1698,9 @@ canvas.addEventListener('touchmove', function (e) {
       var dx = t.clientX - touch.joy.x0, dy = t.clientY - touch.joy.y0;
       touch.steer = clamp(dx / 62, -1, 1);
       touch.sailIn = clamp(-dy / 62, -1, 1);
+      var len = Math.hypot(dx, dy);
+      if (len > 40) { dx = dx / len * 40; dy = dy / len * 40; }
+      joyMove(dx, dy);
     } else if (touch.cam && t.identifier === touch.cam.id) {
       camCtl.user -= (t.clientX - touch.cam.x) * 0.008;
       touch.cam.x = t.clientX;
@@ -1679,7 +1710,7 @@ canvas.addEventListener('touchmove', function (e) {
 function touchEnd(e) {
   for (var i = 0; i < e.changedTouches.length; i++) {
     var t = e.changedTouches[i];
-    if (touch.joy && t.identifier === touch.joy.id) { touch.joy = null; touch.steer = 0; touch.sailIn = 0; }
+    if (touch.joy && t.identifier === touch.joy.id) { touch.joy = null; touch.steer = 0; touch.sailIn = 0; joyHide(); }
     if (touch.cam && t.identifier === touch.cam.id) touch.cam = null;
   }
 }
@@ -1732,10 +1763,10 @@ function updateWeather(dt) {
   visW.amp = lerp(visW.amp, def.amp, dt * 0.5);
   visW.fogFar = lerp(visW.fogFar, targetFar, dt * 0.5);
   visW.sunI = lerp(visW.sunI, def.sunI, dt * 0.5);
-  visW.skyTop.lerp(new THREE.Color(def.sky[0]), dt * 0.5);
-  visW.skyBot.lerp(new THREE.Color(def.sky[1]), dt * 0.5);
-  visW.seaDeep.lerp(new THREE.Color(def.sea[0]), dt * 0.5);
-  visW.seaShal.lerp(new THREE.Color(def.sea[1]), dt * 0.5);
+  visW.skyTop.lerp(def.skyC[0], dt * 0.5);
+  visW.skyBot.lerp(def.skyC[1], dt * 0.5);
+  visW.seaDeep.lerp(def.seaC[0], dt * 0.5);
+  visW.seaShal.lerp(def.seaC[1], dt * 0.5);
   visW.fogC.copy(visW.skyBot);
   var rainT = w.cur === 'storm' ? 0.5 : w.cur === 'drizzle' ? 0.22 : 0;
   visW.rain = lerp(visW.rain, rainT, dt * 0.8);
@@ -1785,31 +1816,37 @@ function onWeatherChange() {
   updateWeatherHUD();
 }
 
+var _cNightTop = new THREE.Color('#1c3a5e').lerp(new THREE.Color('#0f2440'), 0.35);
+var _cNightBot = new THREE.Color('#41678e');
+var _cDuskTop = new THREE.Color('#7a6f96');
+var _cDuskBot = new THREE.Color('#f4c99a');
+var _cNightFog = new THREE.Color('#3d5c7e');
+var _sunDirBack = new THREE.Vector3(-0.3, 0.5, -0.4);
+var _sunDir = new THREE.Vector3();
+var _cTop = new THREE.Color();
+var _cBot = new THREE.Color();
+
 function updateDayNight(dt) {
   state.dayT += dt / DAYLEN;
-  if (state.dayT >= 1) { state.dayT -= 1; state.day++; toast('第 ' + state.day + ' 天开始了', 'gold'); }
+  if (state.dayT >= 1) { state.dayT -= 1; state.day++; toast('第 ' + state.day + ' 天开始了', 'gold'); placeWhirlpools(state.day); }
   var elev = Math.sin((state.dayT - 0.25) * Math.PI * 2);
   var night = clamp(-elev * 1.8, 0, 1);
   var dusk = clamp(1 - Math.abs(elev) * 2.6, 0, 1);
   var sunA = (state.dayT - 0.25) * Math.PI * 2;
-  var sd = new THREE.Vector3(Math.cos(sunA) * 0.7, Math.max(0.12, Math.sin(sunA)), 0.45).normalize();
+  var sd = _sunDir.set(Math.cos(sunA) * 0.7, Math.max(0.12, Math.sin(sunA)), 0.45).normalize();
   var moonA = sunA + Math.PI;
   skyMat.uniforms.uMoonDir.value.set(Math.cos(moonA) * 0.7, Math.max(0.12, Math.sin(moonA)), 0.45).normalize();
-  skyMat.uniforms.uSunDir.value.copy(elev > 0 ? sd : new THREE.Vector3(-0.3, 0.5, -0.4));
+  skyMat.uniforms.uSunDir.value.copy(elev > 0 ? sd : _sunDirBack);
   seaMat.uniforms.uSun.value.copy(skyMat.uniforms.uSunDir.value);
 
-  var dayTop = visW.skyTop.clone(), dayBot = visW.skyBot.clone();
-  var nightTop = new THREE.Color('#1c3a5e').lerp(new THREE.Color('#0f2440'), 0.35);
-  var nightBot = new THREE.Color('#41678e');
-  var duskTop = new THREE.Color('#7a6f96'), duskBot = new THREE.Color('#f4c99a');
-  var top = dayTop.clone().lerp(duskTop, dusk).lerp(nightTop, night);
-  var bot = dayBot.clone().lerp(duskBot, dusk).lerp(nightBot, night);
-  skyMat.uniforms.uTop.value.copy(top);
-  skyMat.uniforms.uBot.value.copy(bot);
+  _cTop.copy(visW.skyTop).lerp(_cDuskTop, dusk).lerp(_cNightTop, night);
+  _cBot.copy(visW.skyBot).lerp(_cDuskBot, dusk).lerp(_cNightBot, night);
+  skyMat.uniforms.uTop.value.copy(_cTop);
+  skyMat.uniforms.uBot.value.copy(_cBot);
   skyMat.uniforms.uNight.value = night;
 
-  var fc = visW.fogC.clone().lerp(new THREE.Color('#3d5c7e'), night * 0.8);
-  scene.fog.color.copy(fc);
+  _cBot.copy(visW.fogC).lerp(_cNightFog, night * 0.8);
+  scene.fog.color.copy(_cBot);
   scene.fog.far = visW.fogFar * (1 - night * 0.3);
   scene.fog.near = scene.fog.far * 0.09;
 
@@ -2324,6 +2361,10 @@ function updateWhirlpools(dt) {
       u.foamPts[f].material.opacity = 0.28 + Math.sin(fa * 2) * 0.15;
     }
     var d = Math.hypot(b.x - w.position.x, b.z - w.position.z);
+    if (d < 35 && !state.hintShown.whirl) {
+      state.hintShown.whirl = 1;
+      toast('海面的螺旋是漩涡，会吸住船体——绕开走！');
+    }
     if (d < 15) {
       u.wasIn = true;
       var pullF = (1 - d / 15) * 3.4 * dt;
@@ -2360,6 +2401,10 @@ function updateCaches(dt) {
     c.userData.ring.scale.set(s, s, 1);
     c.userData.gl.material.opacity = (isNight() ? 0.8 : 0.45) * (0.8 + Math.sin(state.time * 3 + c.userData.ph) * 0.2);
     var d = Math.hypot(b.x - c.userData.x, b.z - c.userData.z);
+    if (d < 10 && !state.hintShown.cache && state.islandsFound[c.userData.islId]) {
+      state.hintShown.cache = 1;
+      toast('岛边停着一座沉睡的宝藏箱，停稳船即可打开');
+    }
     if (d < 4.5 && b.speed < 1.5) {
       c.userData.hold += dt;
       if (c.userData.hold > 1.2) {
@@ -2878,10 +2923,13 @@ function renderLog() {
     var a = ACHS[j];
     var ok = !!state.ach[a.id];
     if (ok) done++;
-    ahs += '<div class="achitem' + (ok ? ' done' : '') + '"><div class="achdot">' + (ok ? '✓' : (j + 1)) + '</div><div><div class="achname">' + a.name + '</div><div class="achdesc">' + a.desc + '</div></div><div class="achrew">' + (ok ? '已获得' : '金币+' + a.rew) + '</div></div>';
+    var pr = !ok && a.p ? a.p() : null;
+    var prTxt = pr ? '（' + pr[0] + ' / ' + pr[1] + '）' : '';
+    ahs += '<div class="achitem' + (ok ? ' done' : '') + '"><div class="achdot">' + (ok ? '✓' : (j + 1)) + '</div><div><div class="achname">' + a.name + '</div><div class="achdesc">' + a.desc + prTxt + '</div></div><div class="achrew">' + (ok ? '已获得' : '金币+' + a.rew) + '</div></div>';
   }
   $('achlist').innerHTML = ahs + '<div style="font-size:11px;color:#7fa0b8;text-align:right;margin-top:3px;font-weight:700">成就 ' + done + ' / ' + ACHS.length + '</div>';
   $('btnMute').textContent = '音效：' + (state.mute ? '关' : '开');
+  $('btnMusic').textContent = '音乐：' + (state.settings.music === false ? '关' : '开');
   $('btnHiRes').textContent = '高清画质：' + (state.settings.hiRes ? '开' : '关');
 }
 
@@ -3088,7 +3136,7 @@ function step(dt) {
   musicT -= dt;
   if (musicT <= 0) {
     musicT = rand(2.4, 4.6);
-    if (!state.mute && AC && state.weather.cur !== 'storm') sfxPluck(pick(MNOTES), Math.random() < 0.35);
+    if (!state.mute && state.settings.music !== false && AC && state.weather.cur !== 'storm') sfxPluck(pick(MNOTES), Math.random() < 0.35);
   }
   hudT -= dt;
   if (hudT <= 0) {
@@ -3231,6 +3279,7 @@ function loadGame(d) {
 }
 
 var lastT = performance.now();
+var fpsN = 0, fpsT = 0, autoDropped = 0;
 function loop(now) {
   requestAnimationFrame(loop);
   var dt = Math.min(0.05, (now - lastT) / 1000);
@@ -3238,6 +3287,18 @@ function loop(now) {
   var ts = window.__ts || 1;
   if (state.phase === 'play') { for (var k = 0; k < ts; k++) step(dt * timeScale); }
   else if (state.phase === 'menu') menuIdle(dt);
+  fpsN++;
+  fpsT += dt;
+  if (fpsT >= 5) {
+    var fps = fpsN / fpsT;
+    fpsN = 0; fpsT = 0;
+    if (fps < 26 && state.settings.hiRes && state.playSec > 15 && now - autoDropped > 20000) {
+      autoDropped = now;
+      state.settings.hiRes = false;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+      toast('已自动降低画质，让航行更流畅');
+    }
+  }
   updateFX(state.phase === 'pause' ? 0 : dt);
   renderer.render(scene, camera);
 }
@@ -3267,6 +3328,11 @@ function boot() {
   $('logclose').onclick = closeLog;
   $('logWrap').addEventListener('click', function (e) { if (e.target === this) closeLog(); });
   $('btnMute').onclick = function () { setMute(!state.mute); renderLog(); };
+  $('btnMusic').onclick = function () {
+    state.settings.music = state.settings.music === false;
+    renderLog();
+    save();
+  };
   $('btnHiRes').onclick = function () {
     state.settings.hiRes = !state.settings.hiRes;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, state.settings.hiRes ? 2 : 1.25));
